@@ -51,7 +51,7 @@ set (CMAKE_MODULE_PATH ${SEQAN_ROOT}/util/cmake ${CMAKE_MODULE_PATH})
 
 # Auto-add dependencies if present in same dir (otherwise will be searched globally)
 foreach (_PATH
-         "${SEQAN_ROOT}/../seqan3/sdsl-lite/include/")
+         "${SEQAN_ROOT}/../seqan3/submodules/sdsl-lite/include/")
     if (EXISTS ${_PATH})
         set (CMAKE_INCLUDE_PATH ${_PATH} ${CMAKE_INCLUDE_PATH})
     endif ()
