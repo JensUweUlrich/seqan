@@ -51,22 +51,37 @@ uint64_t ipow(uint64_t base, uint64_t exp)
 template <typename TAlphabet>
 static void addKmer_IBF(benchmark::State& state)
 {
-    KmerFilter<TAlphabet, InterleavedBloomFilter> ibf (state.range(0), state.range(3), state.range(1), state.range(2));
+    KmerFilter<TAlphabet, InterleavedBloomFilter> ibf (state.range(0), state.range(3), state.range(1), (1ULL<<state.range(2))+256);
     std::mt19937 RandomNumber;
     String<TAlphabet> kmer("");
     for (uint8_t i = 0; i < state.range(1); ++i)
         appendValue(kmer, TAlphabet(RandomNumber() % ValueSize<TAlphabet>::VALUE));
     for (auto _ : state)
-        addKmer(ibf, kmer, 0);
+        addKmer(ibf, kmer, RandomNumber() % state.range(0));
 }
 
 template <typename TAlphabet>
 static void whichBins_IBF(benchmark::State& state)
 {
-    KmerFilter<TAlphabet, InterleavedBloomFilter> ibf (state.range(0), state.range(3), state.range(1), state.range(2));
+    auto bins = state.range(0);
+    auto k = state.range(1);
+    auto bits = state.range(2);
+    auto hash = state.range(3);
+    auto occ  = state.range(4);
+    KmerFilter<TAlphabet, InterleavedBloomFilter> ibf (bins, hash, k, (1ULL<<bits)+256);
+
+    auto vecSize = (1ULL<<bits) - 1;
+    while (vecSize > 0)
+    {
+        auto vecPos = vecSize - occ + 1;
+        ibf.filterVector[vecPos] = true;
+        // ibf.filterVector.set_pos(vecPos);
+        vecSize -= occ;
+    }
+
     std::mt19937 RandomNumber;
     String<TAlphabet> kmer("");
-    for (uint8_t i = 0; i < state.range(1); ++i)
+    for (uint8_t i = 0; i < k; ++i)
         appendValue(kmer, TAlphabet(RandomNumber() % ValueSize<TAlphabet>::VALUE));
     for (auto _ : state)
         whichBins(ibf, kmer, 0);
@@ -81,7 +96,7 @@ static void addKmer_DA(benchmark::State& state)
     for (uint8_t i = 0; i < state.range(1); ++i)
         appendValue(kmer, TAlphabet(RandomNumber() % ValueSize<TAlphabet>::VALUE));
     for (auto _ : state)
-        addKmer(da, kmer, 0);
+        addKmer(da, kmer, RandomNumber() % state.range(0));
 }
 
 template <typename TAlphabet>
@@ -100,21 +115,28 @@ static void IBFArguments(benchmark::internal::Benchmark* b)
 {
     for (int32_t binNo = 1; binNo <= 8192; binNo *= 2)
     {
-        if (binNo > 1 && binNo < 64)
+        if ((binNo > 1 && binNo < 64) || binNo==128 || binNo==512 || binNo==2048 || binNo==4096)
             continue;
         for (int32_t k = 20; k <= 20; ++k)
         {
-            for (int32_t bits = 1<<16; bits <= 1<<21; bits <<= 1 )
+            // 35 = 4GiB, 36 = 8GiB, 37 = 16GiB
+            for (int32_t bits = 20; bits < 37; ++bits )
             {
                 for (int32_t hashNo = 3; hashNo < 4; ++hashNo)
                 {
-                    b->Args({binNo, k, bits+256, hashNo});
+                    for (int32_t occ = 1; occ <= 8192; occ *= 2)
+                    {
+                        if ((occ >= 4 && occ < 64) || occ==256 || occ==512 || occ==4096)
+                            continue;
+                        b->Args({binNo, k, bits, hashNo, occ});
+                    }
                 }
             }
         }
     }
 }
 
+[[maybe_unused]]
 static void DAArguments(benchmark::internal::Benchmark* b)
 {
     for (int32_t binNo = 1; binNo <= 128; binNo *= 2)
@@ -130,9 +152,9 @@ static void DAArguments(benchmark::internal::Benchmark* b)
 
 // 0=bins 1=k 2=bits 3=noOfHashes
 
-BENCHMARK_TEMPLATE(addKmer_IBF, Dna)->Apply(IBFArguments);
-BENCHMARK_TEMPLATE(addKmer_DA, Dna)->Apply(DAArguments);
+// BENCHMARK_TEMPLATE(addKmer_IBF, Dna)->Apply(IBFArguments);
+// BENCHMARK_TEMPLATE(addKmer_DA, Dna)->Apply(DAArguments);
 BENCHMARK_TEMPLATE(whichBins_IBF, Dna)->Apply(IBFArguments);
-BENCHMARK_TEMPLATE(whichBins_DA, Dna)->Apply(DAArguments);
+// BENCHMARK_TEMPLATE(whichBins_DA, Dna)->Apply(DAArguments);
 
 BENCHMARK_MAIN();
