@@ -68,15 +68,14 @@ static void whichBins_IBF(benchmark::State& state)
     auto bits = state.range(2);
     auto hash = state.range(3);
     auto occ  = state.range(4);
-    KmerFilter<TAlphabet, InterleavedBloomFilter> ibf (bins, hash, k, (1ULL<<bits)+256);
+    KmerFilter<TAlphabet, InterleavedBloomFilter> ibf(bins, hash, k, (1ULL<<bits)+256);
 
-    auto vecSize = (1ULL<<bits) - 1;
-    while (vecSize > 0)
+    auto vecPos = (1ULL<<bits) - occ;
+    while (vecPos > 0)
     {
-        auto vecPos = vecSize - occ + 1;
-        ibf.filterVector[vecPos] = true;
+        ibf.filterVector[vecPos] = 1;
         // ibf.filterVector.set_pos(vecPos);
-        vecSize -= occ;
+        vecPos -= occ;
     }
 
     std::mt19937 RandomNumber;
@@ -113,14 +112,14 @@ static void whichBins_DA(benchmark::State& state)
 
 static void IBFArguments(benchmark::internal::Benchmark* b)
 {
-    for (int32_t binNo = 1; binNo <= 8192; binNo *= 2)
+    for (int32_t binNo = 64; binNo <= 8192; binNo *= 2)
     {
         if ((binNo > 1 && binNo < 64) || binNo==128 || binNo==512 || binNo==2048 || binNo==4096)
             continue;
         for (int32_t k = 20; k <= 20; ++k)
         {
             // 35 = 4GiB, 36 = 8GiB, 37 = 16GiB
-            for (int32_t bits = 20; bits < 37; ++bits )
+            for (int32_t bits = 32; bits < 37; ++bits )
             {
                 for (int32_t hashNo = 3; hashNo < 4; ++hashNo)
                 {
@@ -154,6 +153,7 @@ static void DAArguments(benchmark::internal::Benchmark* b)
 
 // BENCHMARK_TEMPLATE(addKmer_IBF, Dna)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(addKmer_DA, Dna)->Apply(DAArguments);
+// BENCHMARK_TEMPLATE(whichBins_IBF2, Dna)->Apply(IBFArguments);
 BENCHMARK_TEMPLATE(whichBins_IBF, Dna)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(whichBins_DA, Dna)->Apply(DAArguments);
 

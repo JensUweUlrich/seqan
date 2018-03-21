@@ -228,7 +228,6 @@ public:
             kmerHashes[i] = hashNext(kmerShape, it);
             ++it;
         }
-
         for (uint64_t kmerHash : kmerHashes)
         {
             std::vector<uint64_t> vecIndices = preCalcValues;
