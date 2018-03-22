@@ -127,7 +127,27 @@ static void whichBins_DA(benchmark::State& state)
         whichBins(da, kmer, 0);
 }
 
-static void IBFArguments(benchmark::internal::Benchmark* b)
+static void IBFAddArguments(benchmark::internal::Benchmark* b)
+{
+    for (int32_t binNo = 64; binNo <= 8192; binNo *= 2)
+    {
+        if ((binNo > 1 && binNo < 64) || binNo==128 || binNo==512 || binNo==2048 || binNo==4096)
+            continue;
+        for (int32_t k = 20; k <= 20; ++k)
+        {
+            // 35 = 4GiB, 36 = 8GiB, 37 = 16GiB
+            for (int32_t bits = 32; bits < 37; ++bits )
+            {
+                for (int32_t hashNo = 3; hashNo < 4; ++hashNo)
+                {
+                    b->Args({binNo, k, bits, hashNo});
+                }
+            }
+        }
+    }
+}
+
+static void IBFWhichArguments(benchmark::internal::Benchmark* b)
 {
     for (int32_t binNo = 64; binNo <= 8192; binNo *= 2)
     {
@@ -152,8 +172,20 @@ static void IBFArguments(benchmark::internal::Benchmark* b)
     }
 }
 
-[[maybe_unused]]
-static void DAArguments(benchmark::internal::Benchmark* b)
+static void DAAddArguments(benchmark::internal::Benchmark* b)
+{
+    for (int32_t binNo = 1; binNo <= 8192; binNo *= 2)
+    {
+        if ((binNo > 1 && binNo < 64) || binNo==128 || binNo==512 || binNo==2048 || binNo==4096)
+            continue;
+        for (int32_t k = 10; k <= 13; ++k)
+        {
+            b->Args({binNo, k});
+        }
+    }
+}
+
+static void DAWhichArguments(benchmark::internal::Benchmark* b)
 {
     for (int32_t binNo = 1; binNo <= 8192; binNo *= 2)
     {
@@ -171,9 +203,9 @@ static void DAArguments(benchmark::internal::Benchmark* b)
     }
 }
 
-BENCHMARK_TEMPLATE(addKmer_IBF, Dna)->Apply(IBFArguments);
-BENCHMARK_TEMPLATE(addKmer_DA, Dna)->Apply(DAArguments);
-BENCHMARK_TEMPLATE(whichBins_IBF, Dna)->Apply(IBFArguments);
-BENCHMARK_TEMPLATE(whichBins_DA, Dna)->Apply(DAArguments);
+BENCHMARK_TEMPLATE(addKmer_IBF, Dna)->Apply(IBFAddArguments);
+BENCHMARK_TEMPLATE(addKmer_DA, Dna)->Apply(DAAddArguments);
+BENCHMARK_TEMPLATE(whichBins_IBF, Dna)->Apply(IBFWhichArguments);
+BENCHMARK_TEMPLATE(whichBins_DA, Dna)->Apply(DAWhichArguments);
 
 BENCHMARK_MAIN();
