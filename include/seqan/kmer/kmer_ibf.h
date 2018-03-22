@@ -218,8 +218,7 @@ public:
     template<typename TString>
     void whichBins(std::vector<uint64_t> & counts, TString const & text)
     {
-        if (rebuild)
-            compress_vector();
+        compress_vector();
         uint8_t possible = length(text) - kmerSize + 1;
 
         std::vector<uint64_t> kmerHashes(possible, 0);
@@ -368,8 +367,11 @@ public:
 
     inline void compress_vector()
     {
-        rebuild = false;
-        compVector = std::move(sdsl::sd_vector<>(filterVector));
+        if (rebuild)
+        {
+            rebuild = false;
+            compVector = std::move(sdsl::sd_vector<>(filterVector));
+        }
     }
 };
 }
