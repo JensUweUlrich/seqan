@@ -219,7 +219,7 @@ public:
      * \param text Text to count occurences for.
      */
     template<typename TString>
-    void whichBins(std::vector<uint64_t> & counts, TString const & text) const
+    void whichBins(std::vector<uint64_t> & counts, TString const & text)
     {
         compress_vector();
         uint8_t possible = length(text) - kmerSize + 1;
@@ -288,7 +288,7 @@ public:
      * \param threshold Minimal count (>=) of containing k-mers to report bin as containing text.
      */
     template<typename TString, typename TInt>
-    inline void whichBins(std::vector<bool> & selected, TString const & text, TInt && threshold) const
+    inline void whichBins(std::vector<bool> & selected, TString const & text, TInt && threshold)
     {
         std::vector<uint64_t> counts(noOfBins, 0);
         whichBins(counts, text);
