@@ -80,6 +80,8 @@ static void whichBins_IBF(benchmark::State& state)
 
     std::mt19937 RandomNumber;
     String<TAlphabet> kmer("");
+    ibf.compress_vector();
+    state.counters["Size"] = sdsl::size_in_mega_bytes(ibf.compVector);
     for (uint8_t i = 0; i < k; ++i)
         appendValue(kmer, TAlphabet(RandomNumber() % ValueSize<TAlphabet>::VALUE));
     for (auto _ : state)
