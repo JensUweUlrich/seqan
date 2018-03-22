@@ -195,7 +195,7 @@ static void DAWhichArguments(benchmark::internal::Benchmark* b)
         {
             for (int32_t occ = 1; occ <= 8192; occ *= 2)
             {
-                if ((occ >= 4 && occ < 64) || occ==256 || occ==512 || occ==4096)
+                if (occ==4 || (occ >= 16 && occ < 64) || occ==256 || occ==512 || occ==2048 || occ==4096)
                     continue;
                 b->Args({binNo, k, occ});
             }
