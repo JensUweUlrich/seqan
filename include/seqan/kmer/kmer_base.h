@@ -259,6 +259,7 @@ inline void setMetadata(KmerFilter<TValue, TSpec> &  me)
 
     THValue metadataStart = me.noOfBits - me.filterMetadataSize;
 
+    // TODO also store TValue (alphabet)
     me.filterVector.set_int(metadataStart, me.noOfBins);
     me.filterVector.set_int(metadataStart + 64, me.noOfHashFunc);
     me.filterVector.set_int(metadataStart+128, me.kmerSize);
