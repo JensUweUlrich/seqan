@@ -81,6 +81,8 @@ public:
 
     //!\brief The bit vector storing the bloom filters.
     sdsl::bit_vector                    filterVector;
+    sdsl::sd_vector<>                   compVector;
+    bool                                rebuild = true;
     //!\brief How many bits we can represent in the biggest unsigned int available.
     static const THValue   intSize = 0x40;
     //!\brief Size in bits of the meta data.
@@ -200,6 +202,7 @@ public:
                     for(uint32_t binNo : bins)
                     {
                         filterVector[vecPos + binNo] = false;
+                        rebuild = true;
                     }
                 }
             }));
@@ -218,6 +221,7 @@ public:
     template<typename TString>
     void whichBins(std::vector<uint64_t> & counts, TString const & text) const
     {
+        compress_vector();
         uint8_t possible = length(text) - kmerSize + 1;
         std::vector<uint64_t> kmerHashes(possible, 0);
 
@@ -242,7 +246,7 @@ public:
                 binNo = batchNo * intSize;
                 // get_int(idx, len) returns the integer value of the binary string of length len starting
                 // at position idx, i.e. len+idx-1|_______|idx, Vector is right to left.
-                uint64_t tmp = filterVector.get_int(kmerHash, intSize);
+                uint64_t tmp = compVector.get_int(kmerHash, intSize);
 
                 // Behaviour for a bit shift with >= maximal size is undefined, i.e. shifting a 64 bit integer by 64
                 // positions is not defined and hence we need a special case for this.
@@ -311,6 +315,7 @@ public:
         {
             uint64_t kmerHash = hashNext(kmerShape, begin(text) + i);
             filterVector[blockBitSize * kmerHash + binNo] = 1;
+            rebuild = true;
         }
     }
 
@@ -326,6 +331,15 @@ public:
         // Size of the bit vector
         noOfBits = noOfBlocks * blockBitSize + filterMetadataSize;
         filterVector = sdsl::bit_vector(noOfBits, 0);
+    }
+
+    inline void compress_vector()
+    {
+        if (rebuild)
+        {
+            rebuild = false;
+            compVector = std::move(sdsl::sd_vector<>(filterVector));
+        }
     }
 };
 }
