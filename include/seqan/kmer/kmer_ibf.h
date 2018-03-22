@@ -67,6 +67,7 @@ class KmerFilter<TValue, InterleavedBloomFilter>
 public:
     //!\brief The type of the variables.
     typedef typename Value<KmerFilter>::Type    THValue;
+    typedef String<TValue>                      TString;
     //!\brief The number of Bins.
     THValue    noOfBins;
     //!\brief The number of hash functions.
@@ -215,7 +216,6 @@ public:
      * \param counts Vector to be filled with counts.
      * \param text Text to count occurences for.
      */
-    template<typename TString>
     void whichBins(std::vector<uint64_t> & counts, TString const & text)
     {
         compress_vector();
@@ -295,7 +295,7 @@ public:
      * \param text Text to count occurences for.
      * \param threshold Minimal count (>=) of containing k-mers to report bin as containing text.
      */
-    template<typename TString, typename TInt>
+    template<typename TInt>
     inline void whichBins(std::vector<bool> & selected, TString const & text, TInt && threshold)
     {
         std::vector<uint64_t> counts(noOfBins, 0);
@@ -326,7 +326,7 @@ public:
      * \param text Text to process.
      * \param binNo bin ID to insert k-mers in.
      */
-    template<typename TString, typename TInt>
+    template<typename TInt>
     inline void addKmer(TString const & text, TInt && binNo)
     {
 
