@@ -330,6 +330,8 @@ public:
     inline void addKmer(TString const & text, TInt && binNo)
     {
 
+        rebuild = true;
+        
         TShape kmerShape;
         resize(kmerShape, kmerSize);
         hashInit(kmerShape, begin(text));
@@ -344,7 +346,6 @@ public:
                 hashToIndex(vecIndex);
                 vecIndex += binNo;
                 filterVector[vecIndex] = 1;
-                rebuild = true;
             }
         }
     }
