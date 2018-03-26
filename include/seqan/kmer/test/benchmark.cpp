@@ -50,7 +50,7 @@ int main()
     // parameters
     uint64_t const noOfRepeats{10};
     uint64_t const noOfKmers{1000000};
-    uint64_t const k{12};
+    uint64_t const k{20};
     uint64_t const noOfBins{32};
     uint64_t const noOfHashes{3};
     uint64_t const noOfBits{16777472};
@@ -59,8 +59,8 @@ int main()
     std::mt19937 rng;
     StringSet<DnaString> input;
     std::vector<int64_t> ibfTime;
-    std::vector<int64_t> sbfTime;
-    std::vector<int64_t> daTime;
+    // std::vector<int64_t> sbfTime;
+    // std::vector<int64_t> daTime;
     reserve(input, noOfKmers);
     for (uint64_t seqNo = 0; seqNo < noOfKmers; ++seqNo)
     {
@@ -78,8 +78,8 @@ int main()
     for (uint64_t r = 0; r < noOfRepeats; r++)
     {
         KmerFilter<Dna, InterleavedBloomFilter> ibf (noOfBins, noOfHashes, k, noOfBits);
-        SeqAnBloomFilter<DnaString> sbf (noOfBins, noOfHashes, k, noOfBits);
-        KmerFilter<Dna, DirectAddressing> da (noOfBins, k);
+        // SeqAnBloomFilter<DnaString> sbf (noOfBins, noOfHashes, k, noOfBits);
+        // KmerFilter<Dna, DirectAddressing> da (noOfBins, k);
 
         auto start = std::chrono::high_resolution_clock::now();
         for(uint64_t i = 0; i < noOfKmers; ++i)
@@ -89,34 +89,34 @@ int main()
         auto elapsed = std::chrono::high_resolution_clock::now() - start;
         ibfTime.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
 
-        start = std::chrono::high_resolution_clock::now();
-        for(uint64_t i = 0; i < noOfKmers; ++i)
-        {
-            sbf.addKmers(input[i], i % noOfBins);
-        }
-        elapsed = std::chrono::high_resolution_clock::now() - start;
-        sbfTime.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
-
-        start = std::chrono::high_resolution_clock::now();
-        for(uint64_t i = 0; i < noOfKmers; ++i)
-        {
-            da.addKmer(input[i], i % noOfBins);
-        }
-        elapsed = std::chrono::high_resolution_clock::now() - start;
-        daTime.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
+        // start = std::chrono::high_resolution_clock::now();
+        // for(uint64_t i = 0; i < noOfKmers; ++i)
+        // {
+        //     sbf.addKmers(input[i], i % noOfBins);
+        // }
+        // elapsed = std::chrono::high_resolution_clock::now() - start;
+        // sbfTime.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
+        //
+        // start = std::chrono::high_resolution_clock::now();
+        // for(uint64_t i = 0; i < noOfKmers; ++i)
+        // {
+        //     da.addKmer(input[i], i % noOfBins);
+        // }
+        // elapsed = std::chrono::high_resolution_clock::now() - start;
+        // daTime.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
     }
 
     auto ibfAvg = accumulate(ibfTime.begin(), ibfTime.end(), 0)/ibfTime.size();
-    auto sbfAvg = accumulate(sbfTime.begin(), sbfTime.end(), 0)/sbfTime.size();
-    auto daAvg = accumulate(daTime.begin(), daTime.end(), 0)/daTime.size();
+    // auto sbfAvg = accumulate(sbfTime.begin(), sbfTime.end(), 0)/sbfTime.size();
+    // auto daAvg = accumulate(daTime.begin(), daTime.end(), 0)/daTime.size();
 
     std::cout << "Average InterleavedBloomFilter: " << ibfAvg << " ms.\n";
-    std::cout << "Average SeqAnBloomFilter: " << sbfAvg << " ms.\n";
-    std::cout << "Average DirectAddressing: " << daAvg << " ms.\n";
+    // std::cout << "Average SeqAnBloomFilter: " << sbfAvg << " ms.\n";
+    // std::cout << "Average DirectAddressing: " << daAvg << " ms.\n";
 
     ibfTime.clear();
     ibfTime.shrink_to_fit();
-    sbfTime.clear();
+    /*sbfTime.clear();
     sbfTime.shrink_to_fit();
     daTime.clear();
     daTime.shrink_to_fit();
@@ -170,5 +170,5 @@ int main()
 
     std::cout << "Average InterleavedBloomFilter: " << ibfAvg << " ms.\n";
     std::cout << "Average SeqAnBloomFilter: " << sbfAvg << " ms.\n";
-    std::cout << "Average DirectAddressing: " << daAvg << " ms.\n";
+    std::cout << "Average DirectAddressing: " << daAvg << " ms.\n"; */
 }

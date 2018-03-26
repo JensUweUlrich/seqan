@@ -146,6 +146,7 @@ inline void addFastaFile(KmerFilter<TValue, TSpec> &  me, const char * fastaFile
         addKmer(me, seq, binNo);
     }
     close(seqFileIn);
+    me.filterVector.unload();
 }
 
 /*!

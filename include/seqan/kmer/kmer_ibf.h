@@ -343,7 +343,6 @@ public:
                 filterVector.set_pos(vecIndex);
             }
         }
-        filterVector.unload();
     }
 
     //! \brief Initialises internal variables.
