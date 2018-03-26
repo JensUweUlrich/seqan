@@ -51,6 +51,8 @@ static void addKmer_IBF(benchmark::State& state)
 
     for (auto _ : state)
         addKmer(ibf, kmer, RandomNumber() % bins);
+
+    state.counters["Size"] = ibf.filterVector.size_in_mega_bytes();
 }
 
 template <typename TAlphabet>
@@ -69,11 +71,10 @@ static void whichBins_IBF(benchmark::State& state)
     while (vecPos > 0)
     {
         ibf.filterVector.set_pos(vecPos);
-        // ibf.filterVector.set_pos(vecPos);
         vecPos -= occ;
     }
     ibf.filterVector.unload();
-    // state.counters["Size"] = sdsl::size_in_mega_bytes(ibf.compVector);
+    state.counters["Size"] = ibf.filterVector.size_in_mega_bytes();
 
     for (uint8_t i = 0; i < k; ++i)
         appendValue(kmer, TAlphabet(RandomNumber() % ValueSize<TAlphabet>::VALUE));
