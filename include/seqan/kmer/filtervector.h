@@ -53,6 +53,16 @@ struct FilterVector
     std::vector<std::list<std::tuple<uint64_t, bool> > > buffer; // chunk[(pos, set),...]
     std::list<uint64_t> queue;
 
+    double size_in_mega_bytes()
+    {
+        double size{0};
+        for (uint64_t j = 0; j < noOfChunks; j++)
+        {
+            size += sdsl::size_in_mega_bytes(*std::get<2>(filterVector[j]));
+        }
+        return size;
+    }
+
     void decompress(uint64_t chunk)
     {
         sdsl::load_from_file(*std::get<1>(filterVector[chunk]), toCString(PREFIX)+std::to_string(chunk));
