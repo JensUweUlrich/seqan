@@ -68,13 +68,12 @@ static void whichBins_IBF(benchmark::State& state)
     auto vecPos = (1ULL<<bits) - occ;
     while (vecPos > 0)
     {
-        ibf.filterVector[vecPos] = 1;
+        ibf.filterVector.set_pos(vecPos);
         // ibf.filterVector.set_pos(vecPos);
         vecPos -= occ;
     }
-
-    ibf.compress_vector();
-    state.counters["Size"] = sdsl::size_in_mega_bytes(ibf.compVector);
+    ibf.filterVector.unload();
+    // state.counters["Size"] = sdsl::size_in_mega_bytes(ibf.compVector);
 
     for (uint8_t i = 0; i < k; ++i)
         appendValue(kmer, TAlphabet(RandomNumber() % ValueSize<TAlphabet>::VALUE));
@@ -82,7 +81,7 @@ static void whichBins_IBF(benchmark::State& state)
     for (auto _ : state)
         whichBins(ibf, kmer, 0);
 }
-
+/*
 template <typename TAlphabet>
 static void addKmer_DA(benchmark::State& state)
 {
@@ -112,12 +111,12 @@ static void whichBins_DA(benchmark::State& state)
     auto vecPos = da.noOfBits - da.filterMetadataSize - occ;
     while (vecPos > 0)
     {
-        da.filterVector[vecPos] = 1;
+        da.filterVector.set_pos(vecPos);
         // ibf.filterVector.set_pos(vecPos);
         vecPos -= occ;
     }
 
-    da.compress_vector();
+    da.filterVector.unload();
     state.counters["Size"] = sdsl::size_in_mega_bytes(da.compVector);
 
     for (uint8_t i = 0; i < k; ++i)
@@ -126,7 +125,7 @@ static void whichBins_DA(benchmark::State& state)
     for (auto _ : state)
         whichBins(da, kmer, 0);
 }
-
+*/
 static void IBFAddArguments(benchmark::internal::Benchmark* b)
 {
     for (int32_t binNo = 64; binNo <= 8192; binNo *= 2)
@@ -171,7 +170,7 @@ static void IBFWhichArguments(benchmark::internal::Benchmark* b)
         }
     }
 }
-
+/*
 static void DAAddArguments(benchmark::internal::Benchmark* b)
 {
     for (int32_t binNo = 1; binNo <= 8192; binNo *= 2)
@@ -202,10 +201,10 @@ static void DAWhichArguments(benchmark::internal::Benchmark* b)
         }
     }
 }
-
+*/
 BENCHMARK_TEMPLATE(addKmer_IBF, Dna)->Apply(IBFAddArguments);
-BENCHMARK_TEMPLATE(addKmer_DA, Dna)->Apply(DAAddArguments);
+// BENCHMARK_TEMPLATE(addKmer_DA, Dna)->Apply(DAAddArguments);
 BENCHMARK_TEMPLATE(whichBins_IBF, Dna)->Apply(IBFWhichArguments);
-BENCHMARK_TEMPLATE(whichBins_DA, Dna)->Apply(DAWhichArguments);
+// BENCHMARK_TEMPLATE(whichBins_DA, Dna)->Apply(DAWhichArguments);
 
 BENCHMARK_MAIN();

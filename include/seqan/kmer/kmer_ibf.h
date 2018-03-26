@@ -92,9 +92,7 @@ public:
     //!\brief How many bits we can represent in the biggest unsigned int available.
     static const THValue   intSize = 0x40;
     //!\brief The bit vector storing the bloom filters.
-    sdsl::bit_vector                    filterVector;
-    sdsl::sd_vector<>                   compVector;
-    bool                                rebuild = true;
+    FilterVector                        filterVector;
     //!\brief Size in bits of the meta data.
     static const uint32_t               filterMetadataSize{256};
     //!\brief A ungapped Shape over our filter alphabet.
@@ -110,7 +108,7 @@ public:
         noOfHashFunc(0),
         kmerSize(0),
         noOfBits(0),
-        filterVector(sdsl::bit_vector(0, 0)) {}
+        filterVector(noOfBins, noOfBits) {}
 
     /*!
      * \brief Constructs an IBF given parameters.
@@ -124,7 +122,7 @@ public:
         noOfHashFunc(n_hash_func),
         kmerSize(kmer_size),
         noOfBits(vec_size),
-        filterVector(sdsl::bit_vector(vec_size, 0))
+        filterVector(noOfBins, noOfBits)
     {
         init();
     }
@@ -199,8 +197,7 @@ public:
                     uint64_t vecPos = hashBlock * blockBitSize;
                     for(uint32_t binNo : bins)
                     {
-                        filterVector[vecPos + binNo] = false;
-                        rebuild = true;
+                        filterVector.unset_pos(vecPos + binNo);
                     }
                 }
             }));
@@ -209,6 +206,7 @@ public:
         {
             task.get();
         }
+        filterVector.unload();
     }
 
     /*!
@@ -218,7 +216,7 @@ public:
      */
     void whichBins(std::vector<uint64_t> & counts, TString const & text)
     {
-        compress_vector();
+        filterVector.unload();
         uint8_t possible = length(text) - kmerSize + 1;
 
         std::vector<uint64_t> kmerHashes(possible, 0);
@@ -247,12 +245,12 @@ public:
                 binNo = batchNo * intSize;
                 // get_int(idx, len) returns the integer value of the binary string of length len starting
                 // at position idx, i.e. len+idx-1|_______|idx, Vector is right to left.
-                uint64_t tmp = compVector.get_int(vecIndices[0], intSize);
+                uint64_t tmp = filterVector.get_int(vecIndices[0], intSize);
 
                 // A k-mer is in a bin of the IBF iff all hash functions return 1 for the bin.
                 for(uint8_t i = 1; i < noOfHashFunc;  ++i)
                 {
-                    tmp &= compVector.get_int(vecIndices[i], intSize);
+                    tmp &= filterVector.get_int(vecIndices[i], intSize);
                 }
 
                 // Behaviour for a bit shift with >= maximal size is undefined, i.e. shifting a 64 bit integer by 64
@@ -330,8 +328,6 @@ public:
     inline void addKmer(TString const & text, TInt && binNo)
     {
 
-        rebuild = true;
-        
         TShape kmerShape;
         resize(kmerShape, kmerSize);
         hashInit(kmerShape, begin(text));
@@ -345,9 +341,10 @@ public:
                 uint64_t vecIndex = preCalcValues[i] * kmerHash;
                 hashToIndex(vecIndex);
                 vecIndex += binNo;
-                filterVector[vecIndex] = 1;
+                filterVector.set_pos(vecIndex);
             }
         }
+        filterVector.unload();
     }
 
     //! \brief Initialises internal variables.
@@ -363,16 +360,6 @@ public:
         preCalcValues.resize(noOfHashFunc);
         for(uint64_t i = 0; i < noOfHashFunc ; i++)
             preCalcValues[i] = i ^  (kmerSize * seedValue);
-    }
-
-
-    inline void compress_vector()
-    {
-        if (rebuild)
-        {
-            rebuild = false;
-            compVector = std::move(sdsl::sd_vector<>(filterVector));
-        }
     }
 };
 }
