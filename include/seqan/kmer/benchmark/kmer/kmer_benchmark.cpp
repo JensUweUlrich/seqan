@@ -44,15 +44,34 @@ static void addKmer_IBF(benchmark::State& state)
     auto hash = state.range(3);
     KmerFilter<TAlphabet, InterleavedBloomFilter> ibf (bins, hash, k, (1ULL<<bits)+256);
     std::mt19937 RandomNumber;
-    String<TAlphabet> kmer("");
+    StringSet<String<TAlphabet> > input;
+    reserve(input, 1000000);
 
-    for (uint8_t i = 0; i < k; ++i)
-        appendValue(kmer, TAlphabet(RandomNumber() % ValueSize<TAlphabet>::VALUE));
+    for (uint64_t seqNo = 0; seqNo < 1000000; ++seqNo)
+    {
+        String<TAlphabet> tmp;
+        for (int32_t i = 0; i < k; ++i)
+        {
+            appendValue(tmp, TAlphabet(RandomNumber() % ValueSize<TAlphabet>::VALUE));
+        }
+        appendValue(input, tmp);
+    }
+
+    uint64_t i{0};
 
     for (auto _ : state)
-        addKmer(ibf, kmer, RandomNumber() % bins);
+    {
+        addKmer(ibf, input[i % 1000000], i % bins);
+        ++i;
+    }
+
+    auto start = std::chrono::high_resolution_clock::now();
+    ibf.filterVector.unload();
+    auto end   = std::chrono::high_resolution_clock::now();
+    auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 
     state.counters["Size"] = ibf.filterVector.size_in_mega_bytes();
+    state.counters["unload"] = elapsed_seconds.count();
 }
 
 template <typename TAlphabet>
@@ -76,13 +95,28 @@ static void whichBins_IBF(benchmark::State& state)
     ibf.filterVector.unload();
     state.counters["Size"] = ibf.filterVector.size_in_mega_bytes();
 
-    for (uint8_t i = 0; i < k; ++i)
-        appendValue(kmer, TAlphabet(RandomNumber() % ValueSize<TAlphabet>::VALUE));
+    StringSet<String<TAlphabet> > input;
+    reserve(input, 1000000);
+
+    for (uint64_t seqNo = 0; seqNo < 1000000; ++seqNo)
+    {
+        String<TAlphabet> tmp;
+        for (int32_t i = 0; i < k; ++i)
+        {
+            appendValue(tmp, TAlphabet(RandomNumber() % ValueSize<TAlphabet>::VALUE));
+        }
+        appendValue(input, tmp);
+    }
+
+    uint64_t i{0};
 
     for (auto _ : state)
-        whichBins(ibf, kmer, 0);
+    {
+        whichBins(ibf, input[i % 1000000], 0);
+        ++i;
+    }
 }
-/*
+
 template <typename TAlphabet>
 static void addKmer_DA(benchmark::State& state)
 {
@@ -90,13 +124,34 @@ static void addKmer_DA(benchmark::State& state)
     auto k = state.range(1);
     KmerFilter<TAlphabet, DirectAddressing> da (bins, k);
     std::mt19937 RandomNumber;
-    String<TAlphabet> kmer("");
+    StringSet<String<TAlphabet> > input;
+    reserve(input, 1000000);
 
-    for (uint8_t i = 0; i < k; ++i)
-        appendValue(kmer, TAlphabet(RandomNumber() % ValueSize<TAlphabet>::VALUE));
+    for (uint64_t seqNo = 0; seqNo < 1000000; ++seqNo)
+    {
+        String<TAlphabet> tmp;
+        for (int32_t i = 0; i < k; ++i)
+        {
+            appendValue(tmp, TAlphabet(RandomNumber() % ValueSize<TAlphabet>::VALUE));
+        }
+        appendValue(input, tmp);
+    }
+
+    uint64_t i{0};
 
     for (auto _ : state)
-        addKmer(da, kmer, RandomNumber() % bins);
+    {
+        addKmer(da, input[i % 1000000], i % bins);
+        ++i;
+    }
+
+    auto start = std::chrono::high_resolution_clock::now();
+    da.filterVector.unload();
+    auto end   = std::chrono::high_resolution_clock::now();
+    auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+
+    state.counters["Size"] = da.filterVector.size_in_mega_bytes();
+    state.counters["unload"] = elapsed_seconds.count();
 }
 
 template <typename TAlphabet>
@@ -118,15 +173,30 @@ static void whichBins_DA(benchmark::State& state)
     }
 
     da.filterVector.unload();
-    state.counters["Size"] = sdsl::size_in_mega_bytes(da.compVector);
+    state.counters["Size"] = da.filterVector.size_in_mega_bytes();
 
-    for (uint8_t i = 0; i < k; ++i)
-        appendValue(kmer, TAlphabet(RandomNumber() % ValueSize<TAlphabet>::VALUE));
+    StringSet<String<TAlphabet> > input;
+    reserve(input, 1000000);
+
+    for (uint64_t seqNo = 0; seqNo < 1000000; ++seqNo)
+    {
+        String<TAlphabet> tmp;
+        for (int32_t i = 0; i < k; ++i)
+        {
+            appendValue(tmp, TAlphabet(RandomNumber() % ValueSize<TAlphabet>::VALUE));
+        }
+        appendValue(input, tmp);
+    }
+
+    uint64_t i{0};
 
     for (auto _ : state)
-        whichBins(da, kmer, 0);
+    {
+        whichBins(da, input[i % 1000000], 0);
+        ++i;
+    }
 }
-*/
+
 static void IBFAddArguments(benchmark::internal::Benchmark* b)
 {
     for (int32_t binNo = 64; binNo <= 8192; binNo *= 2)
@@ -171,7 +241,7 @@ static void IBFWhichArguments(benchmark::internal::Benchmark* b)
         }
     }
 }
-/*
+
 static void DAAddArguments(benchmark::internal::Benchmark* b)
 {
     for (int32_t binNo = 1; binNo <= 8192; binNo *= 2)
@@ -202,10 +272,10 @@ static void DAWhichArguments(benchmark::internal::Benchmark* b)
         }
     }
 }
-*/
+
 BENCHMARK_TEMPLATE(addKmer_IBF, Dna)->Apply(IBFAddArguments);
-// BENCHMARK_TEMPLATE(addKmer_DA, Dna)->Apply(DAAddArguments);
+BENCHMARK_TEMPLATE(addKmer_DA, Dna)->Apply(DAAddArguments);
 BENCHMARK_TEMPLATE(whichBins_IBF, Dna)->Apply(IBFWhichArguments);
-// BENCHMARK_TEMPLATE(whichBins_DA, Dna)->Apply(DAWhichArguments);
+BENCHMARK_TEMPLATE(whichBins_DA, Dna)->Apply(DAWhichArguments);
 
 BENCHMARK_MAIN();
