@@ -179,37 +179,44 @@ public:
     void clearBins(std::vector<THValue> const & bins, TInt&& threads)
     {
         std::vector<std::future<void>> tasks;
+        uint64_t chunkBlocks = filterVector.chunkSize / filterVector.blockBitSize;
 
-        // We have so many blocks that we want to distribute to so many threads
-        uint64_t batchSize = noOfBlocks / threads;
-        if(batchSize * threads < noOfBlocks) ++batchSize;
-
-        for (uint32_t taskNo = 0; taskNo < threads; ++taskNo)
+        for (uint64_t chunk = 0; chunk < filterVector.chunkNo; ++chunk)
         {
-            // hashBlock is the number of the block the thread will work on. Each block contains binNo bits that
-            // represent the individual bins. Each thread has to work on batchSize blocks. We can get the position in
-            // our filterVector by multiplying the hashBlock with noOfBins. Then we just need to add the respective
-            // binNo. We have to make sure that the vecPos we generate is not out of bounds, only the case in the last
-            // thread if the blocks could not be evenly distributed, and that we do not clear a bin that is assigned to
-            // another thread.
-            tasks.emplace_back(std::async([=] {
-                for (uint64_t hashBlock=taskNo*batchSize;
-                    hashBlock < noOfBlocks && hashBlock < (taskNo +1) * batchSize;
-                    ++hashBlock)
-                {
-                    uint64_t vecPos = hashBlock * blockBitSize;
-                    for(uint32_t binNo : bins)
+            filterVector.decompress(chunk);
+
+            // We have so many blocks that we want to distribute to so many threads
+            uint64_t batchSize = chunkBlocks / threads;
+            if(batchSize * threads < chunkBlocks) ++batchSize;
+
+            for (uint32_t taskNo = 0; taskNo < threads; ++taskNo)
+            {
+                // hashBlock is the number of the block the thread will work on. Each block contains binNo bits that
+                // represent the individual bins. Each thread has to work on batchSize blocks. We can get the position in
+                // our filterVector by multiplying the hashBlock with noOfBins. Then we just need to add the respective
+                // binNo. We have to make sure that the vecPos we generate is not out of bounds, only the case in the last
+                // thread if the blocks could not be evenly distributed, and that we do not clear a bin that is assigned to
+                // another thread.
+                tasks.emplace_back(std::async([=] {
+                    for (uint64_t hashBlock=taskNo*batchSize;
+                        hashBlock < chunkBlocks && hashBlock < (taskNo +1) * batchSize;
+                        ++hashBlock)
                     {
-                        filterVector.unset_pos(vecPos + binNo);
+                        uint64_t vecPos = hashBlock * filterVector.blockBitSize;
+                        for(uint32_t binNo : bins)
+                        {
+                            filterVector.unset_pos(chunk, vecPos - chunk * filterVector.chunkSize);
+                        }
                     }
-                }
-            }));
+                }));
+            }
+            for (auto &&task : tasks)
+            {
+                task.get();
+            }
+
+            filterVector.compress(chunk);
         }
-        for (auto &&task : tasks)
-        {
-            task.get();
-        }
-        filterVector.unload();
     }
 
     /*!
