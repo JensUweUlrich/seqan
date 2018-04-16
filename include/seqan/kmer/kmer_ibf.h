@@ -180,13 +180,14 @@ public:
 
         for (uint64_t chunk = 0; chunk < filterVector.noOfChunks; ++chunk)
         {
+            tasks.clear();
             filterVector.decompress(chunk);
 
             // We have so many blocks that we want to distribute to so many threads
             uint64_t batchSize = noOfBlocks / threads;
             if(batchSize * threads < noOfBlocks) ++batchSize;
 
-            for (uint32_t taskNo = 0; taskNo < threads; ++taskNo)
+            for (uint32_t taskNo = 0; taskNo < threads; ++taskNo) // TODO Rather divide by chunks?
             {
                 // hashBlock is the number of the block the thread will work on. Each block contains binNo bits that
                 // represent the individual bins. Each thread has to work on batchSize blocks. We can get the position in
@@ -202,7 +203,8 @@ public:
                         uint64_t vecPos = hashBlock * filterVector.blockBitSize;
                         for(uint32_t binNo : bins)
                         {
-                            filterVector.unset_pos(chunk, vecPos - chunk * filterVector.chunkSize);
+                            if (vecPos >= chunk * filterVector.chunkSize)
+                                filterVector.unset_pos(chunk, vecPos - chunk * filterVector.chunkSize + binNo);
                         }
                     }
                 }));
@@ -361,7 +363,7 @@ public:
     inline void init()
     {
         // How many blocks of 64 bit do we need to represent our noOfBins
-        binWidth = std::ceil((float)noOfBins / intSize);
+        binWidth = std::ceil((double)noOfBins / intSize);
         // How big is then a block (multiple of 64 bit)
         blockBitSize = binWidth * intSize;
         // How many hash values can we represent

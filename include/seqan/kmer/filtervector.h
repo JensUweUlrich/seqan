@@ -95,15 +95,19 @@ struct FilterVector
         noOfBlocks = (noOfBits + FILTER_METADATA_SIZE) / blockBitSize;
 
         // If we split, we need to split at the end of a block.
-        chunkSize = std::min((float)noOfBlocks * blockBitSize, std::ceil((float)MAX_VEC/blockBitSize) * blockBitSize);
+        chunkSize = std::min((double)noOfBlocks * blockBitSize, std::ceil((double)MAX_VEC/blockBitSize) * blockBitSize);
         // This is how many chunks we need.
-        noOfChunks = std::ceil((float) noOfBits/chunkSize);
+        noOfChunks = std::ceil((double)noOfBits/chunkSize);
+        if (chunkSize * noOfChunks < noOfBits + FILTER_METADATA_SIZE)
+            ++noOfChunks;
+        uint64_t size = noOfBits + FILTER_METADATA_SIZE;
         for (uint64_t i = 0; i < noOfChunks; ++i)
         {
             filterVector.emplace_back(std::make_tuple(false,
-                                                   std::make_unique<sdsl::bit_vector>(chunkSize, 0),
+                                                   std::make_unique<sdsl::bit_vector>(std::min(chunkSize, size), 0),
                                                    std::make_unique<sdsl::sd_vector<> >()));
             compress(i);
+            size -= chunkSize;
         }
     }
 
@@ -147,9 +151,7 @@ struct FilterVector
                     true,
                     std::make_unique<sdsl::bit_vector>(0,0),
                     std::make_unique<sdsl::sd_vector<> >()));
-            CharString f = fileName;
-            appendValue(f, chunk);
-            if (sdsl::load_from_file(*std::get<2>(filterVector[chunk]), toCString(f)))
+            if (sdsl::load_from_file(*std::get<2>(filterVector[chunk]), toCString(fileName)+std::to_string(chunk)))
             {
                 ++chunk;
             }
@@ -167,14 +169,14 @@ struct FilterVector
         noOfBits -= FILTER_METADATA_SIZE;
         noOfBins = get_int(noOfBits);
         // How many blocks of 64 bit do we need to represent our noOfBins
-        binWidth = std::ceil((float)noOfBins / INT_SIZE);
+        binWidth = std::ceil((double)noOfBins / INT_SIZE);
         // How big is then a block (multiple of 64 bit)
         blockBitSize = binWidth * INT_SIZE;
         // How many hash values can we represent
-        noOfBlocks = noOfBits / blockBitSize;
+        noOfBlocks = (noOfBits + FILTER_METADATA_SIZE) / blockBitSize;
 
         // We need to split at the end of a block.
-        chunkSize = std::ceil((float)MAX_VEC/blockBitSize) * blockBitSize;
+        chunkSize = std::min((double)noOfBlocks * blockBitSize, std::ceil((double)MAX_VEC/blockBitSize) * blockBitSize);
     }
 
     uint64_t get_int(uint64_t idx, uint64_t len = 1ULL<<6)
@@ -218,9 +220,7 @@ struct FilterVector
         bool res = true;
         for (uint64_t chunk = 0; chunk < noOfChunks; ++chunk)
         {
-            CharString f = fileName;
-            appendValue(f, chunk);
-            res && sdsl::store_to_file(*std::get<2>(filterVector[chunk]), toCString(f));
+            res && sdsl::store_to_file(*std::get<2>(filterVector[chunk]), toCString(fileName)+std::to_string(chunk));
         }
         return res;
     }
