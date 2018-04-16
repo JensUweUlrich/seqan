@@ -37,7 +37,7 @@ struct FilterVector
 {
     static const uint64_t FILTER_METADATA_SIZE = 256;
     static const uint64_t BUFFER_SIZE = 10000000;
-    static const uint64_t MAX_VEC = (1ULL<<32) + 256;
+    static const uint64_t MAX_VEC = 1ULL<<32;
     static const uint64_t INT_SIZE = 0x40;
     CharString PREFIX{"test"};
 
@@ -92,10 +92,10 @@ struct FilterVector
         // How big is then a block (multiple of 64 bit)
         blockBitSize = binWidth * INT_SIZE;
         // How many hash values can we represent
-        noOfBlocks = (noOfBits - FILTER_METADATA_SIZE) / blockBitSize;
+        noOfBlocks = (noOfBits + FILTER_METADATA_SIZE) / blockBitSize;
 
-        // We need to split at the end of a block.
-        chunkSize = std::ceil((float)MAX_VEC/blockBitSize) * blockBitSize;
+        // If we split, we need to split at the end of a block.
+        chunkSize = std::min((float)noOfBlocks * blockBitSize, std::ceil((float)MAX_VEC/blockBitSize) * blockBitSize);
         // This is how many chunks we need.
         noOfChunks = std::ceil((float) noOfBits/chunkSize);
         for (uint64_t i = 0; i < noOfChunks; ++i)
@@ -137,7 +137,47 @@ struct FilterVector
         return *this;
     }
 
-    uint64_t get_int(uint64_t idx, uint64_t len)
+    FilterVector(CharString fileName)
+    {
+        uint64_t chunk = 0;
+        while (true)
+        {
+            filterVector.emplace_back(
+                std::make_tuple(
+                    true,
+                    std::make_unique<sdsl::bit_vector>(0,0),
+                    std::make_unique<sdsl::sd_vector<> >()));
+            CharString f = fileName;
+            appendValue(f, chunk);
+            if (sdsl::load_from_file(*std::get<2>(filterVector[chunk]), toCString(f)))
+            {
+                ++chunk;
+            }
+            else
+            {
+                break;
+            }
+        }
+        noOfChunks = chunk;
+        noOfBits = 0;
+        for (uint64_t c = 0; c < noOfChunks; ++c)
+        {
+            noOfBits += std::get<2>(filterVector[c])->size();
+        }
+        noOfBits -= FILTER_METADATA_SIZE;
+        noOfBins = get_int(noOfBits);
+        // How many blocks of 64 bit do we need to represent our noOfBins
+        binWidth = std::ceil((float)noOfBins / INT_SIZE);
+        // How big is then a block (multiple of 64 bit)
+        blockBitSize = binWidth * INT_SIZE;
+        // How many hash values can we represent
+        noOfBlocks = noOfBits / blockBitSize;
+
+        // We need to split at the end of a block.
+        chunkSize = std::ceil((float)MAX_VEC/blockBitSize) * blockBitSize;
+    }
+
+    uint64_t get_int(uint64_t idx, uint64_t len = 1ULL<<6)
     {
         uint64_t access = idx;
         uint64_t chunkNo = access / MAX_VEC;
@@ -171,5 +211,22 @@ struct FilterVector
     void unset_pos(uint64_t chunkNo, uint64_t chunkPos)
     {
         (*std::get<1>(filterVector[chunkNo]))[chunkPos] = false;
+    }
+
+    bool store(CharString fileName)
+    {
+        bool res = true;
+        for (uint64_t chunk = 0; chunk < noOfChunks; ++chunk)
+        {
+            CharString f = fileName;
+            appendValue(f, chunk);
+            res && sdsl::store_to_file(*std::get<2>(filterVector[chunk]), toCString(f));
+        }
+        return res;
+    }
+
+    void retrieve(CharString fileName)
+    {
+        *this = FilterVector(fileName);
     }
 };
