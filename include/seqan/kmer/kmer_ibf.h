@@ -108,7 +108,7 @@ public:
         noOfHashFunc(0),
         kmerSize(0),
         noOfBits(0),
-        filterVector(noOfBins, noOfBits) {}
+        filterVector() {}
 
     /*!
      * \brief Constructs an IBF given parameters.
@@ -128,13 +128,13 @@ public:
     }
 
     //!\brief Copy constructor
-    KmerFilter(KmerFilter<TValue, InterleavedBloomFilter> const & other)
+    KmerFilter(KmerFilter<TValue, InterleavedBloomFilter> & other)
     {
         *this = other;
     }
 
     //!\brief Copy assignment
-    KmerFilter<TValue, InterleavedBloomFilter> & operator=(KmerFilter<TValue, InterleavedBloomFilter> const & other)
+    KmerFilter<TValue, InterleavedBloomFilter> & operator=(KmerFilter<TValue, InterleavedBloomFilter> & other)
     {
         noOfBins = other.noOfBins;
         noOfHashFunc = other.noOfHashFunc;
@@ -178,7 +178,7 @@ public:
         std::vector<std::future<void>> tasks;
         uint64_t chunkBlocks = filterVector.chunkSize / filterVector.blockBitSize;
 
-        for (uint64_t chunk = 0; chunk < filterVector.chunkNo; ++chunk)
+        for (uint64_t chunk = 0; chunk < filterVector.noOfChunks; ++chunk)
         {
             filterVector.decompress(chunk);
 
