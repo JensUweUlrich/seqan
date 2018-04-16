@@ -242,9 +242,9 @@ inline void getMetadata(KmerFilter<TValue, TSpec> &  me)
     //-------------------------------------------------------------------
     //| kmer_size | n_hash_func | n_bins |              bf              |
     //-------------------------------------------------------------------
-    me.noOfBits = me.filterVector.bit_size();
+    me.noOfBits = me.filterVector.noOfBits;
 
-    THValue metadataStart = me.noOfBits - me.filterMetadataSize;
+    THValue metadataStart = me.filterVector.noOfBits;
     me.noOfBins = me.filterVector.get_int(metadataStart);
     me.noOfHashFunc = me.filterVector.get_int(metadataStart+64);
     me.kmerSize = me.filterVector.get_int(metadataStart+128);
@@ -263,7 +263,7 @@ inline void setMetadata(KmerFilter<TValue, TSpec> &  me)
     //| kmer_size | n_hash_func | n_bins |              bf              |
     //-------------------------------------------------------------------
 
-    THValue metadataStart = me.noOfBits - me.filterMetadataSize;
+    THValue metadataStart = me.noOfBits;
 
     // TODO also store TValue (alphabet)
     me.filterVector.set_int(metadataStart, me.noOfBins);
@@ -279,7 +279,7 @@ inline void setMetadata(KmerFilter<TValue, TSpec> &  me)
 template<typename TValue, typename TSpec, typename THValue>
 inline double size(KmerFilter<TValue, TSpec> &  me)
 {
-    return sdsl::size_in_mega_bytes(me.filterVector);
+    return me.filterVector.size_in_mega_bytes();
 }
 
 /*!
@@ -289,10 +289,10 @@ inline double size(KmerFilter<TValue, TSpec> &  me)
  * \returns bool Indicates if the operation was successful.
  */
 template<typename TValue, typename TSpec>
-inline bool store(KmerFilter<TValue, TSpec> &  me, const char * fileName)
+inline bool store(KmerFilter<TValue, TSpec> &  me, CharString fileName)
 {
     setMetadata(me);
-    return sdsl::store_to_file(me.filterVector, fileName);
+    return me.filterVector.store(fileName);
 }
 
 /*!
@@ -302,13 +302,9 @@ inline bool store(KmerFilter<TValue, TSpec> &  me, const char * fileName)
  * \returns bool Indicates if the operation was successful.
  */
 template<typename TValue, typename TSpec>
-inline bool retrieve(KmerFilter<TValue, TSpec> &  me, const char * fileName)
+inline bool retrieve(KmerFilter<TValue, TSpec> &  me, CharString fileName)
 {
-    if (!sdsl::load_from_file(me.filterVector, fileName))
-    {
-        std::cerr << "File \"" << fileName << "\" could not be read." << std::endl;
-        exit(1);
-    }
+    me.filterVector.retrieve(fileName);
     getMetadata(me);
     me.init();
     return true;

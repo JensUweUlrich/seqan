@@ -52,7 +52,7 @@ int main()
     uint64_t noBins{10};
     uint64_t kmerSize{3};
     uint64_t hashFunc{3};
-    uint64_t bits{11829};
+    uint64_t bits{1ULL<<16};
 
 
     // ==========================================================================
@@ -60,21 +60,21 @@ int main()
     // ==========================================================================
     std::cout << "Testing ctors" << '\n';
 
-    // typedef InterleavedBloomFilter TSpec;
-    typedef DirectAddressing       TSpec;
+    typedef InterleavedBloomFilter TSpec;
+    // typedef DirectAddressing       TSpec;
 
     // Empty default constructor
     KmerFilter<Dna, TSpec> ctor_empty;
     // Default constructor
     // KmerFilter<Dna, TSpec> ctor_default (noBins, hashFunc, kmerSize, bits);
 
-    // KmerFilter<Dna, TSpec> ctor_default (noBins, hashFunc, kmerSize, bits);
-    // KmerFilter<Dna, TSpec> ctor_default_helper1 (noBins, hashFunc, kmerSize, bits);
-    // KmerFilter<Dna, TSpec> ctor_default_helper2 (noBins, hashFunc, kmerSize, bits);
+    KmerFilter<Dna, TSpec> ctor_default (noBins, hashFunc, kmerSize, bits);
+    KmerFilter<Dna, TSpec> ctor_default_helper1 (noBins, hashFunc, kmerSize, bits);
+    KmerFilter<Dna, TSpec> ctor_default_helper2 (noBins, hashFunc, kmerSize, bits);
 
-    KmerFilter<Dna, TSpec> ctor_default (noBins, kmerSize);
-    KmerFilter<Dna, TSpec> ctor_default_helper1 (noBins, kmerSize);
-    KmerFilter<Dna, TSpec> ctor_default_helper2 (noBins, kmerSize);
+    // KmerFilter<Dna, TSpec> ctor_default (noBins, kmerSize);
+    // KmerFilter<Dna, TSpec> ctor_default_helper1 (noBins, kmerSize);
+    // KmerFilter<Dna, TSpec> ctor_default_helper2 (noBins, kmerSize);
 
     // Copy constructor
     KmerFilter<Dna, TSpec> ctor_copy (ctor_default);
@@ -106,12 +106,14 @@ int main()
     // ==========================================================================
     // Test storing and retrieving
     // ==========================================================================
-    // std::cout << "Testing store/retrieve" << '\n';
-    //
-    // CharString store1("file.dat");
-    // store(ctor_default, toCString(store1));
-    // retrieve(ctor_empty, toCString(store1));
-    // std::remove(toCString(store1));
+    std::cout << "Testing store/retrieve" << '\n';
+
+    CharString store1("file.dat");
+    std::cout << "store\n";
+    store(ctor_default, store1);
+    std::cout << "retrieve\n";
+    retrieve(ctor_empty, store1);
+
 
 
     // ==========================================================================
