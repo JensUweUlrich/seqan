@@ -301,8 +301,8 @@ public:
      * \param text Text to process.
      * \param binNo bin ID to insert k-mers in.
      */
-    template<typename TInt>
-    inline void addKmer(TString const & text, TInt && binNo)
+    template<typename TBin, typename TChunk>
+    inline void addKmer(TString const & text,TBin && binNo, TChunk && chunkNo)
     {
         TShape kmerShape;
         resize(kmerShape, kmerSize);
@@ -311,7 +311,13 @@ public:
         for (uint64_t i = 0; i < length(text) - length(kmerShape) + 1; ++i)
         {
             uint64_t kmerHash = hashNext(kmerShape, begin(text) + i);
-            filterVector.set_pos(blockBitSize * kmerHash + binNo);
+            uint64_t vecIndex = kmerHash * blockBitSize + binNo;
+            uint64_t chunk = vecIndex / filterVector.chunkSize;
+            if (static_cast<uint64_t>(chunkNo) == chunk)
+            {
+                uint64_t chunkPos = vecIndex - chunk * filterVector.chunkSize;
+                filterVector.set_pos(chunk, chunkPos);
+            }
         }
     }
 
