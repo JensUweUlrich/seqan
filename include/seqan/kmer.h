@@ -40,7 +40,7 @@
 
 #include <seqan/kmer/kmer_base.h>
 #include <seqan/kmer/filtervector.h>
-// #include <seqan/kmer/kmer_direct.h>
+#include <seqan/kmer/kmer_direct.h>
 #include <seqan/kmer/kmer_ibf.h>
 
 #endif

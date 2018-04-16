@@ -132,15 +132,15 @@ inline void addFastaFile(KmerFilter<TValue, TSpec> &  me, const char * fastaFile
     String<TValue> seq;
 
     SeqFileIn seqFileIn;
-    if (!open(seqFileIn, fastaFile))
-    {
-        CharString msg = "Unable to open contigs file: ";
-        append(msg, CharString(fastaFile));
-        throw toCString(msg);
-    }
     for (uint64_t i = 0; i < me.filterVector.noOfChunks; ++i)
     {
-        rewind(seqFileIn);
+        if (!open(seqFileIn, fastaFile))
+        {
+            CharString msg = "Unable to open contigs file: ";
+            append(msg, CharString(fastaFile));
+            throw toCString(msg);
+        }
+
         me.filterVector.decompress(i);
         while(!atEnd(seqFileIn))
         {
@@ -150,8 +150,8 @@ inline void addFastaFile(KmerFilter<TValue, TSpec> &  me, const char * fastaFile
             addKmer(me, seq, binNo, i);
         }
         me.filterVector.compress(i);
+        close(seqFileIn); // No rewind() for FormattedFile ?
     }
-    close(seqFileIn);
 }
 
 /*!

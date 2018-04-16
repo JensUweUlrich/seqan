@@ -114,13 +114,13 @@ public:
     }
 
     //!\brief Copy constructor
-    KmerFilter(KmerFilter<TValue, DirectAddressing> const & other)
+    KmerFilter(KmerFilter<TValue, DirectAddressing> & other)
     {
         *this = other;
     }
 
     //!\brief Copy assignment
-    KmerFilter<TValue, DirectAddressing> & operator=(KmerFilter<TValue, DirectAddressing> const & other)
+    KmerFilter<TValue, DirectAddressing> & operator=(KmerFilter<TValue, DirectAddressing> & other)
     {
         noOfBins = other.noOfBins;
         kmerSize = other.kmerSize;
@@ -181,7 +181,7 @@ public:
         std::vector<std::future<void>> tasks;
         uint64_t chunkBlocks = filterVector.chunkSize / filterVector.blockBitSize;
 
-        for (uint64_t chunk = 0; chunk < filterVector.chunkNo; ++chunk)
+        for (uint64_t chunk = 0; chunk < filterVector.noOfChunks; ++chunk)
         {
             filterVector.decompress(chunk);
 

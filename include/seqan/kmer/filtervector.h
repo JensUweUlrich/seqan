@@ -107,6 +107,36 @@ struct FilterVector
         }
     }
 
+    FilterVector & operator=(FilterVector & other)
+    {
+        for (const auto& element : other.filterVector)
+            filterVector.emplace_back(std::make_tuple(std::get<0>(element), std::make_unique<sdsl::bit_vector>(*std::get<1>(element)), std::make_unique<sdsl::sd_vector<> >(*std::get<2>(element))));
+
+        noOfBins = other.noOfBins;
+        noOfBits = other.noOfBits;
+        binWidth = other.binWidth;
+        blockBitSize = other.blockBitSize;
+        noOfBlocks = other.noOfBlocks;
+        chunkSize = other.chunkSize;
+        noOfChunks = other.noOfChunks;
+
+        return *this;
+    }
+
+    FilterVector & operator=(FilterVector && other)
+    {
+        filterVector = std::move(other.filterVector);
+        noOfBins = std::move(other.noOfBins);
+        noOfBits = std::move(other.noOfBits);
+        binWidth = std::move(other.binWidth);
+        blockBitSize = std::move(other.blockBitSize);
+        noOfBlocks = std::move(other.noOfBlocks);
+        chunkSize = std::move(other.chunkSize);
+        noOfChunks = std::move(other.noOfChunks);
+
+        return *this;
+    }
+
     uint64_t get_int(uint64_t idx, uint64_t len)
     {
         uint64_t access = idx;
@@ -121,6 +151,16 @@ struct FilterVector
         uint64_t chunkNo = access / MAX_VEC;
         uint64_t chunkPos = access - chunkNo * MAX_VEC;
         return (*std::get<2>(filterVector[chunkNo]))[chunkPos];
+    }
+
+    void set_int(uint64_t idx, uint64_t val)
+    {
+        uint64_t access = idx;
+        uint64_t chunkNo = access / MAX_VEC;
+        uint64_t chunkPos = access - chunkNo * MAX_VEC;
+        decompress(chunkNo);
+        (*std::get<1>(filterVector[chunkNo])).set_int(chunkPos, val);
+        compress(chunkNo);
     }
 
     void set_pos(uint64_t chunkNo, uint64_t chunkPos)
