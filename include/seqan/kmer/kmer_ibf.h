@@ -197,7 +197,7 @@ public:
                     uint64_t vecPos = hashBlock * blockBitSize;
                     for(uint32_t binNo : bins)
                     {
-                        filterVector.unset_pos(vecPos + binNo);
+                        filterVector.unset_pos(0, vecPos + binNo); //TODO
                     }
                 }
             }));
@@ -206,7 +206,6 @@ public:
         {
             task.get();
         }
-        filterVector.unload();
     }
 
     /*!
@@ -323,8 +322,8 @@ public:
      * \param text Text to process.
      * \param binNo bin ID to insert k-mers in.
      */
-    template<typename TInt>
-    inline void addKmer(TString const & text, TInt && binNo)
+    template<typename TBin, typename TChunk>
+    inline void addKmer(TString const & text, TBin && binNo, TChunk && chunkNo)
     {
 
         TShape kmerShape;
@@ -340,7 +339,12 @@ public:
                 uint64_t vecIndex = preCalcValues[i] * kmerHash;
                 hashToIndex(vecIndex);
                 vecIndex += binNo;
-                filterVector.set_pos(vecIndex);
+                uint64_t chunk = vecIndex / filterVector.chunkSize;
+                if (static_cast<uint64_t>(chunkNo) == chunk)
+                {
+                    uint64_t chunkPos = vecIndex - chunk * filterVector.chunkSize;
+                    filterVector.set_pos(chunk, chunkPos);
+                }
             }
         }
     }

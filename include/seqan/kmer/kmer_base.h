@@ -101,10 +101,10 @@ struct Value<KmerFilter<TValue, TSpec> >
  * \param kmer The k-mer to be added.
  * \param binNo The bin to add the k-mer to.
  */
-template<typename TValue, typename TSpec, typename TString, typename TInt>
-inline void addKmer(KmerFilter<TValue, TSpec> & me, TString const & kmer, TInt && binNo)
+template<typename TValue, typename TSpec, typename TString, typename TBin, typename TChunk>
+inline void addKmer(KmerFilter<TValue, TSpec> & me, TString const & kmer, TBin && binNo, TChunk && chunkNo)
 {
-    me.addKmer(kmer, binNo);
+    me.addKmer(kmer, binNo, chunkNo);
 }
 
 /*!
@@ -138,15 +138,20 @@ inline void addFastaFile(KmerFilter<TValue, TSpec> &  me, const char * fastaFile
         append(msg, CharString(fastaFile));
         throw toCString(msg);
     }
-    while(!atEnd(seqFileIn))
+    for (uint64_t i = 0; i < me.filterVector.noOfChunks; ++i)
     {
-        readRecord(id, seq, seqFileIn);
-        if(length(seq) < me.kmerSize)
-            continue;
-        addKmer(me, seq, binNo);
+        rewind(seqFileIn);
+        me.filterVector.decompress(i);
+        while(!atEnd(seqFileIn))
+        {
+            readRecord(id, seq, seqFileIn);
+            if(length(seq) < me.kmerSize)
+                continue;
+            addKmer(me, seq, binNo, i);
+        }
+        me.filterVector.compress(i);
     }
     close(seqFileIn);
-    me.filterVector.unload();
 }
 
 /*!
