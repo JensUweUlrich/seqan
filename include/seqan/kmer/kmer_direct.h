@@ -183,7 +183,7 @@ public:
 
         for (uint64_t chunk = 0; chunk < filterVector.noOfChunks; ++chunk)
         {
-            tasks.clear()
+            tasks.clear();
             filterVector.decompress(chunk);
 
             // We have so many blocks that we want to distribute to so many threads
