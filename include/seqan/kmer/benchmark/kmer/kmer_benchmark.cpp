@@ -95,10 +95,18 @@ static void whichBins_IBF(benchmark::State& state)
     String<TAlphabet> kmer("");
 
     auto vecPos = (1ULL<<bits) - occ;
+    uint64_t current_chunk = 0;
+    ibf.filterVector.decompress(0);
     while (vecPos > 0)
     {
         uint64_t chunk = vecPos / ibf.filterVector.chunkSize;
         uint64_t chunkPos = vecPos - chunk * ibf.filterVector.chunkSize;
+        if (current_chunk != chunk)
+        {
+            ibf.filterVector.compress(current_chunk);
+            ibf.filterVector.decompress(chunk);
+            current_chunk = chunk;
+        }
         ibf.filterVector.set_pos(chunk, chunkPos);
         vecPos -= occ;
     }
@@ -206,6 +214,8 @@ static void whichBins_DA(benchmark::State& state)
     }
 }
 */
+
+[[maybe_unused]]
 static void IBFAddArguments(benchmark::internal::Benchmark* b)
 {
     for (int32_t binNo = 64; binNo <= 8192; binNo *= 2)
@@ -226,6 +236,7 @@ static void IBFAddArguments(benchmark::internal::Benchmark* b)
     }
 }
 
+[[maybe_unused]]
 static void IBFWhichArguments(benchmark::internal::Benchmark* b)
 {
     for (int32_t binNo = 64; binNo <= 8192; binNo *= 2)
