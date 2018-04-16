@@ -129,7 +129,13 @@ static void whichBins_IBF(benchmark::State& state)
 
     for (auto _ : state)
     {
-        whichBins(ibf, input[i % 1000000], 0);
+        auto start = std::chrono::high_resolution_clock::now();
+        auto res = whichBins(ibf, input[i % 1000000], 0);
+        auto end   = std::chrono::high_resolution_clock::now();
+        auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(end - start);
+        state.SetIterationTime(elapsed_seconds.count());
+        state.counters["Verifications"] = count(res.begin(), res.end(), true);
+
         ++i;
     }
 }
@@ -224,7 +230,13 @@ static void whichBins_DA(benchmark::State& state)
 
     for (auto _ : state)
     {
-        whichBins(da, input[i % 1000000], 0);
+        auto start = std::chrono::high_resolution_clock::now();
+        auto res = whichBins(da, input[i % 1000000], 0);
+        auto end   = std::chrono::high_resolution_clock::now();
+        auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(end - start);
+        state.SetIterationTime(elapsed_seconds.count());
+        state.counters["Verifications"] = count(res.begin(), res.end(), true);
+
         ++i;
     }
 }
@@ -305,10 +317,10 @@ static void DAWhichArguments(benchmark::internal::Benchmark* b)
         }
     }
 }
-
+BENCHMARK_TEMPLATE(whichBins_IBF, Dna)->Apply(IBFWhichArguments)->UseManualTime();
 BENCHMARK_TEMPLATE(addKmer_IBF, Dna)->Apply(IBFAddArguments);
 BENCHMARK_TEMPLATE(addKmer_DA, Dna)->Apply(DAAddArguments);
-BENCHMARK_TEMPLATE(whichBins_IBF, Dna)->Apply(IBFWhichArguments);
-BENCHMARK_TEMPLATE(whichBins_DA, Dna)->Apply(DAWhichArguments);
+// BENCHMARK_TEMPLATE(whichBins_IBF, Dna)->Apply(IBFWhichArguments)->UseManualTime();
+BENCHMARK_TEMPLATE(whichBins_DA, Dna)->Apply(DAWhichArguments)->UseManualTime();
 
 BENCHMARK_MAIN();
