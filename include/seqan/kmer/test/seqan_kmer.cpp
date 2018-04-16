@@ -52,7 +52,7 @@ int main()
     uint64_t noBins{10};
     uint64_t kmerSize{3};
     uint64_t hashFunc{3};
-    uint64_t bits{1ULL<<16};
+    uint64_t bits{1ULL<<31};
 
 
     // ==========================================================================
@@ -108,10 +108,8 @@ int main()
     // ==========================================================================
     std::cout << "Testing store/retrieve" << '\n';
 
-    CharString store1("file.dat");
-    std::cout << "store\n";
+    CharString store1("file");
     store(ctor_default, store1);
-    std::cout << "retrieve\n";
     retrieve(ctor_empty, store1);
 
 
