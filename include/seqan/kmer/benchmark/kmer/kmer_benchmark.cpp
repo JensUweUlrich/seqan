@@ -133,7 +133,7 @@ static void whichBins_IBF(benchmark::State& state)
         ++i;
     }
 }
-/*
+
 template <typename TAlphabet>
 static void addKmer_DA(benchmark::State& state)
 {
@@ -155,20 +155,28 @@ static void addKmer_DA(benchmark::State& state)
     }
 
     uint64_t i{0};
-
-    for (auto _ : state)
+    for (uint64_t chunk = 0; chunk < da.filterVector.noOfChunks; ++chunk)
     {
-        addKmer(da, input[i % 1000000], i % bins);
-        ++i;
+        auto start = std::chrono::high_resolution_clock::now();
+        da.filterVector.decompress(chunk);
+        auto end   = std::chrono::high_resolution_clock::now();
+        auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+        state.counters["decompress"] = elapsed_seconds.count();
+
+        for (auto _ : state)
+        {
+            addKmer(da, input[i % 1000000], i % bins, chunk);
+            ++i;
+        }
+
+        start = std::chrono::high_resolution_clock::now();
+        da.filterVector.compress(chunk);
+        end   = std::chrono::high_resolution_clock::now();
+        elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+        state.counters["compress"] = elapsed_seconds.count();
     }
 
-    auto start = std::chrono::high_resolution_clock::now();
-    da.filterVector.unload();
-    auto end   = std::chrono::high_resolution_clock::now();
-    auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
-
     state.counters["Size"] = da.filterVector.size_in_mega_bytes();
-    state.counters["unload"] = elapsed_seconds.count();
 }
 
 template <typename TAlphabet>
@@ -182,14 +190,21 @@ static void whichBins_DA(benchmark::State& state)
     String<TAlphabet> kmer("");
 
     auto vecPos = da.noOfBits - da.filterMetadataSize - occ;
+    uint64_t current_chunk = 0;
+    da.filterVector.decompress(0);
     while (vecPos > 0)
     {
-        da.filterVector.set_pos(vecPos);
-        // ibf.filterVector.set_pos(vecPos);
+        uint64_t chunk = vecPos / da.filterVector.chunkSize;
+        uint64_t chunkPos = vecPos - chunk * da.filterVector.chunkSize;
+        if (current_chunk != chunk)
+        {
+            da.filterVector.compress(current_chunk);
+            da.filterVector.decompress(chunk);
+            current_chunk = chunk;
+        }
+        da.filterVector.set_pos(chunk, chunkPos);
         vecPos -= occ;
     }
-
-    da.filterVector.unload();
     state.counters["Size"] = da.filterVector.size_in_mega_bytes();
 
     StringSet<String<TAlphabet> > input;
@@ -213,9 +228,8 @@ static void whichBins_DA(benchmark::State& state)
         ++i;
     }
 }
-*/
 
-[[maybe_unused]]
+
 static void IBFAddArguments(benchmark::internal::Benchmark* b)
 {
     for (int32_t binNo = 64; binNo <= 8192; binNo *= 2)
@@ -236,7 +250,6 @@ static void IBFAddArguments(benchmark::internal::Benchmark* b)
     }
 }
 
-[[maybe_unused]]
 static void IBFWhichArguments(benchmark::internal::Benchmark* b)
 {
     for (int32_t binNo = 64; binNo <= 8192; binNo *= 2)
@@ -261,7 +274,7 @@ static void IBFWhichArguments(benchmark::internal::Benchmark* b)
         }
     }
 }
-/*
+
 static void DAAddArguments(benchmark::internal::Benchmark* b)
 {
     for (int32_t binNo = 1; binNo <= 8192; binNo *= 2)
@@ -292,10 +305,10 @@ static void DAWhichArguments(benchmark::internal::Benchmark* b)
         }
     }
 }
-*/
+
 BENCHMARK_TEMPLATE(addKmer_IBF, Dna)->Apply(IBFAddArguments);
-// BENCHMARK_TEMPLATE(addKmer_DA, Dna)->Apply(DAAddArguments);
+BENCHMARK_TEMPLATE(addKmer_DA, Dna)->Apply(DAAddArguments);
 BENCHMARK_TEMPLATE(whichBins_IBF, Dna)->Apply(IBFWhichArguments);
-// BENCHMARK_TEMPLATE(whichBins_DA, Dna)->Apply(DAWhichArguments);
+BENCHMARK_TEMPLATE(whichBins_DA, Dna)->Apply(DAWhichArguments);
 
 BENCHMARK_MAIN();

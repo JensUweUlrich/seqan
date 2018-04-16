@@ -60,21 +60,21 @@ int main()
     // ==========================================================================
     std::cout << "Testing ctors" << '\n';
 
-    typedef InterleavedBloomFilter TSpec;
-    // typedef DirectAddressing       TSpec;
+    // typedef InterleavedBloomFilter TSpec;
+    typedef DirectAddressing       TSpec;
 
     // Empty default constructor
     KmerFilter<Dna, TSpec> ctor_empty;
     // Default constructor
     // KmerFilter<Dna, TSpec> ctor_default (noBins, hashFunc, kmerSize, bits);
 
-    KmerFilter<Dna, TSpec> ctor_default (noBins, hashFunc, kmerSize, bits);
-    KmerFilter<Dna, TSpec> ctor_default_helper1 (noBins, hashFunc, kmerSize, bits);
-    KmerFilter<Dna, TSpec> ctor_default_helper2 (noBins, hashFunc, kmerSize, bits);
+    // KmerFilter<Dna, TSpec> ctor_default (noBins, hashFunc, kmerSize, bits);
+    // KmerFilter<Dna, TSpec> ctor_default_helper1 (noBins, hashFunc, kmerSize, bits);
+    // KmerFilter<Dna, TSpec> ctor_default_helper2 (noBins, hashFunc, kmerSize, bits);
 
-    // KmerFilter<Dna, TSpec> ctor_default (noBins, kmerSize);
-    // KmerFilter<Dna, TSpec> ctor_default_helper1 (noBins, kmerSize);
-    // KmerFilter<Dna, TSpec> ctor_default_helper2 (noBins, kmerSize);
+    KmerFilter<Dna, TSpec> ctor_default (noBins, kmerSize);
+    KmerFilter<Dna, TSpec> ctor_default_helper1 (noBins, kmerSize);
+    KmerFilter<Dna, TSpec> ctor_default_helper2 (noBins, kmerSize);
 
     // Copy constructor
     KmerFilter<Dna, TSpec> ctor_copy (ctor_default);
@@ -106,12 +106,12 @@ int main()
     // ==========================================================================
     // Test storing and retrieving
     // ==========================================================================
-    std::cout << "Testing store/retrieve" << '\n';
-
-    CharString store1("file.dat");
-    store(ctor_default, toCString(store1));
-    retrieve(ctor_empty, toCString(store1));
-    std::remove(toCString(store1));
+    // std::cout << "Testing store/retrieve" << '\n';
+    //
+    // CharString store1("file.dat");
+    // store(ctor_default, toCString(store1));
+    // retrieve(ctor_empty, toCString(store1));
+    // std::remove(toCString(store1));
 
 
     // ==========================================================================
@@ -144,7 +144,7 @@ int main()
     bool ctor_default_any = false;
     for (uint64_t i = 0; i < ctor_default.noOfBlocks * ctor_default.noOfBins; ++i)
     {
-        if (ctor_default.filterVector[i])
+        if (ctor_default.filterVector.get_pos(i))
         {
             ctor_default_any = true;
             break;
@@ -159,7 +159,7 @@ int main()
     ctor_default_any = false;
     for (uint64_t i = 0; i < ctor_default.noOfBlocks * ctor_default.noOfBins; ++i)
     {
-        if (ctor_default.filterVector[i])
+        if (ctor_default.filterVector.get_pos(i))
         {
             ctor_default_any = true;
             break;
