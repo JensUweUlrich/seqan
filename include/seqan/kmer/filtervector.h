@@ -39,7 +39,6 @@ struct FilterVector
     static const uint64_t BUFFER_SIZE = 10000000;
     static const uint64_t MAX_VEC = (1ULL<<32) + 256;
     static const uint64_t INT_SIZE = 0x40;
-    bool dirty = false;
     CharString PREFIX{"test"};
 
     uint64_t noOfBins;
@@ -51,8 +50,6 @@ struct FilterVector
     uint64_t chunkSize;
 
     std::vector<std::tuple<bool,std::unique_ptr<sdsl::bit_vector>, std::unique_ptr<sdsl::sd_vector<> > > > filterVector;
-    std::vector<std::list<std::tuple<uint64_t, bool> > > buffer; // chunk[(pos, set),...]
-    std::list<uint64_t> queue;
 
     double size_in_mega_bytes()
     {
@@ -66,16 +63,22 @@ struct FilterVector
 
     inline void decompress(uint64_t chunk)
     {
-        sdsl::load_from_file(*std::get<1>(filterVector[chunk]), toCString(PREFIX)+std::to_string(chunk));
-        std::get<0>(filterVector[chunk]) = false;
+        if (std::get<0>(filterVector[chunk]))
+        {
+            sdsl::load_from_file(*std::get<1>(filterVector[chunk]), toCString(PREFIX)+std::to_string(chunk));
+            std::get<0>(filterVector[chunk]) = false;
+        }
     }
 
     inline void compress(uint64_t chunk)
     {
-        std::get<2>(filterVector[chunk]) = std::make_unique<sdsl::sd_vector<> >(*std::get<1>(filterVector[chunk]));
-        sdsl::store_to_file(*std::get<1>(filterVector[chunk]), toCString(PREFIX)+std::to_string(chunk));
-        std::get<1>(filterVector[chunk]) = std::make_unique<sdsl::bit_vector>(0,0);
-        std::get<0>(filterVector[chunk]) = true;
+        if (!std::get<0>(filterVector[chunk]))
+        {
+            std::get<2>(filterVector[chunk]) = std::make_unique<sdsl::sd_vector<> >(*std::get<1>(filterVector[chunk]));
+            sdsl::store_to_file(*std::get<1>(filterVector[chunk]), toCString(PREFIX)+std::to_string(chunk));
+            std::get<1>(filterVector[chunk]) = std::make_unique<sdsl::bit_vector>(0,0);
+            std::get<0>(filterVector[chunk]) = true;
+        }
     }
 
     FilterVector() {}
@@ -102,13 +105,10 @@ struct FilterVector
                                                    std::make_unique<sdsl::sd_vector<> >()));
             compress(i);
         }
-        buffer.resize(noOfChunks);
     }
 
     uint64_t get_int(uint64_t idx, uint64_t len)
     {
-        if (dirty)
-            std::cerr << "There are unsaved changes to the bit vector, call FilterVector.unload() before accessing.\n";
         uint64_t access = idx;
         uint64_t chunkNo = access / MAX_VEC;
         uint64_t chunkPos = access - chunkNo * MAX_VEC;
@@ -117,51 +117,19 @@ struct FilterVector
 
     uint64_t get_pos(uint64_t vecIndex)
     {
-        if (dirty)
-            std::cerr << "There are unsaved changes to the bit vector, call FilterVector.unload() before accessing.\n";
         uint64_t access = vecIndex;
         uint64_t chunkNo = access / MAX_VEC;
         uint64_t chunkPos = access - chunkNo * MAX_VEC;
         return (*std::get<2>(filterVector[chunkNo]))[chunkPos];
     }
 
-    void unload()
+    void set_pos(uint64_t chunkNo, uint64_t chunkPos)
     {
-        if (dirty)
-        {
-            dirty = false;
-            for (uint64_t j = 0; j < noOfChunks; j++)
-            {
-                if (!buffer[j].empty())
-                {
-                    decompress(j);
-                    while (!buffer[j].empty())
-                    {
-                        auto i = buffer[j].front();
-                        (*std::get<1>(filterVector[j]))[std::get<0>(i)] = std::get<1>(i);
-                        buffer[j].pop_front();
-                    }
-                    compress(j);
-                }
-            }
-        }
+        (*std::get<1>(filterVector[chunkNo]))[chunkPos] = true;
     }
 
-    void set_pos(uint64_t vecIndex)
+    void unset_pos(uint64_t chunkNo, uint64_t chunkPos)
     {
-        dirty = true;
-        uint64_t access = vecIndex;
-        uint64_t chunkNo = access / chunkSize;
-        uint64_t chunkPos = access - chunkNo * chunkSize;
-        buffer[chunkNo].push_back(std::make_tuple(chunkPos, true));
-    }
-
-    void unset_pos(uint64_t vecIndex)
-    {
-        dirty = true;
-        uint64_t access = vecIndex;
-        uint64_t chunkNo = access / chunkSize;
-        uint64_t chunkPos = access - chunkNo * chunkSize;
-        buffer[chunkNo].push_back(std::make_tuple(chunkPos, false));
+        (*std::get<1>(filterVector[chunkNo]))[chunkPos] = false;
     }
 };
