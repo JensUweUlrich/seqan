@@ -338,8 +338,8 @@ public:
         // How many hash values must we represent
         noOfBlocks = ipow(ValueSize<TValue>::VALUE, kmerSize);
         // Size of the bit vector
-        noOfBits = noOfBlocks * blockBitSize + filterMetadataSize;
-        filterVector = FilterVector(noOfBits, noOfBins);
+        noOfBits = noOfBlocks * blockBitSize;
+        filterVector = FilterVector(noOfBins, noOfBits);
     }
 };
 }
