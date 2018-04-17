@@ -31,6 +31,7 @@
 // ==========================================================================
 // Author:  Enrico Seiler <enrico.seiler@fu-berlin.de>
 // ==========================================================================
+#include <random>
 
 using namespace seqan;
 struct FilterVector
@@ -39,7 +40,20 @@ struct FilterVector
     static const uint64_t BUFFER_SIZE = 10000000;
     static const uint64_t MAX_VEC = 1ULL<<32;
     static const uint64_t INT_SIZE = 0x40;
-    CharString PREFIX{"test"};
+
+    std::string random_string()
+    {
+         std::string str("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+
+         std::random_device rd;
+         std::mt19937 generator(rd());
+
+         std::shuffle(str.begin(), str.end(), generator);
+
+         return str.substr(0, 32);
+    }
+
+    CharString PREFIX{random_string()};
 
     uint64_t noOfBins;
     uint64_t noOfBits;
@@ -139,6 +153,14 @@ struct FilterVector
         noOfChunks = std::move(other.noOfChunks);
 
         return *this;
+    }
+
+    ~FilterVector()
+    {
+        for (uint64_t chunk = 0; chunk < noOfChunks; ++chunk)
+        {
+            std::remove((toCString(PREFIX)+std::to_string(chunk)).c_str());
+        }
     }
 
     FilterVector(CharString fileName)
