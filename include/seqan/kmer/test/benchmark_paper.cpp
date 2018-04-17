@@ -130,10 +130,11 @@ int main()
     retrieve(ibf, storeIBF);
     retrieve(da, storeDA);
 
+    uint64_t verifications_ibf{0};
+    uint64_t verifications_da{0};
+
     for (uint64_t r = 0; r < noOfRepeats; ++r)
     {
-        uint64_t verifications_ibf{0};
-        uint64_t verifications_da{0};
         auto start = std::chrono::high_resolution_clock::now();
         for(uint64_t i = 0; i < noOfBins; ++i)
         {
@@ -162,13 +163,13 @@ int main()
             {
                 readRecord(id, seq, seqFileIn);
                 auto x = whichBins(ibf, seq, 100-k+1 - k*3);
-                verifications_ibf += count(x.begin(), x.end(), true);
+                if (r == noOfRepeats - 1)
+                    verifications_ibf += count(x.begin(), x.end(), true);
             }
         }
         auto elapsed = std::chrono::high_resolution_clock::now() - start;
         ibfTime.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
 
-        verifications = 0;
         start = std::chrono::high_resolution_clock::now();
         for(uint64_t i = 0; i < noOfBins; ++i)
         {
@@ -197,7 +198,8 @@ int main()
             {
                 readRecord(id, seq, seqFileIn);
                 auto x = whichBins(da, seq, 100-k+1 -k*3);
-                verifications_da += count(x.begin(), x.end(), true);
+                if (r == noOfRepeats - 1)
+                    verifications_da += count(x.begin(), x.end(), true);
             }
         }
         elapsed = std::chrono::high_resolution_clock::now() - start;
