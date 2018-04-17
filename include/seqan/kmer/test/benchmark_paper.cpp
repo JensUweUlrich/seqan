@@ -44,11 +44,10 @@ int main()
 {
     // parameters
     uint64_t const noOfRepeats{5};
-    uint64_t const noOfKmers{1000000};
     uint64_t const k{12};
     uint64_t const noOfBins{64};
     uint64_t const noOfHashes{3};
-    uint64_t const noOfBits{1ULL<<32};
+    uint64_t const noOfBits{1ULL<<34};
 
     std::vector<int64_t> ibfTime;
     std::vector<int64_t> daTime;
@@ -105,8 +104,8 @@ int main()
         elapsed = std::chrono::high_resolution_clock::now() - start;
         daTime.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
 
-        store(ibf, toCString(storeIBF));
-        store(da, toCString(storeDA));
+        store(ibf, storeIBF);
+        store(da, storeDA);
     }
 
     auto ibfAvg = accumulate(ibfTime.begin(), ibfTime.end(), 0)/ibfTime.size();
@@ -127,13 +126,13 @@ int main()
     KmerFilter<Dna, InterleavedBloomFilter> ibf (noOfBins, noOfHashes, k, noOfBits);
     KmerFilter<Dna, DirectAddressing> da (noOfBins, k);
 
-    retrieve(ibf, toCString(storeIBF));
-    retrieve(da, toCString(storeDA));
+    retrieve(ibf, storeIBF);
+    retrieve(da, storeDA);
 
     for (uint64_t r = 0; r < noOfRepeats; ++r)
     {
         auto start = std::chrono::high_resolution_clock::now();
-        for(uint64_t i = 0; i < noOfKmers; ++i)
+        for(uint64_t i = 0; i < noOfBins; ++i)
         {
             CharString file("/Users/enricoseiler/dev/eval/64/reads/");
             if (i < 10)
@@ -166,7 +165,7 @@ int main()
         ibfTime.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
 
         start = std::chrono::high_resolution_clock::now();
-        for(uint64_t i = 0; i < noOfKmers; ++i)
+        for(uint64_t i = 0; i < noOfBins; ++i)
         {
             CharString file("/Users/enricoseiler/dev/eval/64/reads/");
             if (i < 10)
