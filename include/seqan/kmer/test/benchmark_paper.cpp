@@ -79,7 +79,7 @@ int main()
             append(file, CharString(".fasta"));
 
             addFastaFile(ibf, toCString(file) , i);
-            std::cout << "Bin " << i << " done." << '\n';
+            std::cout << "IBF Iteration " << r << " Bin " << i << " done." << '\n';
         }
         auto elapsed = std::chrono::high_resolution_clock::now() - start;
         ibfTime.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
@@ -100,6 +100,7 @@ int main()
             append(file, CharString(".fasta"));
 
             addFastaFile(da, toCString(file) , i);
+            std::cout << "DA Iteration " << r << " Bin " << i << " done." << '\n';
         }
         elapsed = std::chrono::high_resolution_clock::now() - start;
         daTime.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
@@ -131,6 +132,8 @@ int main()
 
     for (uint64_t r = 0; r < noOfRepeats; ++r)
     {
+        uint64_t verifications_ibf{0};
+        uint64_t verifications_da{0};
         auto start = std::chrono::high_resolution_clock::now();
         for(uint64_t i = 0; i < noOfBins; ++i)
         {
@@ -158,12 +161,14 @@ int main()
             while(!atEnd(seqFileIn))
             {
                 readRecord(id, seq, seqFileIn);
-                auto x = whichBins(ibf, seq, 1);
+                auto x = whichBins(ibf, seq, 100-k+1 - k*3);
+                verifications_ibf += count(x.begin(), x.end(), true);
             }
         }
         auto elapsed = std::chrono::high_resolution_clock::now() - start;
         ibfTime.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
 
+        verifications = 0;
         start = std::chrono::high_resolution_clock::now();
         for(uint64_t i = 0; i < noOfBins; ++i)
         {
@@ -191,7 +196,8 @@ int main()
             while(!atEnd(seqFileIn))
             {
                 readRecord(id, seq, seqFileIn);
-                auto x = whichBins(da, seq, 1);
+                auto x = whichBins(da, seq, 100-k+1 -k*3);
+                verifications_da += count(x.begin(), x.end(), true);
             }
         }
         elapsed = std::chrono::high_resolution_clock::now() - start;
@@ -203,4 +209,6 @@ int main()
 
     std::cout << "Average InterleavedBloomFilter: " << ibfAvg << " ms.\n";
     std::cout << "Average DirectAddressing: " << daAvg << " ms.\n";
+    std::cout << "Verifications InterleavedBloomFilter: " << verifications_ibf << '\n';
+    std::cout << "Verifications DirectAddressing: " << verifications_da << '\n';
 }
