@@ -61,8 +61,8 @@ namespace seqan{
  * ```
  *
  */
-template<typename TValue>
-class KmerFilter<TValue, InterleavedBloomFilter>
+template<typename TValue, typename TFilterVector>
+class KmerFilter<TValue, InterleavedBloomFilter, TFilterVector>
 {
 public:
     //!\brief The type of the variables.
@@ -92,7 +92,7 @@ public:
     //!\brief How many bits we can represent in the biggest unsigned int available.
     static const THValue   intSize = 0x40;
     //!\brief The bit vector storing the bloom filters.
-    FilterVector                        filterVector;
+    FilterVector<TFilterVector>         filterVector;
     //!\brief Size in bits of the meta data.
     static const uint32_t               filterMetadataSize{256};
     //!\brief A ungapped Shape over our filter alphabet.
@@ -128,13 +128,13 @@ public:
     }
 
     //!\brief Copy constructor
-    KmerFilter(KmerFilter<TValue, InterleavedBloomFilter> & other)
+    KmerFilter(KmerFilter<TValue, InterleavedBloomFilter, TFilterVector> & other)
     {
         *this = other;
     }
 
     //!\brief Copy assignment
-    KmerFilter<TValue, InterleavedBloomFilter> & operator=(KmerFilter<TValue, InterleavedBloomFilter> & other)
+    KmerFilter<TValue, InterleavedBloomFilter, TFilterVector> & operator=(KmerFilter<TValue, InterleavedBloomFilter, TFilterVector> & other)
     {
         noOfBins = other.noOfBins;
         noOfHashFunc = other.noOfHashFunc;
@@ -146,13 +146,13 @@ public:
     }
 
     //!\brief Move constrcutor
-    KmerFilter(KmerFilter<TValue, InterleavedBloomFilter> && other)
+    KmerFilter(KmerFilter<TValue, InterleavedBloomFilter, TFilterVector> && other)
     {
         *this = std::move(other);
     }
 
     //!\brief Move assignment
-    KmerFilter<TValue, InterleavedBloomFilter> & operator=(KmerFilter<TValue, InterleavedBloomFilter> && other)
+    KmerFilter<TValue, InterleavedBloomFilter, TFilterVector> & operator=(KmerFilter<TValue, InterleavedBloomFilter, TFilterVector> && other)
     {
         noOfBins = std::move(other.noOfBins);
         noOfHashFunc = std::move(other.noOfHashFunc);
@@ -164,7 +164,7 @@ public:
     }
 
     //!\brief Destructor
-    ~KmerFilter<TValue, InterleavedBloomFilter>() = default;
+    ~KmerFilter<TValue, InterleavedBloomFilter, TFilterVector>() = default;
     //!\}
 
     /*!
@@ -201,10 +201,11 @@ public:
                         ++hashBlock)
                     {
                         uint64_t vecPos = hashBlock * filterVector.blockBitSize;
+                        uint64_t chunkNo = vecPos / filterVector.chunkSize;
                         for(uint32_t binNo : bins)
                         {
-                            if (vecPos >= chunk * filterVector.chunkSize)
-                                filterVector.unset_pos(chunk, vecPos - chunk * filterVector.chunkSize + binNo);
+                            if (chunk == chunkNo)
+                                filterVector.unset_pos(vecPos + binNo);
                         }
                     }
                 }));
@@ -213,7 +214,6 @@ public:
             {
                 task.get();
             }
-
             filterVector.compress(chunk);
         }
     }
@@ -352,8 +352,7 @@ public:
                 uint64_t chunk = vecIndex / filterVector.chunkSize;
                 if (static_cast<uint64_t>(chunkNo) == chunk)
                 {
-                    uint64_t chunkPos = vecIndex - chunk * filterVector.chunkSize;
-                    filterVector.set_pos(chunk, chunkPos);
+                    filterVector.set_pos(vecIndex);
                 }
             }
         }

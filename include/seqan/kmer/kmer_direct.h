@@ -60,8 +60,8 @@ namespace seqan{
  * ```
  *
  */
-template<typename TValue>
-class KmerFilter<TValue, DirectAddressing>
+template<typename TValue, typename TFilterVector>
+class KmerFilter<TValue, DirectAddressing, TFilterVector>
 {
 public:
     //!\brief The type of the variables.
@@ -81,7 +81,7 @@ public:
     THValue    blockBitSize;
 
     //!\brief The bit vector storing the bloom filters.
-    FilterVector                        filterVector;
+    FilterVector<TFilterVector>         filterVector;
     //!\brief How many bits we can represent in the biggest unsigned int available.
     static const THValue   intSize = 0x40;
     //!\brief Size in bits of the meta data.
@@ -108,47 +108,55 @@ public:
      */
     KmerFilter(THValue n_bins, THValue kmer_size):
         noOfBins(n_bins),
-        kmerSize(kmer_size)
+        kmerSize(kmer_size),
+        filterVector(n_bins, ipow(ValueSize<TValue>::VALUE, kmerSize) * std::ceil((double)noOfBins / intSize) * intSize)
     {
         init();
     }
 
     //!\brief Copy constructor
-    KmerFilter(KmerFilter<TValue, DirectAddressing> & other)
+    KmerFilter(KmerFilter<TValue, DirectAddressing, TFilterVector> & other)
     {
         *this = other;
     }
 
     //!\brief Copy assignment
-    KmerFilter<TValue, DirectAddressing> & operator=(KmerFilter<TValue, DirectAddressing> & other)
+    KmerFilter<TValue, DirectAddressing, TFilterVector> & operator=(KmerFilter<TValue, DirectAddressing, TFilterVector> & other)
     {
         noOfBins = other.noOfBins;
         kmerSize = other.kmerSize;
         noOfBits = other.noOfBits;
         noOfBlocks = other.noOfBlocks;
         filterVector = other.filterVector;
+        binWidth = other.binWidth;
+        blockBitSize = other.blockBitSize;
+        noOfBlocks = other.noOfBlocks;
         return *this;
     }
 
     //!\brief Move constrcutor
-    KmerFilter(KmerFilter<TValue, DirectAddressing> && other)
+    KmerFilter(KmerFilter<TValue, DirectAddressing, TFilterVector> && other)
     {
         *this = std::move(other);
     }
 
     //!\brief Move assignment
-    KmerFilter<TValue, DirectAddressing> & operator=(KmerFilter<TValue, DirectAddressing> && other)
+    KmerFilter<TValue, DirectAddressing, TFilterVector> & operator=(KmerFilter<TValue, DirectAddressing, TFilterVector> && other)
     {
         noOfBins = std::move(other.noOfBins);
         kmerSize = std::move(other.kmerSize);
         noOfBits = std::move(other.noOfBits);
         noOfBlocks = std::move(other.noOfBlocks);
         filterVector = std::move(other.filterVector);
+        binWidth = std::move(other.binWidth);
+        blockBitSize = std::move(other.blockBitSize);
+        noOfBlocks = std::move(other.noOfBlocks);
         return *this;
     }
 
     //!\brief Destructor
-    ~KmerFilter<TValue, DirectAddressing>() = default;
+    // ~KmerFilter<TValue, DirectAddressing, TFilterVector>() = default;
+    ~KmerFilter<TValue, DirectAddressing, TFilterVector>() = default;
     //!\}
 
     /*!
@@ -204,10 +212,11 @@ public:
                         ++hashBlock)
                     {
                         uint64_t vecPos = hashBlock * filterVector.blockBitSize;
+                        uint64_t chunkNo = vecPos / filterVector.chunkSize;
                         for(uint32_t binNo : bins)
                         {
-                            if (vecPos >= chunk * filterVector.chunkSize)
-                                filterVector.unset_pos(chunk, vecPos - chunk * filterVector.chunkSize + binNo);
+                            if (chunk == chunkNo)
+                                filterVector.unset_pos(vecPos + binNo);
                         }
                     }
                 }));
@@ -324,8 +333,7 @@ public:
             uint64_t chunk = vecIndex / filterVector.chunkSize;
             if (static_cast<uint64_t>(chunkNo) == chunk)
             {
-                uint64_t chunkPos = vecIndex - chunk * filterVector.chunkSize;
-                filterVector.set_pos(chunk, chunkPos);
+                filterVector.set_pos(vecIndex);
             }
         }
     }
@@ -341,7 +349,7 @@ public:
         noOfBlocks = ipow(ValueSize<TValue>::VALUE, kmerSize);
         // Size of the bit vector
         noOfBits = noOfBlocks * blockBitSize;
-        filterVector = FilterVector(noOfBins, noOfBits);
+        // filterVector = FilterVector<TFilterVector>(noOfBins, noOfBits);
     }
 };
 }

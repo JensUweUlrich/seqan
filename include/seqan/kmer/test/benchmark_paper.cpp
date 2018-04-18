@@ -60,8 +60,8 @@ int main()
               << "====================================================================\n";
     for (uint64_t r = 0; r < noOfRepeats; ++r)
     {
-        KmerFilter<Dna, InterleavedBloomFilter> ibf (noOfBins, noOfHashes, k, noOfBits);
-        KmerFilter<Dna, DirectAddressing> da (noOfBins, k);
+        KmerFilter<Dna, InterleavedBloomFilter, CompressedArray> ibf (noOfBins, noOfHashes, k, noOfBits);
+        KmerFilter<Dna, DirectAddressing, CompressedArray> da (noOfBins, k);
 
         auto start = std::chrono::high_resolution_clock::now();
         for(uint64_t i = 0; i < noOfBins; ++i)
