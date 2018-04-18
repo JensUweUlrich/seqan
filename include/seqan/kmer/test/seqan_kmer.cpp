@@ -50,9 +50,9 @@ int main()
     //SeqAnBloomFilter<> filter (10, 1, 12, 16777216);
     uint64_t threads{3};
     uint64_t noBins{10};
-    uint64_t kmerSize{3};
+    uint64_t kmerSize{14};
     uint64_t hashFunc{3};
-    uint64_t bits{1ULL<<31};
+    uint64_t bits{1ULL<<33};
 
 
     // ==========================================================================
@@ -63,28 +63,32 @@ int main()
     typedef InterleavedBloomFilter TSpec;
     // typedef DirectAddressing       TSpec;
 
+    // typedef Uncompressed TFilter;
+    // typedef CompressedSimple TFilter;
+    typedef CompressedArray TFilter;
+
     // Empty default constructor
-    KmerFilter<Dna, TSpec> ctor_empty;
+    KmerFilter<Dna, TSpec, TFilter> ctor_empty;
     // Default constructor
     // KmerFilter<Dna, TSpec> ctor_default (noBins, hashFunc, kmerSize, bits);
 
-    KmerFilter<Dna, TSpec> ctor_default (noBins, hashFunc, kmerSize, bits);
-    KmerFilter<Dna, TSpec> ctor_default_helper1 (noBins, hashFunc, kmerSize, bits);
-    KmerFilter<Dna, TSpec> ctor_default_helper2 (noBins, hashFunc, kmerSize, bits);
+    KmerFilter<Dna, TSpec, TFilter> ctor_default (noBins, hashFunc, kmerSize, bits);
+    KmerFilter<Dna, TSpec, TFilter> ctor_default_helper1 (noBins, hashFunc, kmerSize, bits);
+    KmerFilter<Dna, TSpec, TFilter> ctor_default_helper2 (noBins, hashFunc, kmerSize, bits);
 
-    // KmerFilter<Dna, TSpec> ctor_default (noBins, kmerSize);
-    // KmerFilter<Dna, TSpec> ctor_default_helper1 (noBins, kmerSize);
-    // KmerFilter<Dna, TSpec> ctor_default_helper2 (noBins, kmerSize);
+    // KmerFilter<Dna, TSpec, TFilter> ctor_default (noBins, kmerSize);
+    // KmerFilter<Dna, TSpec, TFilter> ctor_default_helper1 (noBins, kmerSize);
+    // KmerFilter<Dna, TSpec, TFilter> ctor_default_helper2 (noBins, kmerSize);
 
     // Copy constructor
-    KmerFilter<Dna, TSpec> ctor_copy (ctor_default);
+    KmerFilter<Dna, TSpec, TFilter> ctor_copy (ctor_default);
     // Copy assignment
-    KmerFilter<Dna, TSpec> assignment_copy;
+    KmerFilter<Dna, TSpec, TFilter> assignment_copy;
     assignment_copy = ctor_default;
     // Move constructor
-    KmerFilter<Dna, TSpec> ctor_move(std::move(ctor_default_helper1));
+    KmerFilter<Dna, TSpec, TFilter> ctor_move(std::move(ctor_default_helper1));
     // Move assignment
-    KmerFilter<Dna, TSpec> assignment_move;
+    KmerFilter<Dna, TSpec, TFilter> assignment_move;
     assignment_move = std::move(ctor_default_helper2);
 
 
@@ -121,8 +125,8 @@ int main()
 
     std::vector<uint64_t> ctor_default_set;
 
-    std::vector<bool> which = whichBins(ctor_default, DnaString("AAA"), 1);
-    (void) whichBins(ctor_default, DnaString("AAA"));
+    std::vector<bool> which = whichBins(ctor_default, DnaString(std::string(kmerSize, 'A')), 1);
+    (void) whichBins(ctor_default, DnaString(std::string(kmerSize, 'T')));
     for (uint64_t i = 0; i < which.size(); ++i)
     {
         if (i == 1 || i == 5 || i == 8)
