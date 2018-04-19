@@ -68,7 +68,14 @@ static void addKmer_IBF(benchmark::State& state)
 
         for (auto _ : state)
         {
-            addKmer(ibf, input[i % 1000000], i % bins, chunk);
+            auto in = input[i % 1000000];
+            uint64_t b = i % bins;
+            start = std::chrono::high_resolution_clock::now();
+            addKmer(ibf, in, b, chunk);
+            end   = std::chrono::high_resolution_clock::now();
+            elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(end - start);
+            state.SetIterationTime(elapsed_seconds.count());
+
             ++i;
         }
 
@@ -315,9 +322,9 @@ static void DAWhichArguments(benchmark::internal::Benchmark* b)
         }
     }
 }
-BENCHMARK_TEMPLATE(addKmer_IBF, Dna, Uncompressed)->Apply(IBFAddArguments);
-BENCHMARK_TEMPLATE(addKmer_IBF, Dna, CompressedSimple)->Apply(IBFAddArguments);
-BENCHMARK_TEMPLATE(addKmer_IBF, Dna, CompressedArray)->Apply(IBFAddArguments);
+BENCHMARK_TEMPLATE(addKmer_IBF, Dna, Uncompressed)->Apply(IBFAddArguments)->UseManualTime();
+BENCHMARK_TEMPLATE(addKmer_IBF, Dna, CompressedSimple)->Apply(IBFAddArguments)->UseManualTime();
+BENCHMARK_TEMPLATE(addKmer_IBF, Dna, CompressedArray)->Apply(IBFAddArguments)->UseManualTime();
 BENCHMARK_TEMPLATE(addKmer_DA, Dna, Uncompressed)->Apply(DAAddArguments);
 BENCHMARK_TEMPLATE(addKmer_DA, Dna, CompressedSimple)->Apply(DAAddArguments);
 BENCHMARK_TEMPLATE(addKmer_DA, Dna, CompressedArray)->Apply(DAAddArguments);
