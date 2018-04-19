@@ -142,7 +142,7 @@ struct FilterVector<Uncompressed>
         uncompressed_vector->set_int(idx, val);
     }
 
-    void set_pos(uint64_t idx)
+    inline void set_pos(uint64_t idx)
     {
         (*uncompressed_vector)[idx] = true;
     }
