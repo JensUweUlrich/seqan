@@ -50,8 +50,8 @@ struct FilterVector<Uncompressed>
     uint64_t noOfChunks;
     uint64_t chunkSize;
 
-    inline void decompress(uint64_t chunk) {}
-    inline void compress(uint64_t chunk) {}
+    inline void decompress(uint64_t) {}
+    inline void compress(uint64_t) {}
 
     std::unique_ptr<sdsl::bit_vector> uncompressed_vector;
 
@@ -201,7 +201,7 @@ struct FilterVector<CompressedSimple>
         return sdsl::size_in_mega_bytes(*compressed_vector);
     }
 
-    inline void decompress(uint64_t chunk)
+    inline void decompress(uint64_t)
     {
         decompress();
     }
@@ -215,7 +215,7 @@ struct FilterVector<CompressedSimple>
         }
     }
 
-    inline void compress(uint64_t chunk)
+    inline void compress(uint64_t)
     {
         compress();
     }
