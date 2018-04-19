@@ -33,6 +33,7 @@
 // ==========================================================================
 
 #include <algorithm>
+#undef NDEBUG
 #include <cassert>
 #include <stdio.h>
 #include <vector>
@@ -173,3 +174,4 @@ int main()
 
     return 0;
 }
+#define NDEBUG
