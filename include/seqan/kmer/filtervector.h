@@ -142,7 +142,7 @@ struct FilterVector<Uncompressed>
         uncompressed_vector->set_int(idx, val);
     }
 
-    inline void set_pos(uint64_t idx)
+    inline void set_pos(uint64_t idx, uint64_t)
     {
         (*uncompressed_vector)[idx] = true;
     }
@@ -324,7 +324,7 @@ struct FilterVector<CompressedSimple>
         uncompressed_vector->set_int(idx, val);
     }
 
-    void set_pos(uint64_t idx)
+    void set_pos(uint64_t idx, uint64_t)
     {
         decompress();
         (*uncompressed_vector)[idx] = true;
@@ -543,12 +543,13 @@ struct FilterVector<CompressedArray>
         compress(chunkNo);
     }
 
-    void set_pos(uint64_t idx)
+    void set_pos(uint64_t idx, uint64_t chunk)
     {
         uint64_t access = idx;
         uint64_t chunkNo = access / chunkSize;
         uint64_t chunkPos = access - chunkNo * chunkSize;
-        (*std::get<1>(filterVector[chunkNo]))[chunkPos] = true;
+        if (chunk == chunkNo)
+            (*std::get<1>(filterVector[chunkNo]))[chunkPos] = true;
     }
 
     void unset_pos(uint64_t idx)

@@ -330,11 +330,7 @@ public:
         {
             uint64_t kmerHash = hashNext(kmerShape, begin(text) + i);
             uint64_t vecIndex = kmerHash * blockBitSize + binNo;
-            uint64_t chunk = vecIndex / filterVector.chunkSize;
-            if (static_cast<uint64_t>(chunkNo) == chunk)
-            {
-                filterVector.set_pos(vecIndex);
-            }
+            filterVector.set_pos(vecIndex, chunkNo);
         }
     }
 

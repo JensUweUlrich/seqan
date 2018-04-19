@@ -106,7 +106,7 @@ static void whichBins_IBF(benchmark::State& state)
             ibf.filterVector.decompress(chunk);
             current_chunk = chunk;
         }
-        ibf.filterVector.set_pos(vecPos);
+        ibf.filterVector.set_pos(vecPos, chunk);
         vecPos -= occ;
     }
     state.counters["Size"] = ibf.filterVector.size_in_mega_bytes();
@@ -206,7 +206,7 @@ static void whichBins_DA(benchmark::State& state)
             da.filterVector.decompress(chunk);
             current_chunk = chunk;
         }
-        da.filterVector.set_pos(vecPos);
+        da.filterVector.set_pos(vecPos, chunk);
         vecPos -= occ;
     }
     state.counters["Size"] = da.filterVector.size_in_mega_bytes();
