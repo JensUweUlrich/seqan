@@ -35,14 +35,14 @@
 
 using namespace seqan;
 
-template <typename TAlphabet>
+template <typename TAlphabet, typename TFilter>
 static void addKmer_IBF(benchmark::State& state)
 {
     auto bins = state.range(0);
     auto k = state.range(1);
     auto bits = state.range(2);
     auto hash = state.range(3);
-    KmerFilter<TAlphabet, InterleavedBloomFilter> ibf (bins, hash, k, (1ULL<<bits)+256);
+    KmerFilter<TAlphabet, InterleavedBloomFilter, TFilter> ibf (bins, hash, k, (1ULL<<bits)+256);
     std::mt19937 RandomNumber;
     StringSet<String<TAlphabet> > input;
     reserve(input, 1000000);
@@ -82,7 +82,7 @@ static void addKmer_IBF(benchmark::State& state)
     state.counters["Size"] = ibf.filterVector.size_in_mega_bytes();
 }
 
-template <typename TAlphabet>
+template <typename TAlphabet, typename TFilter>
 static void whichBins_IBF(benchmark::State& state)
 {
     auto bins = state.range(0);
@@ -90,7 +90,7 @@ static void whichBins_IBF(benchmark::State& state)
     auto bits = state.range(2);
     auto hash = state.range(3);
     auto occ  = state.range(4);
-    KmerFilter<TAlphabet, InterleavedBloomFilter> ibf(bins, hash, k, (1ULL<<bits)+256);
+    KmerFilter<TAlphabet, InterleavedBloomFilter, TFilter> ibf(bins, hash, k, (1ULL<<bits)+256);
     std::mt19937 RandomNumber;
     String<TAlphabet> kmer("");
 
@@ -139,7 +139,7 @@ static void whichBins_IBF(benchmark::State& state)
     }
 }
 
-template <typename TAlphabet>
+template <typename TAlphabet, typename TFilter>
 static void addKmer_DA(benchmark::State& state)
 {
     auto bins = state.range(0);
@@ -184,7 +184,7 @@ static void addKmer_DA(benchmark::State& state)
     state.counters["Size"] = da.filterVector.size_in_mega_bytes();
 }
 
-template <typename TAlphabet>
+template <typename TAlphabet, typename TFilter>
 static void whichBins_DA(benchmark::State& state)
 {
     auto bins = state.range(0);
@@ -315,10 +315,17 @@ static void DAWhichArguments(benchmark::internal::Benchmark* b)
         }
     }
 }
-BENCHMARK_TEMPLATE(whichBins_IBF, Dna)->Apply(IBFWhichArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(addKmer_IBF, Dna)->Apply(IBFAddArguments);
-BENCHMARK_TEMPLATE(addKmer_DA, Dna)->Apply(DAAddArguments);
-// BENCHMARK_TEMPLATE(whichBins_IBF, Dna)->Apply(IBFWhichArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(whichBins_DA, Dna)->Apply(DAWhichArguments)->UseManualTime();
+BENCHMARK_TEMPLATE(addKmer_IBF, Dna, Uncompressed)->Apply(IBFAddArguments);
+BENCHMARK_TEMPLATE(addKmer_IBF, Dna, CompressedSimple)->Apply(IBFAddArguments);
+BENCHMARK_TEMPLATE(addKmer_IBF, Dna, CompressedArray)->Apply(IBFAddArguments);
+BENCHMARK_TEMPLATE(addKmer_DA, Dna, Uncompressed)->Apply(DAAddArguments);
+BENCHMARK_TEMPLATE(addKmer_DA, Dna, CompressedSimple)->Apply(DAAddArguments);
+BENCHMARK_TEMPLATE(addKmer_DA, Dna, CompressedArray)->Apply(DAAddArguments);
+BENCHMARK_TEMPLATE(whichBins_IBF, Dna, Uncompressed)->Apply(IBFWhichArguments)->UseManualTime();
+BENCHMARK_TEMPLATE(whichBins_IBF, Dna, CompressedSimple)->Apply(IBFWhichArguments)->UseManualTime();
+BENCHMARK_TEMPLATE(whichBins_IBF, Dna, CompressedArray)->Apply(IBFWhichArguments)->UseManualTime();
+BENCHMARK_TEMPLATE(whichBins_DA, Dna, Uncompressed)->Apply(DAWhichArguments)->UseManualTime();
+BENCHMARK_TEMPLATE(whichBins_DA, Dna, CompressedSimple)->Apply(DAWhichArguments)->UseManualTime();
+BENCHMARK_TEMPLATE(whichBins_DA, Dna, CompressedArray)->Apply(DAWhichArguments)->UseManualTime();
 
 BENCHMARK_MAIN();
