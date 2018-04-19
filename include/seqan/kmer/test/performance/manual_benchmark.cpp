@@ -41,7 +41,7 @@
 // static global const values needed for bloom_filter
 static const uint32_t filterMetadataSize = 256;
 static const uint8_t INT_WIDTH = 0x40;
-#include "../../../../apps/yara/bloom_filter.h"
+#include "../../../../../apps/yara/bloom_filter.h"
 
 using namespace seqan;
 
@@ -77,14 +77,14 @@ int main()
               << "====================================================================\n";
     for (uint64_t r = 0; r < noOfRepeats; r++)
     {
-        KmerFilter<Dna, InterleavedBloomFilter> ibf (noOfBins, noOfHashes, k, noOfBits);
+        KmerFilter<Dna, InterleavedBloomFilter, Uncompressed> ibf (noOfBins, noOfHashes, k, noOfBits);
         // SeqAnBloomFilter<DnaString> sbf (noOfBins, noOfHashes, k, noOfBits);
         // KmerFilter<Dna, DirectAddressing> da (noOfBins, k);
 
         auto start = std::chrono::high_resolution_clock::now();
         for(uint64_t i = 0; i < noOfKmers; ++i)
         {
-            ibf.addKmer(input[i], i % noOfBins);
+            ibf.addKmer(input[i], i % noOfBins, uint64_t{0});
         }
         auto elapsed = std::chrono::high_resolution_clock::now() - start;
         ibfTime.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());

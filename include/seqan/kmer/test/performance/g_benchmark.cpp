@@ -100,14 +100,13 @@ static void whichBins_IBF(benchmark::State& state)
     while (vecPos > 0)
     {
         uint64_t chunk = vecPos / ibf.filterVector.chunkSize;
-        uint64_t chunkPos = vecPos - chunk * ibf.filterVector.chunkSize;
         if (current_chunk != chunk)
         {
             ibf.filterVector.compress(current_chunk);
             ibf.filterVector.decompress(chunk);
             current_chunk = chunk;
         }
-        ibf.filterVector.set_pos(chunk, chunkPos);
+        ibf.filterVector.set_pos(vecPos);
         vecPos -= occ;
     }
     state.counters["Size"] = ibf.filterVector.size_in_mega_bytes();
@@ -201,14 +200,13 @@ static void whichBins_DA(benchmark::State& state)
     while (vecPos > 0)
     {
         uint64_t chunk = vecPos / da.filterVector.chunkSize;
-        uint64_t chunkPos = vecPos - chunk * da.filterVector.chunkSize;
         if (current_chunk != chunk)
         {
             da.filterVector.compress(current_chunk);
             da.filterVector.decompress(chunk);
             current_chunk = chunk;
         }
-        da.filterVector.set_pos(chunk, chunkPos);
+        da.filterVector.set_pos(vecPos);
         vecPos -= occ;
     }
     state.counters["Size"] = da.filterVector.size_in_mega_bytes();
