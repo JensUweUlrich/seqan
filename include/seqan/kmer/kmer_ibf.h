@@ -349,8 +349,9 @@ public:
                 uint64_t vecIndex = preCalcValues[i] * kmerHash;
                 hashToIndex(vecIndex);
                 vecIndex += binNo;
-                uint64_t chunk = vecIndex / filterVector.chunkSize;
-                if (static_cast<uint64_t>(chunkNo) == chunk)
+                // uint64_t chunk = vecIndex / filterVector.chunkSize;
+                // if (static_cast<uint64_t>(chunkNo) == chunk)
+                if (true || chunkNo)
                 {
                     filterVector.set_pos(vecIndex);
                 }
