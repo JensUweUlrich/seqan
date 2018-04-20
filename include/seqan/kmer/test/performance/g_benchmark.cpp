@@ -137,7 +137,7 @@ static void whichBins_IBF(benchmark::State& state)
             {
                 readRecord(id, seq, seqFileIn);
                 auto start = std::chrono::high_resolution_clock::now();
-                auto res = whichBins(ibf, seq, 100-k+1 - k*3);
+                auto res = whichBins(ibf, seq, 100-k+1 - k*e);
                 auto end   = std::chrono::high_resolution_clock::now();
                 auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(end - start);
                 state.SetIterationTime(elapsed_seconds.count());
