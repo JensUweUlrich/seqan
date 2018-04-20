@@ -105,6 +105,7 @@ static void whichBins_IBF(benchmark::State& state)
     retrieve(ibf, storage);
 
     uint64_t verifications{0};
+    uint64_t tp{0};
 
     for (auto _ : state)
     {
@@ -141,12 +142,15 @@ static void whichBins_IBF(benchmark::State& state)
                 auto end   = std::chrono::high_resolution_clock::now();
                 auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(end - start);
                 state.SetIterationTime(elapsed_seconds.count());
-
+                if (res[i])
+                {
+                    ++tp;
+                }
                 verifications += count(res.begin(), res.end(), true);
             }
-            ++i;
         }
         state.counters["Verifications"] = verifications/readNo;
+        state.counters["Sensitivity"] = tp/verifications;
     }
 }
 
@@ -208,6 +212,7 @@ static void whichBins_DA(benchmark::State& state)
     retrieve(da, storage);
 
     uint64_t verifications{0};
+    uint64_t tp{0};
 
     for (auto _ : state)
     {
@@ -245,11 +250,15 @@ static void whichBins_DA(benchmark::State& state)
                 auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(end - start);
                 state.SetIterationTime(elapsed_seconds.count());
 
+                if (res[i])
+                {
+                    ++tp;
+                }
                 verifications += count(res.begin(), res.end(), true);
             }
-            ++i;
         }
         state.counters["Verifications"] = verifications/readNo;
+        state.counters["Sensitivity"] = tp/verifications;
     }
 }
 
