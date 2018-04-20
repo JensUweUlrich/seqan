@@ -35,6 +35,26 @@
 
 using namespace seqan;
 
+std::random_device seed;     // only used once to initialise (seed) engine
+
+template<typename TAlphabet>
+void getKmers(StringSet<String<TAlphabet> > & kmer_set, uint64_t const & count, uint16_t k)
+{
+    std::mt19937 rng(seed());    // random-number engine used (Mersenne-Twister in this case)
+    std::uniform_int_distribution<int> uni(0, 3); // guaranteed unbiased
+
+    clear(kmer_set);
+    for(uint64_t i = 0; i< count; ++i)
+    {
+        DnaString curr_kmer ="";
+        for(uint64_t b=0; b<k; b++)
+        {
+            appendValue(curr_kmer, (Dna)(uni(rng)));
+        }
+        appendValue(kmer_set, curr_kmer);
+    }
+}
+
 template <typename TAlphabet, typename TFilter>
 static void addKmer_IBF(benchmark::State& state)
 {
@@ -43,19 +63,9 @@ static void addKmer_IBF(benchmark::State& state)
     auto bits = state.range(2);
     auto hash = state.range(3);
     KmerFilter<TAlphabet, InterleavedBloomFilter, TFilter> ibf (bins, hash, k, (1ULL<<bits)+256);
-    std::mt19937 RandomNumber;
     StringSet<String<TAlphabet> > input;
-    reserve(input, 1000000);
 
-    for (uint64_t seqNo = 0; seqNo < 1000000; ++seqNo)
-    {
-        String<TAlphabet> tmp;
-        for (int32_t i = 0; i < k; ++i)
-        {
-            appendValue(tmp, TAlphabet(RandomNumber() % ValueSize<TAlphabet>::VALUE));
-        }
-        appendValue(input, tmp);
-    }
+    getKmers(input, 1000000, k);
 
     uint64_t i{0};
     for (uint64_t chunk = 0; chunk < ibf.filterVector.noOfChunks; ++chunk)
@@ -98,8 +108,6 @@ static void whichBins_IBF(benchmark::State& state)
     auto hash = state.range(3);
     auto occ  = state.range(4);
     KmerFilter<TAlphabet, InterleavedBloomFilter, TFilter> ibf(bins, hash, k, (1ULL<<bits)+256);
-    std::mt19937 RandomNumber;
-    String<TAlphabet> kmer("");
 
     auto vecPos = (1ULL<<bits) - occ;
     uint64_t current_chunk = 0;
@@ -119,24 +127,16 @@ static void whichBins_IBF(benchmark::State& state)
     state.counters["Size"] = ibf.filterVector.size_in_mega_bytes();
 
     StringSet<String<TAlphabet> > input;
-    reserve(input, 1000000);
 
-    for (uint64_t seqNo = 0; seqNo < 1000000; ++seqNo)
-    {
-        String<TAlphabet> tmp;
-        for (int32_t i = 0; i < k; ++i)
-        {
-            appendValue(tmp, TAlphabet(RandomNumber() % ValueSize<TAlphabet>::VALUE));
-        }
-        appendValue(input, tmp);
-    }
+    getKmers(input, 1000000, k);
 
     uint64_t i{0};
 
     for (auto _ : state)
     {
+        auto in = input[i % 1000000];
         auto start = std::chrono::high_resolution_clock::now();
-        auto res = whichBins(ibf, input[i % 1000000], 0);
+        auto res = whichBins(ibf, in, 0);
         auto end   = std::chrono::high_resolution_clock::now();
         auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(end - start);
         state.SetIterationTime(elapsed_seconds.count());
@@ -152,19 +152,9 @@ static void addKmer_DA(benchmark::State& state)
     auto bins = state.range(0);
     auto k = state.range(1);
     KmerFilter<TAlphabet, DirectAddressing> da (bins, k);
-    std::mt19937 RandomNumber;
     StringSet<String<TAlphabet> > input;
-    reserve(input, 1000000);
 
-    for (uint64_t seqNo = 0; seqNo < 1000000; ++seqNo)
-    {
-        String<TAlphabet> tmp;
-        for (int32_t i = 0; i < k; ++i)
-        {
-            appendValue(tmp, TAlphabet(RandomNumber() % ValueSize<TAlphabet>::VALUE));
-        }
-        appendValue(input, tmp);
-    }
+    getKmers(input, 1000000, k);
 
     uint64_t i{0};
     for (uint64_t chunk = 0; chunk < da.filterVector.noOfChunks; ++chunk)
@@ -177,7 +167,14 @@ static void addKmer_DA(benchmark::State& state)
 
         for (auto _ : state)
         {
-            addKmer(da, input[i % 1000000], i % bins, chunk);
+            auto in = input[i % 1000000];
+            uint64_t b = i % bins;
+            start = std::chrono::high_resolution_clock::now();
+            addKmer(da, in, b, chunk);
+            end   = std::chrono::high_resolution_clock::now();
+            elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(end - start);
+            state.SetIterationTime(elapsed_seconds.count());
+
             ++i;
         }
 
@@ -198,8 +195,9 @@ static void whichBins_DA(benchmark::State& state)
     auto k = state.range(1);
     auto occ = state.range(2);
     KmerFilter<TAlphabet, DirectAddressing> da (bins, k);
-    std::mt19937 RandomNumber;
-    String<TAlphabet> kmer("");
+    StringSet<String<TAlphabet> > input;
+
+    getKmers(input, 1000000, k);
 
     auto vecPos = da.noOfBits - da.filterMetadataSize - occ;
     uint64_t current_chunk = 0;
@@ -217,19 +215,6 @@ static void whichBins_DA(benchmark::State& state)
         vecPos -= occ;
     }
     state.counters["Size"] = da.filterVector.size_in_mega_bytes();
-
-    StringSet<String<TAlphabet> > input;
-    reserve(input, 1000000);
-
-    for (uint64_t seqNo = 0; seqNo < 1000000; ++seqNo)
-    {
-        String<TAlphabet> tmp;
-        for (int32_t i = 0; i < k; ++i)
-        {
-            appendValue(tmp, TAlphabet(RandomNumber() % ValueSize<TAlphabet>::VALUE));
-        }
-        appendValue(input, tmp);
-    }
 
     uint64_t i{0};
 
@@ -325,9 +310,9 @@ static void DAWhichArguments(benchmark::internal::Benchmark* b)
 BENCHMARK_TEMPLATE(addKmer_IBF, Dna, Uncompressed)->Apply(IBFAddArguments)->UseManualTime();
 BENCHMARK_TEMPLATE(addKmer_IBF, Dna, CompressedSimple)->Apply(IBFAddArguments)->UseManualTime();
 BENCHMARK_TEMPLATE(addKmer_IBF, Dna, CompressedArray)->Apply(IBFAddArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(addKmer_DA, Dna, Uncompressed)->Apply(DAAddArguments);
-BENCHMARK_TEMPLATE(addKmer_DA, Dna, CompressedSimple)->Apply(DAAddArguments);
-BENCHMARK_TEMPLATE(addKmer_DA, Dna, CompressedArray)->Apply(DAAddArguments);
+BENCHMARK_TEMPLATE(addKmer_DA, Dna, Uncompressed)->Apply(DAAddArguments)->UseManualTime();
+BENCHMARK_TEMPLATE(addKmer_DA, Dna, CompressedSimple)->Apply(DAAddArguments)->UseManualTime();
+BENCHMARK_TEMPLATE(addKmer_DA, Dna, CompressedArray)->Apply(DAAddArguments)->UseManualTime();
 BENCHMARK_TEMPLATE(whichBins_IBF, Dna, Uncompressed)->Apply(IBFWhichArguments)->UseManualTime();
 BENCHMARK_TEMPLATE(whichBins_IBF, Dna, CompressedSimple)->Apply(IBFWhichArguments)->UseManualTime();
 BENCHMARK_TEMPLATE(whichBins_IBF, Dna, CompressedArray)->Apply(IBFWhichArguments)->UseManualTime();
