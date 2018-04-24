@@ -35,7 +35,7 @@
 
 using namespace seqan;
 
-CharString baseDir{"/Users/enricoseiler/dev/eval/64/"};
+CharString baseDir{"/srv/public/enricoseiler/benchmark/"};
 uint64_t e{2};
 uint64_t readNo{1000000};
 
@@ -50,10 +50,12 @@ static void addKmer_IBF(benchmark::State& state)
 
     for (auto _ : state)
     {
+        double elapsed_seconds{0.0};
         for(int32_t i = 0; i < bins; ++i)
         {
             CharString file(baseDir);
-            append(file, CharString{"bins/"});
+            append(file, CharString(std::to_string(bins)));
+            append(file, CharString{"/bins/"});
             if (i < 10)
             {
                 append(file, CharString("bin_0"));
@@ -68,10 +70,10 @@ static void addKmer_IBF(benchmark::State& state)
             auto start = std::chrono::high_resolution_clock::now();
             addFastaFile(ibf, toCString(file), i);
             auto end   = std::chrono::high_resolution_clock::now();
-            auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(end - start);
-            state.SetIterationTime(elapsed_seconds.count());
+            elapsed_seconds += (std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
             std::cerr << "IBF Bin " << i << " done." << '\n';
         }
+        state.SetIterationTime(elapsed_seconds);
     }
 
     CharString storage("");
@@ -109,10 +111,12 @@ static void whichBins_IBF(benchmark::State& state)
 
     for (auto _ : state)
     {
+        double elapsed_seconds{0.0};
         for(int32_t i = 0; i < bins; ++i)
         {
             CharString file(baseDir);
-            append(file, CharString{"reads/"});
+            append(file, CharString(std::to_string(bins)));
+            append(file, CharString{"/reads/"});
 
             if (i < 10)
             {
@@ -140,8 +144,7 @@ static void whichBins_IBF(benchmark::State& state)
                 auto start = std::chrono::high_resolution_clock::now();
                 auto res = whichBins(ibf, seq, 100-k+1 - k*e);
                 auto end   = std::chrono::high_resolution_clock::now();
-                auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(end - start);
-                state.SetIterationTime(elapsed_seconds.count());
+                elapsed_seconds += (std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
                 if (res[i])
                 {
                     ++tp;
@@ -149,6 +152,7 @@ static void whichBins_IBF(benchmark::State& state)
                 verifications += count(res.begin(), res.end(), true);
             }
         }
+        state.SetIterationTime(elapsed_seconds);
         state.counters["Verifications"] = verifications/readNo;
         state.counters["Sensitivity"] = tp/verifications;
     }
@@ -163,10 +167,12 @@ static void addKmer_DA(benchmark::State& state)
 
     for (auto _ : state)
     {
+        double elapsed_seconds{0.0};
         for(int32_t i = 0; i < bins; ++i)
         {
             CharString file(baseDir);
-            append(file, CharString{"bins/"});
+            append(file, CharString(std::to_string(bins)));
+            append(file, CharString{"/bins/"});
             if (i < 10)
             {
                 append(file, CharString("bin_0"));
@@ -181,10 +187,10 @@ static void addKmer_DA(benchmark::State& state)
             auto start = std::chrono::high_resolution_clock::now();
             addFastaFile(da, toCString(file), i);
             auto end   = std::chrono::high_resolution_clock::now();
-            auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(end - start);
-            state.SetIterationTime(elapsed_seconds.count());
-            // std::cerr << "DA Iteration " << r << " Bin " << i << " done." << '\n';
+            elapsed_seconds += (std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
+            std::cerr << "DA Bin " << i << " done." << '\n';
         }
+        state.SetIterationTime(elapsed_seconds);
     }
 
     CharString storage("");
@@ -216,10 +222,12 @@ static void whichBins_DA(benchmark::State& state)
 
     for (auto _ : state)
     {
+        double elapsed_seconds{0.0};
         for(int32_t i = 0; i < bins; ++i)
         {
             CharString file(baseDir);
-            append(file, CharString{"reads/"});
+            append(file, CharString(std::to_string(bins)));
+            append(file, CharString{"/reads/"});
 
             if (i < 10)
             {
@@ -247,8 +255,7 @@ static void whichBins_DA(benchmark::State& state)
                 auto start = std::chrono::high_resolution_clock::now();
                 auto res = whichBins(da, seq, 100-k+1 - k*e);
                 auto end   = std::chrono::high_resolution_clock::now();
-                auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(end - start);
-                state.SetIterationTime(elapsed_seconds.count());
+                elapsed_seconds += (std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
 
                 if (res[i])
                 {
@@ -257,6 +264,7 @@ static void whichBins_DA(benchmark::State& state)
                 verifications += count(res.begin(), res.end(), true);
             }
         }
+        state.SetIterationTime(elapsed_seconds);
         state.counters["Verifications"] = verifications/readNo;
         state.counters["Sensitivity"] = tp/verifications;
     }
