@@ -82,6 +82,13 @@ static void addKmer_IBF(benchmark::State& state)
     append(storage, CharString(std::to_string(k)));
     append(storage, CharString("_"));
     append(storage, CharString(std::to_string(bits)));
+    if constexpr (std::is_same_v<TFilter, Uncompressed>) {
+        append(storage, CharString("_Uncompressed"));
+    }
+    else
+    {
+        append(storage, CharString("_Compressed"));
+    }
     append(storage, CharString("_ibf.filter"));
     store(ibf, storage);
 
@@ -103,6 +110,13 @@ static void whichBins_IBF(benchmark::State& state)
     append(storage, CharString(std::to_string(k)));
     append(storage, CharString("_"));
     append(storage, CharString(std::to_string(bits)));
+    if constexpr (std::is_same_v<TFilter, Uncompressed>) {
+        append(storage, CharString("_Uncompressed"));
+    }
+    else
+    {
+        append(storage, CharString("_Compressed"));
+    }
     append(storage, CharString("_ibf.filter"));
     retrieve(ibf, storage);
 
@@ -197,6 +211,13 @@ static void addKmer_DA(benchmark::State& state)
     append(storage, CharString(std::to_string(bins)));
     append(storage, CharString("_"));
     append(storage, CharString(std::to_string(k)));
+    if constexpr (std::is_same_v<TFilter, Uncompressed>) {
+        append(storage, CharString("_Uncompressed"));
+    }
+    else
+    {
+        append(storage, CharString("_Compressed"));
+    }
     append(storage, CharString("_da.filter"));
     store(da, storage);
 
@@ -214,6 +235,13 @@ static void whichBins_DA(benchmark::State& state)
     append(storage, CharString(std::to_string(bins)));
     append(storage, CharString("_"));
     append(storage, CharString(std::to_string(k)));
+    if constexpr (std::is_same_v<TFilter, Uncompressed>) {
+        append(storage, CharString("_Uncompressed"));
+    }
+    else
+    {
+        append(storage, CharString("_Compressed"));
+    }
     append(storage, CharString("_da.filter"));
     retrieve(da, storage);
 
