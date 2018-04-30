@@ -353,7 +353,7 @@ struct FilterVector<CompressedArray>
 {
     static const uint64_t FILTER_METADATA_SIZE = 256;
     static const uint64_t BUFFER_SIZE = 10000000;
-    static const uint64_t MAX_VEC = 1ULL<<32;
+    static const uint64_t MAX_VEC = 1ULL<<32; //512 MB, 36 -> 8GB, 39 -> 64
     static const uint64_t INT_SIZE = 0x40;
 
     std::string random_string()
