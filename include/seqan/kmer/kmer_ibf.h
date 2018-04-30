@@ -223,9 +223,9 @@ public:
      * \param counts Vector to be filled with counts.
      * \param text Text to count occurences for.
      */
-    void whichBins(std::vector<uint64_t> & counts, TString const & text)
+    void whichBins(std::vector<uint64_t> & counts, TString const & text) // TODO uint16_t
     {
-        uint8_t possible = length(text) - kmerSize + 1;
+        uint8_t possible = length(text) - kmerSize + 1; // TODO uint16_t
 
         std::vector<uint64_t> kmerHashes(possible, 0);
 

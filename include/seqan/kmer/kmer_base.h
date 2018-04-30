@@ -42,6 +42,9 @@
 #include <algorithm>
 #include <future>
 
+// TODO change API
+// TODO change types
+
 namespace seqan {
 
 // ==========================================================================
@@ -111,15 +114,15 @@ struct Value<KmerFilter<TValue, TSpec, TFilterVector> >
 // --------------------------------------------------------------------------
 
 /*!
- * \brief Adds a k-mer to a bin in a given filter.
+ * \brief Adds k-mers from a text to a bin in a given filter.
  * \param me The KmerFilter instance.
- * \param kmer The k-mer to be added.
- * \param binNo The bin to add the k-mer to.
+ * \param text The text from which the k-mers are to be added.
+ * \param binNo The bin to add the k-mers to.
  */
 template<typename TValue, typename TSpec, typename TFilterVector, typename TString, typename TBin, typename TChunk>
-inline void addKmer(KmerFilter<TValue, TSpec, TFilterVector> & me, TString const & kmer, TBin && binNo, TChunk && chunkNo)
+inline void addKmer(KmerFilter<TValue, TSpec, TFilterVector> & me, TString const & text, TBin && binNo, TChunk && chunkNo)
 {
-    me.addKmer(kmer, binNo, chunkNo);
+    me.addKmer(text, binNo, chunkNo);
 }
 
 /*!
@@ -231,7 +234,7 @@ inline std::vector<bool> whichBins(KmerFilter<TValue, TSpec, TFilterVector> &  m
 template<typename TValue, typename TSpec, typename TFilterVector>
 inline typename Value<KmerFilter<TValue, TSpec, TFilterVector> >::Type getNumberOfBins(KmerFilter<TValue, TSpec, TFilterVector> &  me)
 {
-    return me.noBins;
+    return me.noOfBins;
 }
 
 /*!
