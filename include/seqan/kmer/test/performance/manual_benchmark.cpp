@@ -73,7 +73,7 @@ int main()
     }
 
     std::cout << "====================================================================\n"
-              << "====================== Benchmarking addKmer() ======================\n"
+              << "====================== Benchmarking insertKmer() ======================\n"
               << "====================================================================\n";
     for (uint64_t r = 0; r < noOfRepeats; r++)
     {
@@ -84,7 +84,7 @@ int main()
         auto start = std::chrono::high_resolution_clock::now();
         for(uint64_t i = 0; i < noOfKmers; ++i)
         {
-            ibf.addKmer(input[i], i % noOfBins, uint64_t{0});
+            ibf.insertKmer(input[i], i % noOfBins, uint64_t{0});
         }
         auto elapsed = std::chrono::high_resolution_clock::now() - start;
         ibfTime.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
@@ -92,7 +92,7 @@ int main()
         // start = std::chrono::high_resolution_clock::now();
         // for(uint64_t i = 0; i < noOfKmers; ++i)
         // {
-        //     sbf.addKmers(input[i], i % noOfBins);
+        //     sbf.insertKmers(input[i], i % noOfBins);
         // }
         // elapsed = std::chrono::high_resolution_clock::now() - start;
         // sbfTime.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
@@ -100,7 +100,7 @@ int main()
         // start = std::chrono::high_resolution_clock::now();
         // for(uint64_t i = 0; i < noOfKmers; ++i)
         // {
-        //     da.addKmer(input[i], i % noOfBins);
+        //     da.insertKmer(input[i], i % noOfBins);
         // }
         // elapsed = std::chrono::high_resolution_clock::now() - start;
         // daTime.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
@@ -123,7 +123,7 @@ int main()
 
 
     std::cout << "====================================================================\n"
-              << "===================== Benchmarking whichBins() =====================\n"
+              << "===================== Benchmarking select() =====================\n"
               << "====================================================================\n";
 
     KmerFilter<Dna, InterleavedBloomFilter> ibf (noOfBins, noOfHashes, k, noOfBits);
@@ -132,9 +132,9 @@ int main()
 
     for(uint64_t i = 0; i < noOfKmers; ++i)
     {
-      ibf.addKmer(input[i], i % noOfBins);
-      sbf.addKmers(input[i], i % noOfBins);
-      da.addKmer(input[i], i % noOfBins);
+      ibf.insertKmer(input[i], i % noOfBins);
+      sbf.insertKmers(input[i], i % noOfBins);
+      da.insertKmer(input[i], i % noOfBins);
     }
 
     for (uint64_t r = 0; r < noOfRepeats; ++r)
@@ -142,7 +142,7 @@ int main()
         auto start = std::chrono::high_resolution_clock::now();
         for(uint64_t i = 0; i < noOfKmers; ++i)
         {
-            (void) whichBins(ibf, input[i], 1);
+            (void) select(ibf, input[i], 1);
         }
         auto elapsed = std::chrono::high_resolution_clock::now() - start;
         ibfTime.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
@@ -150,7 +150,7 @@ int main()
         start = std::chrono::high_resolution_clock::now();
         for(uint64_t i = 0; i < noOfKmers; ++i)
         {
-            (void) sbf.whichBins(input[i], 1);
+            (void) sbf.select(input[i], 1);
         }
         elapsed = std::chrono::high_resolution_clock::now() - start;
         sbfTime.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
@@ -158,7 +158,7 @@ int main()
         start = std::chrono::high_resolution_clock::now();
         for(uint64_t i = 0; i < noOfKmers; ++i)
         {
-            (void) whichBins(da, input[i], 1);
+            (void) select(da, input[i], 1);
         }
         elapsed = std::chrono::high_resolution_clock::now() - start;
         daTime.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());

@@ -56,7 +56,7 @@ int main()
     CharString storeDA("DA.filter");
 
     std::cout << "====================================================================\n"
-              << "====================== Benchmarking addKmer() ======================\n"
+              << "====================== Benchmarking insertKmer() ======================\n"
               << "====================================================================\n";
     for (uint64_t r = 0; r < noOfRepeats; ++r)
     {
@@ -78,7 +78,7 @@ int main()
             append(file, CharString(std::to_string(i)));
             append(file, CharString(".fasta"));
 
-            addFastaFile(ibf, toCString(file) , i);
+            insertKmer(ibf, toCString(file) , i);
             std::cout << "IBF Iteration " << r << " Bin " << i << " done." << '\n';
         }
         auto elapsed = std::chrono::high_resolution_clock::now() - start;
@@ -99,7 +99,7 @@ int main()
             append(file, CharString(std::to_string(i)));
             append(file, CharString(".fasta"));
 
-            addFastaFile(da, toCString(file) , i);
+            insertKmer(da, toCString(file) , i);
             std::cout << "DA Iteration " << r << " Bin " << i << " done." << '\n';
         }
         elapsed = std::chrono::high_resolution_clock::now() - start;
@@ -121,7 +121,7 @@ int main()
     daTime.shrink_to_fit();
 
     std::cout << "====================================================================\n"
-              << "===================== Benchmarking whichBins() =====================\n"
+              << "===================== Benchmarking select() =====================\n"
               << "====================================================================\n";
 
     KmerFilter<Dna, InterleavedBloomFilter> ibf (noOfBins, noOfHashes, k, noOfBits);
@@ -162,7 +162,7 @@ int main()
             while(!atEnd(seqFileIn))
             {
                 readRecord(id, seq, seqFileIn);
-                auto x = whichBins(ibf, seq, 100-k+1 - k*3);
+                auto x = select(ibf, seq, 100-k+1 - k*3);
                 if (r == noOfRepeats - 1)
                     verifications_ibf += count(x.begin(), x.end(), true);
             }
@@ -197,7 +197,7 @@ int main()
             while(!atEnd(seqFileIn))
             {
                 readRecord(id, seq, seqFileIn);
-                auto x = whichBins(da, seq, 100-k+1 -k*3);
+                auto x = select(da, seq, 100-k+1 -k*3);
                 if (r == noOfRepeats - 1)
                     verifications_da += count(x.begin(), x.end(), true);
             }
