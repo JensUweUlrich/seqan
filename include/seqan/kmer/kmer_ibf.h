@@ -57,7 +57,7 @@ namespace seqan{
  * #include <seqan/kmer.h>
  * CharString file("sequence.fasta");
  * KmerFilter<Dna, InterleavedBloomFilter> ibf (10, 3, 20, 16777472);
- * addFastaFile(ibf, toCString(file));
+ * insertKmer(ibf, toCString(file));
  * ```
  *
  */
@@ -173,7 +173,7 @@ public:
      * \param threads Number of threads to use.
      */
     template<typename TInt>
-    void clearBins(std::vector<THValue> const & bins, TInt&& threads)
+    void clear(std::vector<THValue> const & bins, TInt&& threads)
     {
         std::vector<std::future<void>> tasks;
         uint64_t chunkBlocks = filterVector.chunkSize / filterVector.blockBitSize;
@@ -223,7 +223,7 @@ public:
      * \param counts Vector to be filled with counts.
      * \param text Text to count occurences for.
      */
-    void whichBins(std::vector<uint64_t> & counts, TString const & text) // TODO uint16_t
+    void select(std::vector<uint64_t> & counts, TString const & text) // TODO uint16_t
     {
         uint8_t possible = length(text) - kmerSize + 1; // TODO uint16_t
 
@@ -302,10 +302,10 @@ public:
      * \param threshold Minimal count (>=) of containing k-mers to report bin as containing text.
      */
     template<typename TInt>
-    inline void whichBins(std::vector<bool> & selected, TString const & text, TInt && threshold)
+    inline void select(std::vector<bool> & selected, TString const & text, TInt && threshold)
     {
         std::vector<uint64_t> counts(noOfBins, 0);
-        whichBins(counts, text);
+        select(counts, text);
         for(uint32_t binNo=0; binNo < noOfBins; ++binNo)
         {
             if(counts[binNo] >= threshold)
@@ -330,10 +330,10 @@ public:
     /*!
      * \brief Adds all k-mers from a text to the IBF.
      * \param text Text to process.
-     * \param binNo bin ID to insert k-mers in.
+     * \param binNo bin ID to insertKmer k-mers in.
      */
     template<typename TBin, typename TChunk>
-    inline void addKmer(TString const & text, TBin && binNo, TChunk && chunkNo)
+    inline void insertKmer(TString const & text, TBin && binNo, TChunk && chunkNo)
     {
 
         TShape kmerShape;
