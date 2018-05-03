@@ -120,9 +120,9 @@ struct Value<KmerFilter<TValue, TSpec, TFilterVector> >
  * \param binNo The bin to add the k-mers to.
  */
 template<typename TValue, typename TSpec, typename TFilterVector, typename TString, typename TBin, typename TChunk>
-inline void addKmer(KmerFilter<TValue, TSpec, TFilterVector> & me, TString const & text, TBin && binNo, TChunk && chunkNo)
+inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> & me, TString const & text, TBin && binNo, TChunk && chunkNo)
 {
-    me.addKmer(text, binNo, chunkNo);
+    me.insertKmer(text, binNo, chunkNo);
 }
 
 /*!
@@ -132,9 +132,9 @@ inline void addKmer(KmerFilter<TValue, TSpec, TFilterVector> & me, TString const
  * \param threads The number of threads to use.
  */
 template<typename TValue, typename TSpec, typename TFilterVector, typename TInt1, typename TInt2>
-inline void clearBins(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<TInt1> & bins, TInt2&& threads)
+inline void clear(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<TInt1> & bins, TInt2&& threads)
 {
-    me.clearBins(bins, static_cast<uint64_t>(threads));
+    me.clear(bins, static_cast<uint64_t>(threads));
 }
 
 /*!
@@ -144,7 +144,7 @@ inline void clearBins(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vecto
  * \param binNo The bin to add the k-mers to.
  */
 template<typename TValue, typename TSpec, typename TFilterVector, typename TInt>
-inline void addFastaFile(KmerFilter<TValue, TSpec, TFilterVector> &  me, const char * fastaFile, TInt && binNo)
+inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> &  me, const char * fastaFile, TInt && binNo)
 {
     CharString id;
     String<TValue> seq;
@@ -165,7 +165,7 @@ inline void addFastaFile(KmerFilter<TValue, TSpec, TFilterVector> &  me, const c
             readRecord(id, seq, seqFileIn);
             if(length(seq) < me.kmerSize)
                 continue;
-            addKmer(me, seq, binNo, i);
+            insertKmer(me, seq, binNo, i);
         }
         me.filterVector.compress(i);
         close(seqFileIn); // No rewind() for FormattedFile ?
@@ -179,9 +179,9 @@ inline void addFastaFile(KmerFilter<TValue, TSpec, TFilterVector> &  me, const c
  * \param text A single text to count all contained k-mers for.
  */
 template<typename TValue, typename TSpec,  typename TFilterVector>
-inline void whichBins(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<uint64_t> & counts, String<TValue> const & text)
+inline void select(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<uint64_t> & counts, String<TValue> const & text)
 {
-    me.whichBins(counts, text);
+    me.select(counts, text);
 }
 
 /*!
@@ -191,10 +191,10 @@ inline void whichBins(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vecto
  * \returns std::vector<uint64_t> of size binNo containing counts.
  */
 template<typename TValue, typename TSpec, typename TFilterVector>
-inline std::vector<uint64_t> whichBins(KmerFilter<TValue, TSpec, TFilterVector> &  me, String<TValue> const & text)
+inline std::vector<uint64_t> select(KmerFilter<TValue, TSpec, TFilterVector> &  me, String<TValue> const & text)
 {
     std::vector<uint64_t> counts(me.noOfBins, 0);
-    whichBins(me, counts, text);
+    select(me, counts, text);
     return counts;
 }
 
@@ -206,9 +206,9 @@ inline std::vector<uint64_t> whichBins(KmerFilter<TValue, TSpec, TFilterVector> 
  * \param threshold The minimal number of occurences to return true for the bin.
  */
 template<typename TValue, typename TSpec, typename TFilterVector, typename TInt>
-inline void whichBins(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<bool> & selected, String<TValue> const & text, TInt threshold)
+inline void select(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<bool> & selected, String<TValue> const & text, TInt threshold)
 {
-    me.whichBins(selected, text, static_cast<uint64_t>(threshold));
+    me.select(selected, text, static_cast<uint64_t>(threshold));
 }
 
 /*!
@@ -219,10 +219,10 @@ inline void whichBins(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vecto
  * \returns std::vector<bool> of size binNo indicating whether the text is in the bin.
  */
 template<typename TValue, typename TSpec, typename TFilterVector, typename TInt>
-inline std::vector<bool> whichBins(KmerFilter<TValue, TSpec, TFilterVector> &  me, String<TValue> const & text, TInt && threshold)
+inline std::vector<bool> select(KmerFilter<TValue, TSpec, TFilterVector> &  me, String<TValue> const & text, TInt && threshold)
 {
     std::vector<bool> selected(me.noOfBins, false);
-    whichBins(me, selected, text, threshold);
+    select(me, selected, text, threshold);
     return selected;
 }
 
