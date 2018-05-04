@@ -47,7 +47,7 @@ struct kmers{
         for (uint64_t seqNo = 0; seqNo < 1000000; ++seqNo)
         {
             String<Dna> tmp;
-            for (int32_t i = 0; i < 19; ++i)
+            for (int32_t i = 0; i < 20; ++i)
             {
                 appendValue(tmp, Dna(RandomNumber() % ValueSize<Dna>::VALUE));
             }
@@ -76,7 +76,8 @@ static void insertKmer_IBF(benchmark::State& state)
 
     for (auto _ : state)
     {
-        auto in = input[i % 1000000];
+        auto tmp = input[i % 1000000];
+        auto in = String<TAlphabet>(infix(tmp, 0, k));
         uint64_t b = i % bins;
         auto start = std::chrono::high_resolution_clock::now();
         insertKmer(ibf, in, b,0);
@@ -102,13 +103,16 @@ static void select_IBF(benchmark::State& state)
     uint64_t i{0};
     for (uint64_t seqNo = 0; seqNo < 1000000; ++seqNo)
     {
-        insertKmer(ibf, input[seqNo], i%bins,0);
+        auto tmp = input[seqNo];
+        auto in = String<TAlphabet>(infix(tmp, 0, k));
+        insertKmer(ibf, in, i%bins,0);
         ++i;
     }
 
     for (auto _ : state)
     {
-        auto in = input[i % 1000000];
+        auto tmp = input[i % 1000000];
+        auto in = String<TAlphabet>(infix(tmp, 0, k));
         auto start = std::chrono::high_resolution_clock::now();
         select(ibf, in, 1);
         auto end   = std::chrono::high_resolution_clock::now();
@@ -130,7 +134,8 @@ static void insertKmer_DA(benchmark::State& state)
 
     for (auto _ : state)
     {
-        auto in = input[i % 1000000];
+        auto tmp = input[i % 1000000];
+        auto in = String<TAlphabet>(infix(tmp, 0, k));
         uint64_t b = i % bins;
         auto start = std::chrono::high_resolution_clock::now();
         insertKmer(da, in, b, 0);
@@ -154,13 +159,16 @@ static void select_DA(benchmark::State& state)
     uint64_t i{0};
     for (uint64_t seqNo = 0; seqNo < 1000000; ++seqNo)
     {
-        insertKmer(da, input[seqNo], i%bins,0);
+        auto tmp = input[seqNo];
+        auto in = String<TAlphabet>(infix(tmp, 0, k));
+        insertKmer(da, in, i%bins,0);
         ++i;
     }
 
     for (auto _ : state)
     {
-        auto in = input[i % 1000000];
+        auto tmp = input[i % 1000000];
+        auto in = String<TAlphabet>(infix(tmp, 0, k));
         auto start = std::chrono::high_resolution_clock::now();
         select(da, in, 1);
         auto end   = std::chrono::high_resolution_clock::now();
