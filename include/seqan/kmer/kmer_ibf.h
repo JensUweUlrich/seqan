@@ -322,6 +322,7 @@ public:
         hash ^= hash >> shiftValue;
         // Bring it back into our vector range (noOfBlocks = possible hash values)
         hash %= noOfBlocks;
+        // hash &= (noOfBlocks - 1);
         // Since each block needs blockBitSize bits, we multiply to get the correct location
         hash *= blockBitSize;
     }

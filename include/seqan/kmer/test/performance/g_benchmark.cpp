@@ -46,7 +46,7 @@ static void insertKmer_IBF(benchmark::State& state)
     auto k = state.range(1);
     auto bits = state.range(2);
     auto hash = state.range(3);
-    KmerFilter<TAlphabet, InterleavedBloomFilter, TFilter> ibf (bins, hash, k, (1ULL<<bits)+256);
+    KmerFilter<TAlphabet, InterleavedBloomFilter, TFilter> ibf (bins, hash, k, (1ULL<<bits));
 
     for (auto _ : state)
     {
@@ -102,7 +102,7 @@ static void select_IBF(benchmark::State& state)
     auto k = state.range(1);
     auto bits = state.range(2);
     auto hash = state.range(3);
-    KmerFilter<TAlphabet, InterleavedBloomFilter, TFilter> ibf(bins, hash, k, (1ULL<<bits)+256);
+    KmerFilter<TAlphabet, InterleavedBloomFilter, TFilter> ibf(bins, hash, k, (1ULL<<bits));
 
     CharString storage("");
     append(storage, CharString(std::to_string(bins)));
@@ -177,7 +177,7 @@ static void insertKmer_DA(benchmark::State& state)
 {
     auto bins = state.range(0);
     auto k = state.range(1);
-    KmerFilter<TAlphabet, DirectAddressing> da (bins, k);
+    KmerFilter<TAlphabet, DirectAddressing, TFilter> da (bins, k);
 
     for (auto _ : state)
     {
@@ -229,7 +229,7 @@ static void select_DA(benchmark::State& state)
 {
     auto bins = state.range(0);
     auto k = state.range(1);
-    KmerFilter<TAlphabet, DirectAddressing> da (bins, k);
+    KmerFilter<TAlphabet, DirectAddressing, TFilter> da (bins, k);
 
     CharString storage("");
     append(storage, CharString(std::to_string(bins)));
