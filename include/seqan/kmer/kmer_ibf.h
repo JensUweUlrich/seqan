@@ -66,35 +66,34 @@ class KmerFilter<TValue, InterleavedBloomFilter, TFilterVector>
 {
 public:
     //!\brief The type of the variables.
-    typedef typename Value<KmerFilter>::Type    THValue;
     typedef String<TValue>                      TString;
     //!\brief The number of Bins.
-    THValue    noOfBins;
+    typename Value<KmerFilter>::noOfBins        noOfBins;
     //!\brief The number of hash functions.
-    THValue    noOfHashFunc;
+    typename Value<KmerFilter>::noOfHashFunc    noOfHashFunc;
     //!\brief The k-mer size.
-    THValue    kmerSize;
+    typename Value<KmerFilter>::kmerSize        kmerSize;
     //!\brief The size of the bit vector.
-    THValue    noOfBits;
+    typename Value<KmerFilter>::noOfBits        noOfBits;
     //!\brief The number of possible hash values that can fit into a single block.
-    THValue    noOfBlocks;
+    typename Value<KmerFilter>::noOfBlocks      noOfBlocks;
     //!\brief The number of 64 bit blocks needed to represent the number of bins.
-    THValue    binWidth;
+    typename Value<KmerFilter>::binWidth        binWidth;
     //!\brief Bits we need to represent noBins bits. Multiple of intSize.
-    THValue    blockBitSize;
+    typename Value<KmerFilter>::blockBitSize    blockBitSize;
 
     //!\brief Randomized values for hash functions.
-    std::vector<THValue>   preCalcValues;
+    std::vector<typename Value<KmerFilter>::preCalcValues>   preCalcValues;
     //!\brief Shift value used for hash function.
-    static const THValue   shiftValue = 27;
+    static const typename Value<KmerFilter>::shiftValue      shiftValue{27};
     //!\brief Random seed.
-    static const THValue   seedValue = 0x90b45d39fb6da1fa;
+    static const typename Value<KmerFilter>::seedValue       seedValue{0x90b45d39fb6da1fa};
     //!\brief How many bits we can represent in the biggest unsigned int available.
-    static const THValue   intSize = 0x40;
+    static const typename Value<KmerFilter>::intSize         intSize{0x40};
     //!\brief The bit vector storing the bloom filters.
-    FilterVector<TFilterVector>         filterVector;
+    FilterVector<TFilterVector>                              filterVector;
     //!\brief Size in bits of the meta data.
-    static const uint32_t               filterMetadataSize{256};
+    static const typename Value<KmerFilter>::filterMetadataSize filterMetadataSize{256};
     //!\brief A ungapped Shape over our filter alphabet.
     typedef Shape<TValue, SimpleShape>  TShape;
 
@@ -117,7 +116,7 @@ public:
      * \param kmer_size The Size of the k-mer.
      * \param vec_size The size of the bit vector in bits. Preferably a power of two + 256 for metadata.
      */
-    KmerFilter(THValue n_bins, THValue n_hash_func, THValue kmer_size, THValue vec_size):
+    KmerFilter(typename Value<KmerFilter>::noOfBins n_bins, typename Value<KmerFilter>::noOfHashFunc n_hash_func, typename Value<KmerFilter>::kmerSize kmer_size, typename Value<KmerFilter>::noOfBits vec_size):
         noOfBins(n_bins),
         noOfHashFunc(n_hash_func),
         kmerSize(kmer_size),
@@ -173,12 +172,12 @@ public:
      * \param threads Number of threads to use.
      */
     template<typename TInt>
-    void clear(std::vector<THValue> const & bins, TInt&& threads)
+    void clear(std::vector<uint16_t> const & bins, TInt&& threads)
     {
         std::vector<std::future<void>> tasks;
         uint64_t chunkBlocks = filterVector.chunkSize / filterVector.blockBitSize;
 
-        for (uint64_t chunk = 0; chunk < filterVector.noOfChunks; ++chunk)
+        for (uint8_t chunk = 0; chunk < filterVector.noOfChunks; ++chunk)
         {
             tasks.clear();
             filterVector.decompress(chunk);
@@ -187,7 +186,7 @@ public:
             uint64_t batchSize = noOfBlocks / threads;
             if(batchSize * threads < noOfBlocks) ++batchSize;
 
-            for (uint32_t taskNo = 0; taskNo < threads; ++taskNo) // TODO Rather divide by chunks?
+            for (uint8_t taskNo = 0; taskNo < threads; ++taskNo) // TODO Rather divide by chunks?
             {
                 // hashBlock is the number of the block the thread will work on. Each block contains binNo bits that
                 // represent the individual bins. Each thread has to work on batchSize blocks. We can get the position in
@@ -201,8 +200,8 @@ public:
                         ++hashBlock)
                     {
                         uint64_t vecPos = hashBlock * filterVector.blockBitSize;
-                        uint64_t chunkNo = vecPos / filterVector.chunkSize;
-                        for(uint32_t binNo : bins)
+                        uint8_t  chunkNo = vecPos / filterVector.chunkSize;
+                        for(uint16_t binNo : bins)
                         {
                             if (chunk == chunkNo)
                                 filterVector.unset_pos(vecPos + binNo);
@@ -223,9 +222,9 @@ public:
      * \param counts Vector to be filled with counts.
      * \param text Text to count occurences for.
      */
-    void select(std::vector<uint64_t> & counts, TString const & text) // TODO uint16_t
+    void select(std::vector<uint16_t> & counts, TString const & text) // TODO uint16_t
     {
-        uint8_t possible = length(text) - kmerSize + 1; // TODO uint16_t
+        uint16_t possible = length(text) - kmerSize + 1; // Supports text lengths up to 65535 + k
 
         std::vector<uint64_t> kmerHashes(possible, 0);
 
@@ -233,7 +232,7 @@ public:
         resize(kmerShape, kmerSize);
         hashInit(kmerShape, begin(text));
         auto it = begin(text);
-        for (uint32_t i = 0; i < possible; ++i)
+        for (uint16_t i = 0; i < possible; ++i)
         {
             kmerHashes[i] = hashNext(kmerShape, it);
             ++it;
@@ -247,8 +246,8 @@ public:
                 hashToIndex(vecIndices[i]);
             }
 
-            uint64_t binNo = 0;
-            for (uint64_t batchNo = 0; batchNo < binWidth; ++batchNo)
+            uint16_t binNo = 0;
+            for (uint16_t batchNo = 0; batchNo < binWidth; ++batchNo)
             {
                 binNo = batchNo * intSize;
                 // get_int(idx, len) returns the integer value of the binary string of length len starting
@@ -287,7 +286,7 @@ public:
                     ++counts[binNo + intSize - 1];
                 }
                 // We will now start with the next batch if possible, so we need to shift all the indices.
-                for (uint64_t i = 0; i < noOfHashFunc; ++i)
+                for (uint8_t i = 0; i < noOfHashFunc; ++i)
                 {
                     vecIndices[i] += intSize;
                 }
@@ -304,9 +303,9 @@ public:
     template<typename TInt>
     inline void select(std::vector<bool> & selected, TString const & text, TInt && threshold)
     {
-        std::vector<uint64_t> counts(noOfBins, 0);
+        std::vector<uint16_t> counts(noOfBins, 0);
         select(counts, text);
-        for(uint32_t binNo=0; binNo < noOfBins; ++binNo)
+        for(uint16_t binNo=0; binNo < noOfBins; ++binNo)
         {
             if(counts[binNo] >= threshold)
                 selected[binNo] = true;
@@ -344,7 +343,7 @@ public:
         {
             uint64_t kmerHash = hashNext(kmerShape, begin(text) + i);
 
-            for(uint8_t i = 0; i < noOfHashFunc ; i++)
+            for(uint8_t i = 0; i < noOfHashFunc ; ++i)
             {
                 uint64_t vecIndex = preCalcValues[i] * kmerHash;
                 hashToIndex(vecIndex);
@@ -365,7 +364,7 @@ public:
         noOfBlocks = (noOfBits - filterMetadataSize) / blockBitSize;
 
         preCalcValues.resize(noOfHashFunc);
-        for(uint64_t i = 0; i < noOfHashFunc ; i++)
+        for(uint8_t i = 0; i < noOfHashFunc ; i++)
             preCalcValues[i] = i ^  (kmerSize * seedValue);
     }
 };
