@@ -86,6 +86,8 @@ static void insertKmer_IBF(benchmark::State& state)
 
         ++i;
     }
+
+    state.counters["Size"] = ibf.filterVector.size_in_mega_bytes();
 }
 
 template <typename TAlphabet, typename TFilter>
@@ -138,6 +140,8 @@ static void insertKmer_DA(benchmark::State& state)
 
         ++i;
     }
+
+    state.counters["Size"] = da.filterVector.size_in_mega_bytes();
 }
 
 template <typename TAlphabet, typename TFilter>
