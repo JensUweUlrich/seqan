@@ -33,25 +33,36 @@
 // ==========================================================================
 #include <random>
 
+#if __has_include(<filesystem>)
+#include <filesystem>
+#else
+#include <experimental/filesystem>
+#endif
+
+#if __has_include(<filesystem>)
+namespace filesystem = std::filesystem;
+#else
+namespace filesystem = std::experimental::filesystem;
+#endif
+
 namespace seqan {
 
 template<>
 struct FilterVector<Uncompressed>
 {
-    static const uint64_t FILTER_METADATA_SIZE = 256;
-    static const uint64_t BUFFER_SIZE = 10000000;
-    static const uint64_t INT_SIZE = 0x40;
+    static const uint16_t FILTER_METADATA_SIZE{256};
+    static const uint8_t INT_SIZE{0x40};
 
-    uint64_t noOfBins;
+    uint16_t noOfBins;
     uint64_t noOfBits;
-    uint64_t binWidth;
-    uint64_t blockBitSize;
+    uint16_t binWidth;
+    uint16_t blockBitSize;
     uint64_t noOfBlocks;
-    uint64_t noOfChunks;
+    uint8_t  noOfChunks;
     uint64_t chunkSize;
 
-    inline void decompress(uint64_t) {}
-    inline void compress(uint64_t) {}
+    inline void decompress(uint8_t) {}
+    inline void compress(uint8_t) {}
 
     std::unique_ptr<sdsl::bit_vector> uncompressed_vector;
 
@@ -62,7 +73,7 @@ struct FilterVector<Uncompressed>
 
     FilterVector() {}
 
-    FilterVector(uint64_t bins, uint64_t bits):
+    FilterVector(uint16_t bins, uint64_t bits):
         noOfBins(bins),
         noOfBits(bits)
     {
@@ -112,6 +123,7 @@ struct FilterVector<Uncompressed>
     FilterVector(CharString fileName)
     {
         uncompressed_vector = std::make_unique<sdsl::bit_vector>(0,0);
+
         sdsl::load_from_file(*uncompressed_vector, toCString(fileName));
 
         noOfBits = uncompressed_vector->size();
@@ -166,9 +178,16 @@ struct FilterVector<Uncompressed>
 template<>
 struct FilterVector<CompressedSimple>
 {
-    static const uint64_t FILTER_METADATA_SIZE = 256;
-    static const uint64_t BUFFER_SIZE = 10000000;
-    static const uint64_t INT_SIZE = 0x40;
+    static const uint16_t FILTER_METADATA_SIZE{256};
+    static const uint8_t INT_SIZE{0x40};
+
+    uint16_t noOfBins;
+    uint64_t noOfBits;
+    uint16_t binWidth;
+    uint16_t blockBitSize;
+    uint64_t noOfBlocks;
+    uint8_t  noOfChunks;
+    uint64_t chunkSize;
 
     std::string random_string()
     {
@@ -184,14 +203,6 @@ struct FilterVector<CompressedSimple>
 
     CharString PREFIX{random_string()};
 
-    uint64_t noOfBins;
-    uint64_t noOfBits;
-    uint64_t binWidth;
-    uint64_t blockBitSize;
-    uint64_t noOfBlocks;
-    uint64_t noOfChunks;
-    uint64_t chunkSize;
-
     bool compressed = false;
     std::unique_ptr<sdsl::bit_vector> uncompressed_vector;
     std::unique_ptr<sdsl::sd_vector<> > compressed_vector;
@@ -201,7 +212,7 @@ struct FilterVector<CompressedSimple>
         return sdsl::size_in_mega_bytes(*compressed_vector);
     }
 
-    inline void decompress(uint64_t)
+    inline void decompress(uint8_t)
     {
         decompress();
     }
@@ -215,7 +226,7 @@ struct FilterVector<CompressedSimple>
         }
     }
 
-    inline void compress(uint64_t)
+    inline void compress(uint8_t)
     {
         compress();
     }
@@ -233,7 +244,7 @@ struct FilterVector<CompressedSimple>
 
     FilterVector() {}
 
-    FilterVector(uint64_t bins, uint64_t bits):
+    FilterVector(uint16_t bins, uint64_t bits):
         noOfBins(bins),
         noOfBits(bits)
     {
@@ -351,10 +362,17 @@ struct FilterVector<CompressedSimple>
 template<>
 struct FilterVector<CompressedArray>
 {
-    static const uint64_t FILTER_METADATA_SIZE = 256;
-    static const uint64_t BUFFER_SIZE = 10000000;
+    static const uint16_t FILTER_METADATA_SIZE{256};
+    static const uint8_t INT_SIZE{0x40};
     static const uint64_t MAX_VEC = 1ULL<<32; //512 MB, 36 -> 8GB, 39 -> 64
-    static const uint64_t INT_SIZE = 0x40;
+
+    uint16_t noOfBins;
+    uint64_t noOfBits;
+    uint16_t binWidth;
+    uint16_t blockBitSize;
+    uint64_t noOfBlocks;
+    uint8_t  noOfChunks;
+    uint64_t chunkSize;
 
     std::string random_string()
     {
@@ -370,27 +388,19 @@ struct FilterVector<CompressedArray>
 
     CharString PREFIX{random_string()};
 
-    uint64_t noOfBins;
-    uint64_t noOfBits;
-    uint64_t binWidth;
-    uint64_t blockBitSize;
-    uint64_t noOfBlocks;
-    uint64_t noOfChunks;
-    uint64_t chunkSize;
-
     std::vector<std::tuple<bool,std::unique_ptr<sdsl::bit_vector>, std::unique_ptr<sdsl::sd_vector<> > > > filterVector;
 
     double size_in_mega_bytes()
     {
         double size{0};
-        for (uint64_t j = 0; j < noOfChunks; j++)
+        for (uint8_t j = 0; j < noOfChunks; j++)
         {
             size += sdsl::size_in_mega_bytes(*std::get<2>(filterVector[j]));
         }
         return size;
     }
 
-    inline void decompress(uint64_t chunk)
+    inline void decompress(uint8_t chunk)
     {
         if (std::get<0>(filterVector[chunk]))
         {
@@ -399,7 +409,7 @@ struct FilterVector<CompressedArray>
         }
     }
 
-    inline void compress(uint64_t chunk)
+    inline void compress(uint8_t chunk)
     {
         if (!std::get<0>(filterVector[chunk]))
         {
@@ -412,7 +422,7 @@ struct FilterVector<CompressedArray>
 
     FilterVector() {}
 
-    FilterVector(uint64_t bins, uint64_t bits):
+    FilterVector(uint16_t bins, uint64_t bits):
         noOfBins(bins),
         noOfBits(bits)
     {
@@ -452,7 +462,10 @@ struct FilterVector<CompressedArray>
         noOfBlocks = other.noOfBlocks;
         chunkSize = other.chunkSize;
         noOfChunks = other.noOfChunks;
-        PREFIX = other.PREFIX;
+        for (uint8_t j = 0; j < noOfChunks; j++)
+        {
+            filesystem::copy_file(toCString(other.PREFIX)+std::to_string(j), toCString(PREFIX)+std::to_string(j));
+        }
 
         return *this;
     }
@@ -474,7 +487,7 @@ struct FilterVector<CompressedArray>
 
     ~FilterVector()
     {
-        for (uint64_t chunk = 0; chunk < noOfChunks; ++chunk)
+        for (uint8_t chunk = 0; chunk < noOfChunks; ++chunk)
         {
             std::remove((toCString(PREFIX)+std::to_string(chunk)).c_str());
         }
@@ -482,7 +495,7 @@ struct FilterVector<CompressedArray>
 
     FilterVector(CharString fileName)
     {
-        uint64_t chunk = 0;
+        uint8_t chunk = 0;
         while (true)
         {
             filterVector.emplace_back(
@@ -503,7 +516,7 @@ struct FilterVector<CompressedArray>
         chunkSize = std::get<2>(filterVector[0])->size();
         noOfChunks = chunk;
         noOfBits = chunkSize;
-        for (uint64_t c = 1; c < noOfChunks; ++c)
+        for (uint8_t c = 1; c < noOfChunks; ++c)
         {
             noOfBits += std::get<2>(filterVector[c])->size();
         }
@@ -563,7 +576,7 @@ struct FilterVector<CompressedArray>
     bool store(CharString fileName)
     {
         bool res = true;
-        for (uint64_t chunk = 0; chunk < noOfChunks; ++chunk)
+        for (uint8_t chunk = 0; chunk < noOfChunks; ++chunk)
         {
             decompress(chunk);
             res && sdsl::store_to_file(*std::get<1>(filterVector[chunk]), toCString(fileName)+std::to_string(chunk));

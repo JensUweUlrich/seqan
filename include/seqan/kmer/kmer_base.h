@@ -98,7 +98,18 @@ class KmerFilter;
 template<typename TValue, typename TSpec, typename TFilterVector>
 struct Value<KmerFilter<TValue, TSpec, TFilterVector> >
 {
-    typedef uint64_t Type;
+    typedef uint16_t noOfBins;
+    typedef uint16_t kmerSize;
+    typedef uint64_t noOfBits;
+    typedef uint64_t noOfBlocks;
+    typedef uint16_t binWidth;
+    typedef uint16_t blockBitSize;
+    typedef uint8_t  intSize;
+    typedef uint16_t filterMetadataSize;
+    typedef uint8_t  noOfHashFunc;
+    typedef uint8_t  shiftValue;
+    typedef uint64_t preCalcValues;
+    typedef uint64_t seedValue;
 };
 
 // --------------------------------------------------------------------------
@@ -134,7 +145,8 @@ inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> & me, TString co
 template<typename TValue, typename TSpec, typename TFilterVector, typename TInt1, typename TInt2>
 inline void clear(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<TInt1> & bins, TInt2&& threads)
 {
-    me.clear(bins, static_cast<uint64_t>(threads));
+    // me.clear(bins, static_cast<uint64_t>(threads));
+    me.clear(bins, threads);
 }
 
 /*!
@@ -148,14 +160,14 @@ inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> &  me, const cha
 {
     CharString id;
     String<TValue> seq;
-
     SeqFileIn seqFileIn;
-    for (uint64_t i = 0; i < me.filterVector.noOfChunks; ++i)
+    for (uint8_t i = 0; i < me.filterVector.noOfChunks; ++i)
     {
         if (!open(seqFileIn, fastaFile))
         {
             CharString msg = "Unable to open contigs file: ";
             append(msg, CharString(fastaFile));
+            std::cerr << msg << std::endl;
             throw toCString(msg);
         }
 
@@ -179,7 +191,7 @@ inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> &  me, const cha
  * \param text A single text to count all contained k-mers for.
  */
 template<typename TValue, typename TSpec,  typename TFilterVector>
-inline void select(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<uint64_t> & counts, String<TValue> const & text)
+inline void select(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<uint16_t> & counts, String<TValue> const & text)
 {
     me.select(counts, text);
 }
@@ -191,9 +203,9 @@ inline void select(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<u
  * \returns std::vector<uint64_t> of size binNo containing counts.
  */
 template<typename TValue, typename TSpec, typename TFilterVector>
-inline std::vector<uint64_t> select(KmerFilter<TValue, TSpec, TFilterVector> &  me, String<TValue> const & text)
+inline std::vector<uint16_t> select(KmerFilter<TValue, TSpec, TFilterVector> &  me, String<TValue> const & text)
 {
-    std::vector<uint64_t> counts(me.noOfBins, 0);
+    std::vector<uint16_t> counts(me.noOfBins, 0);
     select(me, counts, text);
     return counts;
 }
@@ -208,7 +220,8 @@ inline std::vector<uint64_t> select(KmerFilter<TValue, TSpec, TFilterVector> &  
 template<typename TValue, typename TSpec, typename TFilterVector, typename TInt>
 inline void select(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<bool> & selected, String<TValue> const & text, TInt threshold)
 {
-    me.select(selected, text, static_cast<uint64_t>(threshold));
+    // me.select(selected, text, static_cast<uint16_t>(threshold));
+    me.select(selected, text, threshold);
 }
 
 /*!
@@ -232,7 +245,7 @@ inline std::vector<bool> select(KmerFilter<TValue, TSpec, TFilterVector> &  me, 
  * \returns Value<KmerFilter<TValue, TSpec> >::Type Number of bins.
  */
 template<typename TValue, typename TSpec, typename TFilterVector>
-inline typename Value<KmerFilter<TValue, TSpec, TFilterVector> >::Type getNumberOfBins(KmerFilter<TValue, TSpec, TFilterVector> &  me)
+inline typename Value<KmerFilter<TValue, TSpec, TFilterVector> >::noOfBins getNumberOfBins(KmerFilter<TValue, TSpec, TFilterVector> &  me)
 {
     return me.noOfBins;
 }
@@ -243,7 +256,7 @@ inline typename Value<KmerFilter<TValue, TSpec, TFilterVector> >::Type getNumber
  * \returns Value<KmerFilter<TValue, TSpec> >::Type k-mer size.
  */
 template<typename TValue, typename TSpec, typename TFilterVector>
-inline typename Value<KmerFilter<TValue, TSpec, TFilterVector> >::Type getKmerSize(KmerFilter<TValue, TSpec, TFilterVector> &  me)
+inline typename Value<KmerFilter<TValue, TSpec, TFilterVector> >::kmerSize getKmerSize(KmerFilter<TValue, TSpec, TFilterVector> &  me)
 {
     return me.kmerSize;
 }
@@ -255,14 +268,12 @@ inline typename Value<KmerFilter<TValue, TSpec, TFilterVector> >::Type getKmerSi
 template<typename TValue, typename TSpec, typename TFilterVector>
 inline void getMetadata(KmerFilter<TValue, TSpec, TFilterVector> &  me)
 {
-    typedef typename Value<KmerFilter<TValue, TSpec, TFilterVector> >::Type THValue;
-
     //-------------------------------------------------------------------
     //| kmer_size | n_hash_func | n_bins |              bf              |
     //-------------------------------------------------------------------
     me.noOfBits = me.filterVector.noOfBits;
 
-    THValue metadataStart = me.filterVector.noOfBits;
+    typename Value<KmerFilter<TValue, TSpec, TFilterVector> >::noOfBits metadataStart = me.filterVector.noOfBits;
     me.noOfBins = me.filterVector.get_int(metadataStart);
     me.noOfHashFunc = me.filterVector.get_int(metadataStart+64);
     me.kmerSize = me.filterVector.get_int(metadataStart+128);
@@ -275,13 +286,11 @@ inline void getMetadata(KmerFilter<TValue, TSpec, TFilterVector> &  me)
 template<typename TValue, typename TSpec, typename TFilterVector>
 inline void setMetadata(KmerFilter<TValue, TSpec, TFilterVector> &  me)
 {
-    typedef typename Value<KmerFilter<TValue, TSpec, TFilterVector> >::Type THValue;
-
     //-------------------------------------------------------------------
     //| kmer_size | n_hash_func | n_bins |              bf              |
     //-------------------------------------------------------------------
 
-    THValue metadataStart = me.noOfBits;
+    typename Value<KmerFilter<TValue, TSpec, TFilterVector> >::noOfBits metadataStart = me.noOfBits;
 
     // TODO also store TValue (alphabet)
     me.filterVector.set_int(metadataStart, me.noOfBins);
@@ -294,7 +303,7 @@ inline void setMetadata(KmerFilter<TValue, TSpec, TFilterVector> &  me)
  * \param me The KmerFilter instance.
  * \returns double filter vector size in MB.
  */
-template<typename TValue, typename TSpec, typename TFilterVector, typename THValue>
+template<typename TValue, typename TSpec, typename TFilterVector>
 inline double size(KmerFilter<TValue, TSpec, TFilterVector> &  me)
 {
     return me.filterVector.size_in_mega_bytes();
