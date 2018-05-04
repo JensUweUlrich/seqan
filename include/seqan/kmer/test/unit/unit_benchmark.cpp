@@ -52,7 +52,9 @@ int main()
     uint64_t threads{3};
     uint64_t noBins{10};
     uint64_t kmerSize{14};
+    [[maybe_unused]]
     uint64_t hashFunc{3};
+    [[maybe_unused]]
     uint64_t bits{1ULL<<33};
 
 
@@ -71,7 +73,6 @@ int main()
     // Empty default constructor
     KmerFilter<Dna, TSpec, TFilter> ctor_empty;
     // Default constructor
-    // KmerFilter<Dna, TSpec> ctor_default (noBins, hashFunc, kmerSize, bits);
 
     KmerFilter<Dna, TSpec, TFilter> ctor_default (noBins, hashFunc, kmerSize, bits);
     KmerFilter<Dna, TSpec, TFilter> ctor_default_helper1 (noBins, hashFunc, kmerSize, bits);
@@ -98,7 +99,7 @@ int main()
     // ==========================================================================
     std::cout << "Testing insertKmer" << '\n';
 
-        CharString fasta("../test.fasta.gz");
+        CharString fasta("../../unit/test.fasta");
         insertKmer(ctor_default, toCString(fasta), 1);
         insertKmer(ctor_default, toCString(fasta), 5);
         insertKmer(ctor_default, toCString(fasta), 8);
@@ -124,11 +125,11 @@ int main()
     // ==========================================================================
     std::cout << "Testing select" << '\n';
 
-    std::vector<uint64_t> ctor_default_set;
+    std::vector<uint16_t> ctor_default_set;
 
     std::vector<bool> which = select(ctor_default, DnaString(std::string(kmerSize, 'A')), 1);
     (void) select(ctor_default, DnaString(std::string(kmerSize, 'T')));
-    for (uint64_t i = 0; i < which.size(); ++i)
+    for (uint16_t i = 0; i < which.size(); ++i)
     {
         if (i == 1 || i == 5 || i == 8)
         {
