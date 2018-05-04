@@ -39,6 +39,18 @@ CharString baseDir{"/srv/public/enricoseiler/benchmark/"};
 uint64_t e{2};
 uint64_t readNo{1000000};
 
+template <typename T>
+int numDigits(T number)
+{
+    int digits = 0;
+    if (number <= 0) digits = 1; // remove this line if '-' counts as a digit
+    while (number) {
+        number /= 10;
+        digits++;
+    }
+    return digits;
+}
+
 template <typename TAlphabet, typename TFilter>
 static void insertKmer_IBF(benchmark::State& state)
 {
@@ -55,16 +67,8 @@ static void insertKmer_IBF(benchmark::State& state)
         {
             CharString file(baseDir);
             append(file, CharString(std::to_string(bins)));
-            append(file, CharString{"/bins/"});
-            if (i < 10)
-            {
-                append(file, CharString("bin_0"));
-            }
-            else
-            {
-                append(file, CharString("bin_"));
-            }
-            append(file, CharString(std::to_string(i)));
+            append(file, CharString{"/bins/bin_"});
+            append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
             append(file, CharString(".fasta"));
 
             auto start = std::chrono::high_resolution_clock::now();
@@ -130,17 +134,8 @@ static void select_IBF(benchmark::State& state)
         {
             CharString file(baseDir);
             append(file, CharString(std::to_string(bins)));
-            append(file, CharString{"/reads/"});
-
-            if (i < 10)
-            {
-                append(file, CharString("bin_0"));
-            }
-            else
-            {
-                append(file, CharString("bin_"));
-            }
-            append(file, CharString(std::to_string(i)));
+            append(file, CharString{"/reads/bin_"});
+            append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
             append(file, CharString(".fastq"));
 
             CharString id;
@@ -186,16 +181,8 @@ static void insertKmer_DA(benchmark::State& state)
         {
             CharString file(baseDir);
             append(file, CharString(std::to_string(bins)));
-            append(file, CharString{"/bins/"});
-            if (i < 10)
-            {
-                append(file, CharString("bin_0"));
-            }
-            else
-            {
-                append(file, CharString("bin_"));
-            }
-            append(file, CharString(std::to_string(i)));
+            append(file, CharString{"/bins/bin_"});
+            append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
             append(file, CharString(".fasta"));
 
             auto start = std::chrono::high_resolution_clock::now();
@@ -255,17 +242,8 @@ static void select_DA(benchmark::State& state)
         {
             CharString file(baseDir);
             append(file, CharString(std::to_string(bins)));
-            append(file, CharString{"/reads/"});
-
-            if (i < 10)
-            {
-                append(file, CharString("bin_0"));
-            }
-            else
-            {
-                append(file, CharString("bin_"));
-            }
-            append(file, CharString(std::to_string(i)));
+            append(file, CharString{"/reads/bin_"});
+            append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
             append(file, CharString(".fastq"));
 
             CharString id;
