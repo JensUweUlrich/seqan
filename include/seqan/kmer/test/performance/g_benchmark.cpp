@@ -123,6 +123,7 @@ static void select_IBF(benchmark::State& state)
     }
     append(storage, CharString("_ibf.filter"));
     retrieve(ibf, storage);
+    ibf.filterVector.compress(0);
 
     uint64_t verifications{0};
     uint64_t tp{0};
@@ -231,6 +232,7 @@ static void select_DA(benchmark::State& state)
     }
     append(storage, CharString("_da.filter"));
     retrieve(da, storage);
+    da.filterVector.compress(0);
 
     uint64_t verifications{0};
     uint64_t tp{0};
@@ -310,7 +312,7 @@ static void DAArguments(benchmark::internal::Benchmark* b)
     }
 }
 
-BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Uncompressed)->Apply(IBFArguments)->UseManualTime();
+//BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Uncompressed)->Apply(IBFArguments)->UseManualTime();
 BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, CompressedSimple)->Apply(IBFArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, CompressedArray)->Apply(IBFAddArguments)->UseManualTime();
 BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Uncompressed)->Apply(DAArguments)->UseManualTime();

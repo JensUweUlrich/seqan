@@ -317,13 +317,13 @@ struct FilterVector<CompressedSimple>
         noOfBlocks = (noOfBits + FILTER_METADATA_SIZE) / blockBitSize;
     }
 
-    uint64_t get_int(uint64_t idx, uint64_t len = 1ULL<<6)
+    inline uint64_t get_int(uint64_t idx, uint64_t len = 1ULL<<6)
     {
         compress();
         return compressed_vector->get_int(idx, len);
     }
 
-    uint64_t get_pos(uint64_t vecIndex)
+    inline uint64_t get_pos(uint64_t vecIndex)
     {
         compress();
         return (*compressed_vector)[vecIndex];
