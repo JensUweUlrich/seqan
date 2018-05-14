@@ -87,8 +87,17 @@ static void insertKmer_IBF(benchmark::State& state)
 
         ++i;
     }
-
+    auto start = std::chrono::high_resolution_clock::now();
+    ibf.filterVector.compress();
+    auto end   = std::chrono::high_resolution_clock::now();
+    auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(end - start);
+    state.counters["Compress"] = elapsed_seconds.count();
     state.counters["Size"] = ibf.filterVector.size_in_mega_bytes();
+    start = std::chrono::high_resolution_clock::now();
+    ibf.filterVector.decompress();
+    end   = std::chrono::high_resolution_clock::now();
+    elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(end - start);
+    state.counters["Decompress"] = elapsed_seconds.count();
 }
 
 template <typename TAlphabet, typename TFilter>
@@ -108,6 +117,8 @@ static void select_IBF(benchmark::State& state)
         insertKmer(ibf, in, i%bins,0);
         ++i;
     }
+
+    ibf.filterVector.compress();
 
     for (auto _ : state)
     {
@@ -146,7 +157,17 @@ static void insertKmer_DA(benchmark::State& state)
         ++i;
     }
 
+    auto start = std::chrono::high_resolution_clock::now();
+    da.filterVector.compress();
+    auto end   = std::chrono::high_resolution_clock::now();
+    auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(end - start);
+    state.counters["Compress"] = elapsed_seconds.count();
     state.counters["Size"] = da.filterVector.size_in_mega_bytes();
+    start = std::chrono::high_resolution_clock::now();
+    da.filterVector.decompress();
+    end   = std::chrono::high_resolution_clock::now();
+    elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(end - start);
+    state.counters["Decompress"] = elapsed_seconds.count();
 }
 
 template <typename TAlphabet, typename TFilter>
@@ -164,6 +185,8 @@ static void select_DA(benchmark::State& state)
         insertKmer(da, in, i%bins,0);
         ++i;
     }
+
+    da.filterVector.compress();
 
     for (auto _ : state)
     {
@@ -202,28 +225,28 @@ static void IBFArguments(benchmark::internal::Benchmark* b)
 
 static void DAArguments(benchmark::internal::Benchmark* b)
 {
-    for (int32_t binNo = 64; binNo <= 8192; binNo *= 2)
+    for (int32_t binNo = 64; binNo < 8192; binNo *= 2)
     {
         if ((binNo > 1 && binNo < 64) || binNo==128 || binNo==512 || binNo==2048 || binNo==4096)
             continue;
-        for (int32_t k = 13; k <= 15; ++k)
+        for (int32_t k = 12; k < 15; ++k)
         {
             b->Args({binNo, k});
         }
     }
 }
 
-BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Uncompressed)->Apply(IBFArguments)->UseManualTime();
+//BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Uncompressed)->Apply(IBFArguments)->UseManualTime();
 BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, CompressedSimple)->Apply(IBFArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, CompressedArray)->Apply(IBFAddArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Uncompressed)->Apply(DAArguments)->UseManualTime();
+//BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Uncompressed)->Apply(DAArguments)->UseManualTime();
 BENCHMARK_TEMPLATE(insertKmer_DA, Dna, CompressedSimple)->Apply(DAArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, CompressedArray)->Apply(DAAddArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(select_IBF, Dna, Uncompressed)->Apply(IBFArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedSimple)->Apply(IBFArguments)->UseManualTime();
+//BENCHMARK_TEMPLATE(select_IBF, Dna, Uncompressed)->Apply(IBFArguments)->UseManualTime();
+//BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedSimple)->Apply(IBFArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedArray)->Apply(IBFWhichArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(select_DA, Dna, Uncompressed)->Apply(DAArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(select_DA, Dna, CompressedSimple)->Apply(DAArguments)->UseManualTime();
+//BENCHMARK_TEMPLATE(select_DA, Dna, Uncompressed)->Apply(DAArguments)->UseManualTime();
+//BENCHMARK_TEMPLATE(select_DA, Dna, CompressedSimple)->Apply(DAArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(select_DA, Dna, CompressedArray)->Apply(DAWhichArguments)->UseManualTime();
 
 BENCHMARK_MAIN();
