@@ -62,7 +62,7 @@ static void insertKmer_IBF(benchmark::State& state)
 
     for (auto _ : state)
     {
-        insertKmerDir(ibf, baseDir, 8);
+        insertKmerDir(ibf, toCString(baseDir), 8);
         // double elapsed_seconds{0.0};
         // for(int32_t i = 0; i < bins; ++i)
         // {
@@ -178,7 +178,7 @@ static void insertKmer_DA(benchmark::State& state)
 
     for (auto _ : state)
     {
-        insertKmerDir(da, baseDir, 8);
+        insertKmerDir(da, toCString(baseDir), 8);
         // double elapsed_seconds{0.0};
         // for(int32_t i = 0; i < bins; ++i)
         // {
