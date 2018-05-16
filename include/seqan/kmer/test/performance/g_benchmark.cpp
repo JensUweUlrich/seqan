@@ -39,18 +39,6 @@ CharString baseDir{"/srv/public/enricoseiler/benchmark/"};
 uint64_t e{2};
 uint64_t readNo{1000000};
 
-template <typename T>
-int numDigits(T number)
-{
-    int digits = 0;
-    if (number <= 0) digits = 1; // remove this line if '-' counts as a digit
-    while (number) {
-        number /= 10;
-        digits++;
-    }
-    return digits;
-}
-
 template <typename TAlphabet, typename TFilter>
 static void insertKmer_IBF(benchmark::State& state)
 {
