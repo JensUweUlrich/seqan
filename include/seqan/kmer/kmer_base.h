@@ -231,7 +231,7 @@ inline void insertKmerDir(KmerFilter<TValue, TSpec, Uncompressed> &  me, const c
         append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
         append(file, CharString(".fasta"));
         tasks.emplace_back(
-            std::async(std::launch::async, [=, &thread_limiter, &me] {
+            std::async(std::launch::async, [=, &thread_limiter, &me, &mtx] {
                 Critical_section _(thread_limiter);
                 insertKmer(me, toCString(file), i);
                 mtx.lock();
