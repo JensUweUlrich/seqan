@@ -62,22 +62,23 @@ static void insertKmer_IBF(benchmark::State& state)
 
     for (auto _ : state)
     {
-        double elapsed_seconds{0.0};
-        for(int32_t i = 0; i < bins; ++i)
-        {
-            CharString file(baseDir);
-            append(file, CharString(std::to_string(bins)));
-            append(file, CharString{"/bins/bin_"});
-            append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
-            append(file, CharString(".fasta"));
-
-            auto start = std::chrono::high_resolution_clock::now();
-            insertKmer(ibf, toCString(file), i);
-            auto end   = std::chrono::high_resolution_clock::now();
-            elapsed_seconds += (std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
-            std::cerr << "IBF Bin " << i << " done." << '\n';
-        }
-        state.SetIterationTime(elapsed_seconds);
+        insertKmerDir(ibf, baseDir, 8);
+        // double elapsed_seconds{0.0};
+        // for(int32_t i = 0; i < bins; ++i)
+        // {
+        //     CharString file(baseDir);
+        //     append(file, CharString(std::to_string(bins)));
+        //     append(file, CharString{"/bins/bin_"});
+        //     append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
+        //     append(file, CharString(".fasta"));
+        //
+        //     auto start = std::chrono::high_resolution_clock::now();
+        //     insertKmer(ibf, toCString(file), i);
+        //     auto end   = std::chrono::high_resolution_clock::now();
+        //     elapsed_seconds += (std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
+        //     std::cerr << "IBF Bin " << i << " done." << '\n';
+        // }
+        // state.SetIterationTime(elapsed_seconds);
     }
 
     CharString storage("");
@@ -177,22 +178,23 @@ static void insertKmer_DA(benchmark::State& state)
 
     for (auto _ : state)
     {
-        double elapsed_seconds{0.0};
-        for(int32_t i = 0; i < bins; ++i)
-        {
-            CharString file(baseDir);
-            append(file, CharString(std::to_string(bins)));
-            append(file, CharString{"/bins/bin_"});
-            append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
-            append(file, CharString(".fasta"));
-
-            auto start = std::chrono::high_resolution_clock::now();
-            insertKmer(da, toCString(file), i);
-            auto end   = std::chrono::high_resolution_clock::now();
-            elapsed_seconds += (std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
-            std::cerr << "DA Bin " << i << " done." << '\n';
-        }
-        state.SetIterationTime(elapsed_seconds);
+        insertKmerDir(da, baseDir, 8);
+        // double elapsed_seconds{0.0};
+        // for(int32_t i = 0; i < bins; ++i)
+        // {
+        //     CharString file(baseDir);
+        //     append(file, CharString(std::to_string(bins)));
+        //     append(file, CharString{"/bins/bin_"});
+        //     append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
+        //     append(file, CharString(".fasta"));
+        //
+        //     auto start = std::chrono::high_resolution_clock::now();
+        //     insertKmer(da, toCString(file), i);
+        //     auto end   = std::chrono::high_resolution_clock::now();
+        //     elapsed_seconds += (std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
+        //     std::cerr << "DA Bin " << i << " done." << '\n';
+        // }
+        // state.SetIterationTime(elapsed_seconds);
     }
 
     CharString storage("");
@@ -312,17 +314,17 @@ static void DAArguments(benchmark::internal::Benchmark* b)
     }
 }
 
-//BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Uncompressed)->Apply(IBFArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, CompressedSimple)->Apply(IBFArguments)->UseManualTime();
+BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Uncompressed)->Apply(IBFArguments);
+// BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, CompressedSimple)->Apply(IBFArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, CompressedArray)->Apply(IBFAddArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Uncompressed)->Apply(DAArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(insertKmer_DA, Dna, CompressedSimple)->Apply(DAArguments)->UseManualTime();
+BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Uncompressed)->Apply(DAArguments);
+// BENCHMARK_TEMPLATE(insertKmer_DA, Dna, CompressedSimple)->Apply(DAArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, CompressedArray)->Apply(DAAddArguments)->UseManualTime();
 BENCHMARK_TEMPLATE(select_IBF, Dna, Uncompressed)->Apply(IBFArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedSimple)->Apply(IBFArguments)->UseManualTime();
+// BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedSimple)->Apply(IBFArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedArray)->Apply(IBFWhichArguments)->UseManualTime();
 BENCHMARK_TEMPLATE(select_DA, Dna, Uncompressed)->Apply(DAArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(select_DA, Dna, CompressedSimple)->Apply(DAArguments)->UseManualTime();
+// BENCHMARK_TEMPLATE(select_DA, Dna, CompressedSimple)->Apply(DAArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(select_DA, Dna, CompressedArray)->Apply(DAWhichArguments)->UseManualTime();
 
 BENCHMARK_MAIN();
