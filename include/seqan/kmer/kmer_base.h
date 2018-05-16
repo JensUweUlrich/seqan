@@ -41,6 +41,7 @@
 #include <valarray>
 #include <algorithm>
 #include <future>
+#include <mutex>
 
 // TODO change API
 // TODO change types
@@ -50,6 +51,36 @@ namespace seqan {
 // ==========================================================================
 // Forwards
 // ==========================================================================
+
+class Semaphore
+{
+    std::mutex m;
+    std::condition_variable cv;
+    int count;
+
+public:
+    Semaphore(int n) : count{n} {}
+    void notify()
+    {
+        std::unique_lock<std::mutex> l(m);
+        ++count;
+        cv.notify_one();
+    }
+    void wait()
+    {
+        std::unique_lock<std::mutex> l(m);
+        cv.wait(l, [this]{ return count!=0; });
+        --count;
+    }
+};
+
+class Critical_section
+{
+    Semaphore &s;
+public:
+    Critical_section(Semaphore &ss) : s{ss} { s.wait(); }
+    ~Critical_section() { s.notify(); }
+};
 
 // ==========================================================================
 // Tags, Classes, Enums
@@ -181,6 +212,37 @@ inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> &  me, const cha
         }
         me.filterVector.compress(i);
         close(seqFileIn); // No rewind() for FormattedFile ?
+    }
+}
+
+template<typename TValue, typename TSpec>
+inline void insertKmerDir(KmerFilter<TValue, TSpec, Uncompressed> &  me, const char * baseDir, uint8_t threads)
+{
+    Semaphore thread_limiter(threads);
+    std::mutex mtx;
+    std::vector<std::future<void>> tasks;
+
+    uint16_t bins{getNumberofBins(me)};
+    for(int16_t i = 0; i < bins; ++i)
+    {
+        CharString file(baseDir);
+        append(file, CharString(std::to_string(bins)));
+        append(file, CharString{"/bins/bin_"});
+        append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
+        append(file, CharString(".fasta"));
+        tasks.emplace_back(
+            std::async(std::launch::async, [=, &thread_limiter, &me] {
+                Critical_section _(thread_limiter);
+                insertKmer(me, toCString(file), i);
+                mtx.lock();
+                std::cerr << "IBF Bin " << i << " done." << '\n';
+                mtx.unlock();
+            })
+        );
+    }
+
+    for (auto &&task : tasks){
+        task.get();
     }
 }
 
