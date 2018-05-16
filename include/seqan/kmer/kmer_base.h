@@ -234,7 +234,7 @@ inline void insertKmerDir(KmerFilter<TValue, TSpec, Uncompressed> &  me, const c
     std::mutex mtx;
     std::vector<std::future<void>> tasks;
 
-    uint16_t bins{getNumberofBins(me)};
+    uint16_t bins = me.noOfBins;
     for(int16_t i = 0; i < bins; ++i)
     {
         CharString file(baseDir);
