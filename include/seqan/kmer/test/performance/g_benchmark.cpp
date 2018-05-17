@@ -254,6 +254,11 @@ static void select_DA(benchmark::State& state)
                 auto start = std::chrono::high_resolution_clock::now();
                 auto res = select(da, seq, 100-k+1 - k*e);
                 auto end   = std::chrono::high_resolution_clock::now();
+                for (int32_t j = 0; j < bins; ++j)
+                {
+                    std::cout << res[j] << ' ';
+                }
+                std::cout << std::endl;
                 elapsed_seconds += (std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
 
                 if (res[i])
@@ -290,6 +295,7 @@ static void IBFArguments(benchmark::internal::Benchmark* b)
     }
 }
 
+[[maybe_unused]]
 static void DAArguments(benchmark::internal::Benchmark* b)
 {
     for (int32_t binNo = 64; binNo <= 8192; binNo *= 2)
@@ -303,16 +309,16 @@ static void DAArguments(benchmark::internal::Benchmark* b)
     }
 }
 
-BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Uncompressed)->Apply(IBFArguments);
+// BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Uncompressed)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, CompressedSimple)->Apply(IBFArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, CompressedArray)->Apply(IBFAddArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Uncompressed)->Apply(DAArguments);
+// BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Uncompressed)->Apply(DAArguments);
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, CompressedSimple)->Apply(DAArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, CompressedArray)->Apply(DAAddArguments)->UseManualTime();
 BENCHMARK_TEMPLATE(select_IBF, Dna, Uncompressed)->Apply(IBFArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedSimple)->Apply(IBFArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedArray)->Apply(IBFWhichArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(select_DA, Dna, Uncompressed)->Apply(DAArguments)->UseManualTime();
+// BENCHMARK_TEMPLATE(select_DA, Dna, Uncompressed)->Apply(DAArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(select_DA, Dna, CompressedSimple)->Apply(DAArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(select_DA, Dna, CompressedArray)->Apply(DAWhichArguments)->UseManualTime();
 
