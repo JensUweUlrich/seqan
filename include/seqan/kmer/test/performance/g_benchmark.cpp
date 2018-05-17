@@ -145,11 +145,7 @@ static void select_IBF(benchmark::State& state)
                 auto res = select(ibf, seq, 100-k+1 - k*e);
                 auto end   = std::chrono::high_resolution_clock::now();
                 elapsed_seconds += (std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
-                for (int32_t j = 0; j < bins; ++j)
-                {
-                    std::cerr << res[j] << ' ';
-                }
-                std::cerr << std::endl;
+                std::cerr << res[i] << ' ' << bool(res[i]) << '\n';
                 if (res[i])
                 {
                     ++tp;
