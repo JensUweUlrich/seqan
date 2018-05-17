@@ -199,13 +199,15 @@ inline void clear(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<TI
  * \param binNo The bin to add the k-mers to.
  */
 template<typename TValue, typename TSpec, typename TFilterVector, typename TInt>
-inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> &  me, const char * fastaFile, TInt && binNo)
+inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> &  me, const char * fastaFile, TInt && binNo, bool batch=false, uint8_t batchChunkNo=0)
 {
     CharString id;
     String<TValue> seq;
     SeqFileIn seqFileIn;
     for (uint8_t i = 0; i < me.filterVector.noOfChunks; ++i)
     {
+        if constexpr (batch && std::is_same_v<TFilterVector, CompressedArray>)
+            i = batchChunkNo;
         if (!open(seqFileIn, fastaFile))
         {
             CharString msg = "Unable to open contigs file: ";
@@ -214,7 +216,8 @@ inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> &  me, const cha
             throw toCString(msg);
         }
 
-        me.filterVector.decompress(i);
+        if (!batch)
+            me.filterVector.decompress(i);
         while(!atEnd(seqFileIn))
         {
             readRecord(id, seq, seqFileIn);
@@ -222,39 +225,47 @@ inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> &  me, const cha
                 continue;
             insertKmer(me, seq, binNo, i);
         }
-        me.filterVector.compress(i);
+        if (!batch)
+            me.filterVector.compress(i);
         close(seqFileIn); // No rewind() for FormattedFile ?
+        if constexpr (batch && std::is_same_v<TFilterVector, CompressedArray>)
+            break;
     }
 }
 
-template<typename TValue, typename TSpec>
-inline void insertKmerDir(KmerFilter<TValue, TSpec, Uncompressed> &  me, const char * baseDir, uint8_t threads)
+template<typename TValue, typename TSpec, typename TFilterVector>
+inline void insertKmerDir(KmerFilter<TValue, TSpec, TFilterVector> &  me, const char * baseDir, uint8_t threads)
 {
     Semaphore thread_limiter(threads);
     std::mutex mtx;
     std::vector<std::future<void>> tasks;
 
     uint16_t bins = me.noOfBins;
-    for(int16_t i = 0; i < bins; ++i)
+    for (uint8_t c = 0; c < me.filterVector.noOfChunks; ++c)
     {
-        CharString file(baseDir);
-        append(file, CharString(std::to_string(bins)));
-        append(file, CharString{"/bins/bin_"});
-        append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
-        append(file, CharString(".fasta"));
-        tasks.emplace_back(
-            std::async(std::launch::async, [=, &thread_limiter, &me, &mtx] {
-                Critical_section _(thread_limiter);
-                insertKmer(me, toCString(file), i);
-                mtx.lock();
-                std::cerr << "IBF Bin " << i << " done." << '\n';
-                mtx.unlock();
-            })
-        );
-    }
+        me.filterVector.decompress(c);
+        for(int16_t i = 0; i < bins; ++i)
+        {
+            CharString file(baseDir);
+            append(file, CharString(std::to_string(bins)));
+            append(file, CharString{"/bins/bin_"});
+            append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
+            append(file, CharString(".fasta"));
+            tasks.emplace_back(
+                std::async(std::launch::async, [=, &thread_limiter, &me, &mtx] {
+                    Critical_section _(thread_limiter);
+                    insertKmer(me, toCString(file), i, true, c);
+                    mtx.lock();
+                    std::cerr << "IBF Bin " << i << " done." << '\n';
+                    mtx.unlock();
+                })
+            );
+        }
 
-    for (auto &&task : tasks){
-        task.get();
+        for (auto &&task : tasks){
+            task.get();
+        }
+        me.filterVector.compress(i);
     }
 }
 
