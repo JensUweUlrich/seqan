@@ -35,7 +35,8 @@
 
 using namespace seqan;
 
-CharString baseDir{"/srv/public/enricoseiler/benchmark/"};
+// CharString baseDir{"/srv/public/enricoseiler/benchmark/"}; // lncrna
+CharString baseDir{"/group/ag_abi/seiler/benchmark/"}; // redwood
 uint64_t e{2};
 uint64_t readNo{1000000};
 
