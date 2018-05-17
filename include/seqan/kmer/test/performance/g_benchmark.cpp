@@ -147,11 +147,10 @@ static void select_IBF(benchmark::State& state)
                 elapsed_seconds += (std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
                 if (res[i])
                 {
-                    std::cerr << "SHould count\n";
                     ++tp;
                 }
-                if (res[i])
-                    std::cerr << "Bool\n";
+                std::cerr << count(res.begin(), res.end(), true) << '\n';
+                std::cerr << count(res.begin(), res.end(), 1) << '\n';
                 verifications += count(res.begin(), res.end(), true);
             }
         }
