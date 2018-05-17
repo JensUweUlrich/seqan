@@ -153,11 +153,8 @@ static void select_IBF(benchmark::State& state)
             }
         }
         state.SetIterationTime(elapsed_seconds);
-        state.counters["Verifications"] = verifications/readNo;
-        std::cerr << verifications << '\n';
-        std::cerr << tp << '\n';
-        std::cerr << readNo << '\n';
-        state.counters["Sensitivity"] = tp/verifications;
+        state.counters["Verifications"] = static_cast<double>(verifications)/readNo;
+        state.counters["Sensitivity"] = static_cast<double>(tp)/verifications;
     }
 }
 
