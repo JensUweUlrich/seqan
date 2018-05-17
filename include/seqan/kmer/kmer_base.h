@@ -195,8 +195,13 @@ inline void clear(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<TI
 /*!
  * \brief Adds all k-mers from a fasta file to a bin of a given KmerFilter.
  * \param me The KmerFilter instance.
- * \param kmer The fasta file to process.
+ * \param fastaFile The fasta file to process.
  * \param binNo The bin to add the k-mers to.
+ * \param batch Parallel batch insertion.
+ * \param batchChunkNo Current chunk for CompressedArray in batch mode.
+ *
+ * If the KmerFilter's filterVector specialisation is CompressedArray, we need to iterate filterVector.noOfChunks times
+ * over the input files. In each iteration the kmers are inserted into one chunk.
  */
 template<typename TValue, typename TSpec, typename TFilterVector, typename TInt>
 inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> &  me, const char * fastaFile, TInt && binNo, bool batch=false, uint8_t batchChunkNo=0)
@@ -233,6 +238,18 @@ inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> &  me, const cha
     }
 }
 
+/*!
+ * \brief Adds all fasta files from a directory to the respective bins.
+ * \param me The KmerFilter instance.
+ * \param baseDir The directory containing the fasta files in a "bins" subdirectory.
+ * \param threads Number of threads to use.
+ *
+ * The fasta files are expected to follow the pattern <baseDir>/bins/bin_xxxx.fasta, where xxxx stands for the bin
+ * number. All bin numbers must have the same number of digits as the total number of bins. E.g. for 8192 bins, the
+ * bins are expected to be named bin_0000.fasta, bin_0001.fasta, ..., bin_8191.fasta; or for 64 bins: bin_00.fasta,
+ * bin_01.fasta, ..., bin_63.fasta.
+ * Up to <threads> fasta files are added to the filterVector at the same time.
+ */
 template<typename TValue, typename TSpec, typename TFilterVector>
 inline void insertKmerDir(KmerFilter<TValue, TSpec, TFilterVector> &  me, const char * baseDir, uint8_t threads)
 {
