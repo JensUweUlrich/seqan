@@ -282,7 +282,7 @@ inline void insertKmerDir(KmerFilter<TValue, TSpec, TFilterVector> &  me, const 
         for (auto &&task : tasks){
             task.get();
         }
-        me.filterVector.compress(i);
+        me.filterVector.compress(c);
     }
 }
 
