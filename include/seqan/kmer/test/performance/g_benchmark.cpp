@@ -145,6 +145,11 @@ static void select_IBF(benchmark::State& state)
                 auto res = select(ibf, seq, 100-k+1 - k*e);
                 auto end   = std::chrono::high_resolution_clock::now();
                 elapsed_seconds += (std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
+                for (int32_t j = 0; j < bins; ++j)
+                {
+                    std::cerr << res[j] << ' ';
+                }
+                std::cerr << std::endl;
                 if (res[i])
                 {
                     ++tp;
@@ -254,11 +259,6 @@ static void select_DA(benchmark::State& state)
                 auto start = std::chrono::high_resolution_clock::now();
                 auto res = select(da, seq, 100-k+1 - k*e);
                 auto end   = std::chrono::high_resolution_clock::now();
-                for (int32_t j = 0; j < bins; ++j)
-                {
-                    std::cerr << res[j] << ' ';
-                }
-                std::cerr << std::endl;
                 elapsed_seconds += (std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
 
                 if (res[i])
