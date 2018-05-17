@@ -155,6 +155,7 @@ static void select_IBF(benchmark::State& state)
         state.SetIterationTime(elapsed_seconds);
         state.counters["Verifications"] = static_cast<double>(verifications)/readNo;
         state.counters["Sensitivity"] = static_cast<double>(tp)/verifications;
+        state.counters["FNR"] = static_cast<double>(tp)/readNo;
     }
 }
 
