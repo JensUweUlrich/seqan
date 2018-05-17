@@ -256,9 +256,9 @@ static void select_DA(benchmark::State& state)
                 auto end   = std::chrono::high_resolution_clock::now();
                 for (int32_t j = 0; j < bins; ++j)
                 {
-                    std::cout << res[j] << ' ';
+                    std::cerr << res[j] << ' ';
                 }
-                std::cout << std::endl;
+                std::cerr << std::endl;
                 elapsed_seconds += (std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
 
                 if (res[i])
