@@ -158,6 +158,11 @@ static void select_IBF(benchmark::State& state)
                 {
                     ++fn;
                     std::cerr << id << " not found in bin " << i << '\n';
+                    for (int32_t m = 0; m < bins; ++m)
+                    {
+                        std::cerr << res[m] << ' ';
+                    }
+                    std::cerr << '\n';
                 }
                 c = count(res.begin(), res.end(), true);
                 verifications += c;
