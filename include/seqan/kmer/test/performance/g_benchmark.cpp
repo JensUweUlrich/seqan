@@ -158,7 +158,7 @@ static void select_IBF(benchmark::State& state)
                 {
                     ++fn;
                     std::cerr << id << " not found in bin " << i << " seq length " << length(seq) << '\n';
-                    std::vector<uint16_t> debug = select(ibf, seq);
+                    std::vector<uint32_t> debug = select(ibf, seq);
                     for (int32_t m = 0; m < bins; ++m)
                     {
                         std::cerr << debug[m] << ' ';
