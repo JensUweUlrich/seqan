@@ -37,7 +37,7 @@ using namespace seqan;
 
 // CharString baseDir{"/srv/public/enricoseiler/benchmark/"}; // lncrna
 CharString baseDir{"/group/ag_abi/seiler/benchmark/"}; // redwood
-uint64_t e{2};
+uint64_t e{3};
 
 template <typename TAlphabet, typename TFilter>
 static void insertKmer_IBF(benchmark::State& state)
