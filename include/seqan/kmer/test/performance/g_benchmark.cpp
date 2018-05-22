@@ -30,6 +30,7 @@
 //
 // ==========================================================================
 #include <random>
+#include <algorithm>
 #include <benchmark/benchmark.h>
 #include <seqan/kmer.h>
 
@@ -117,6 +118,9 @@ static void select_IBF(benchmark::State& state)
 
     uint64_t verifications{0};
     uint64_t tp{0};
+    uint64_t p{0};
+    uint64_t fp{0};
+    uint64_t fn{0};
 
     for (auto _ : state)
     {
@@ -146,16 +150,26 @@ static void select_IBF(benchmark::State& state)
                 auto end   = std::chrono::high_resolution_clock::now();
                 elapsed_seconds += (std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
                 if (res[i])
-                {
                     ++tp;
-                }
+                else
+                    ++fn;
                 verifications += count(res.begin(), res.end(), true);
+                fp += std::max(verifications - 1, 0);
+                p += verifications;
             }
         }
         state.SetIterationTime(elapsed_seconds);
         state.counters["Verifications"] = static_cast<double>(verifications)/readNo;
-        state.counters["Sensitivity"] = static_cast<double>(tp)/verifications;
-        state.counters["FNR"] = static_cast<double>(tp)/readNo;
+        state.counters["Sensitivity"] = static_cast<double>(tp)/p;
+        state.counters["Precision"] = static_cast<double>(tp)/readNo;
+        state.counters["FNR"] = static_cast<double>(fn)/p;
+        state.counters["FDR"] = static_cast<double>(fp)/readNo;
+        state.counters["TP"] = tp;
+        state.counters["FN"] = fn;
+        state.counters["FP"] = fp;
+        state.counters["P"] = p;
+        state.counters["readNo"] = readNo;
+        state.counters["verifications"] = verifications;
     }
 }
 
