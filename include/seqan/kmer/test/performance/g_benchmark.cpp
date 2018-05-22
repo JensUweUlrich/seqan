@@ -116,6 +116,7 @@ static void select_IBF(benchmark::State& state)
     ibf.filterVector.compress(0);
 
     uint64_t verifications{0};
+    uint64_t count{0};
     uint64_t tp{0};
     uint64_t p{0};
     uint64_t fp{0};
@@ -152,15 +153,16 @@ static void select_IBF(benchmark::State& state)
                     ++tp;
                 else
                     ++fn;
-                verifications += count(res.begin(), res.end(), true);
-                if (verifications > 1)
+                count = count(res.begin(), res.end(), true);
+                verifications += count;
+                if (count > 1)
                 {
                     if (res[i])
-                        fp += verifications - 1;
+                        fp += count - 1;
                     else
-                        fp += verifications;
+                        fp += count;
                 }
-                p += verifications;
+                p += count;
             }
         }
         state.SetIterationTime(elapsed_seconds);
