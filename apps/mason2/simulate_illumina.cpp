@@ -353,6 +353,7 @@ void IlluminaSequencingSimulator::_simulateCigar(TCigarString & cigar)
     clear(cigar);
     unsigned len = this->readLength();
     std::uniform_real_distribution<double> dist(0, 1);
+    unsigned threshold{0};
 
     for (int i = 0; i < (int)len;)
     {
@@ -367,10 +368,13 @@ void IlluminaSequencingSimulator::_simulateCigar(TCigarString & cigar)
 
         // TODO(holtgrew): No indel at beginning or ending! Same for other simulators!
 
-        if (x < pMatch)  // match
+        if (x < pMatch || threshold == 2)  // match
             i += appendOperation(cigar, 'M').first;
         else if (x < pMatch + pMismatch)  // point polymorphism
+        {
             i += appendOperation(cigar, 'X').first;
+            ++threshold;
+        }
         else if (x < pMatch + pMismatch + pInsert) // insertion
             i += appendOperation(cigar, 'I').first;
         else  // deletion
