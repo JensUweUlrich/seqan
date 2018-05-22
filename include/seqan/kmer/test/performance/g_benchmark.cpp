@@ -155,7 +155,7 @@ static void select_IBF(benchmark::State& state)
                     ++fn;
                 c = count(res.begin(), res.end(), true);
                 verifications += c;
-                if (count > 1)
+                if (c > 1)
                 {
                     if (res[i])
                         fp += c - 1;
