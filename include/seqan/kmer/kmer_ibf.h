@@ -222,7 +222,7 @@ public:
      * \param counts Vector to be filled with counts.
      * \param text Text to count occurences for.
      */
-    void select(std::vector<uint32_t> & counts, TString const & text) // TODO uint16_t
+    void select(std::vector<uint16_t> & counts, TString const & text) // TODO uint16_t
     {
         uint32_t possible = length(text) - kmerSize + 1; // Supports text lengths up to 65535 + k
 
