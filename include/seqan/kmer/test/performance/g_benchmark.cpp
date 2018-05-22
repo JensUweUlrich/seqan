@@ -154,7 +154,7 @@ static void select_IBF(benchmark::State& state)
                 else
                     ++fn;
                 verifications += count(res.begin(), res.end(), true);
-                fp += std::max(verifications - 1, 0);
+                fp += std::max((verifications - 1), 0);
                 p += verifications;
             }
         }
