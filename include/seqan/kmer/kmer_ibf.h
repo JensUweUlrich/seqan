@@ -303,7 +303,7 @@ public:
     template<typename TInt>
     inline void select(std::vector<bool> & selected, TString const & text, TInt && threshold)
     {
-        std::vector<uint32_t> counts(noOfBins, 0);
+        std::vector<uint16_t> counts(noOfBins, 0);
         select(counts, text);
         for(uint16_t binNo=0; binNo < noOfBins; ++binNo)
         {
