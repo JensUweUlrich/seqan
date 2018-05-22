@@ -30,7 +30,6 @@
 //
 // ==========================================================================
 #include <random>
-#include <algorithm>
 #include <benchmark/benchmark.h>
 #include <seqan/kmer.h>
 
@@ -154,7 +153,13 @@ static void select_IBF(benchmark::State& state)
                 else
                     ++fn;
                 verifications += count(res.begin(), res.end(), true);
-                fp += std::max({(verifications - 1), 0});
+                if (verifications > 1)
+                {
+                    if (res[i])
+                        fp += verifications - 1;
+                    else
+                        fp += verifications;
+                }
                 p += verifications;
             }
         }
