@@ -224,7 +224,7 @@ public:
      */
     void select(std::vector<uint16_t> & counts, TString const & text) // TODO uint16_t
     {
-        uint16_t possible = length(text) - kmerSize + 1; // Supports text lengths up to 65535 + k
+        uint32_t possible = length(text) - kmerSize + 1; // Supports text lengths up to 65535 + k
 
         std::vector<uint64_t> kmerHashes(possible, 0);
 
@@ -232,7 +232,7 @@ public:
         resize(kmerShape, kmerSize);
         hashInit(kmerShape, begin(text));
         auto it = begin(text);
-        for (uint16_t i = 0; i < possible; ++i)
+        for (uint32_t i = 0; i < possible; ++i)
         {
             kmerHashes[i] = hashNext(kmerShape, it);
             ++it;
