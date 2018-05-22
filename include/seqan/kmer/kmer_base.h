@@ -293,7 +293,7 @@ inline void insertKmerDir(KmerFilter<TValue, TSpec, TFilterVector> &  me, const 
  * \param text A single text to count all contained k-mers for.
  */
 template<typename TValue, typename TSpec,  typename TFilterVector>
-inline void select(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<uint16_t> & counts, String<TValue> const & text)
+inline void select(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<uint32_t> & counts, String<TValue> const & text)
 {
     me.select(counts, text);
 }
@@ -305,9 +305,9 @@ inline void select(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<u
  * \returns std::vector<uint64_t> of size binNo containing counts.
  */
 template<typename TValue, typename TSpec, typename TFilterVector>
-inline std::vector<uint16_t> select(KmerFilter<TValue, TSpec, TFilterVector> &  me, String<TValue> const & text)
+inline std::vector<uint32_t> select(KmerFilter<TValue, TSpec, TFilterVector> &  me, String<TValue> const & text)
 {
-    std::vector<uint16_t> counts(me.noOfBins, 0);
+    std::vector<uint32_t> counts(me.noOfBins, 0);
     select(me, counts, text);
     return counts;
 }
