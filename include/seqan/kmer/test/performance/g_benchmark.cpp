@@ -233,6 +233,8 @@ static void select_DA(benchmark::State& state)
     auto k = state.range(1);
     KmerFilter<TAlphabet, DirectAddressing, TFilter> da (bins, k);
 
+    uint64_t readNo{1};
+
     CharString storage("");
     append(storage, CharString(std::to_string(bins)));
     append(storage, CharString("_"));
