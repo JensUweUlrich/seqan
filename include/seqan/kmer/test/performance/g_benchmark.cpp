@@ -129,11 +129,11 @@ static void select_IBF(benchmark::State& state)
         {
             CharString file(baseDir);
             append(file, CharString(std::to_string(bins)));
-            // append(file, CharString{"/reads/bin_"});
-            append(file, CharString{"/bins/bin_"});
+            append(file, CharString{"/reads/bin_"});
+            // append(file, CharString{"/bins/bin_"});
             append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
-            // append(file, CharString(".fastq"));
-            append(file, CharString(".fasta"));
+            append(file, CharString(".fastq"));
+            // append(file, CharString(".fasta"));
 
             CharString id;
             String<TAlphabet> seq;
