@@ -121,6 +121,7 @@ static void select_IBF(benchmark::State& state)
     uint64_t p{0};
     uint64_t fp{0};
     uint64_t fn{0};
+    uint64_t debug{0};
 
     for (auto _ : state)
     {
@@ -148,6 +149,7 @@ static void select_IBF(benchmark::State& state)
                 auto start = std::chrono::high_resolution_clock::now();
                 auto res = select(ibf, seq, 100-k+1 - k*e);
                 auto end   = std::chrono::high_resolution_clock::now();
+                ++debug;
                 elapsed_seconds += (std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
                 if (res[i])
                     ++tp;
@@ -170,8 +172,9 @@ static void select_IBF(benchmark::State& state)
         state.counters["6_FN"] = fn;
         state.counters["7_FP"] = fp;
         state.counters["8_P"] = p;
-        state.counters["9_readNo"] = readNo;
+        state.counters["999_readNo"] = readNo;
         state.counters["99_verifications"] = verifications;
+        state.counters["9_DEBUG"] = debug;
         state.counters["0_Verifications"] = static_cast<double>(verifications)/readNo;
         state.counters["1_Sensitivity"] = static_cast<double>(tp)/readNo;
         state.counters["2_Precision"] = static_cast<double>(tp)/p;
