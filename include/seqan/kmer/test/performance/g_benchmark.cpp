@@ -173,10 +173,10 @@ static void select_IBF(benchmark::State& state)
         state.counters["9_readNo"] = readNo;
         state.counters["99_verifications"] = verifications;
         state.counters["0_Verifications"] = static_cast<double>(verifications)/readNo;
-        state.counters["1_Sensitivity"] = static_cast<double>(tp)/p;
-        state.counters["2_Precision"] = static_cast<double>(tp)/readNo;
-        state.counters["3_FNR"] = static_cast<double>(fn)/p;
-        state.counters["4_FDR"] = static_cast<double>(fp)/readNo;
+        state.counters["1_Sensitivity"] = static_cast<double>(tp)/readNo;
+        state.counters["2_Precision"] = static_cast<double>(tp)/p;
+        state.counters["3_FNR"] = static_cast<double>(fn)/readNo;
+        state.counters["4_FDR"] = static_cast<double>(fp)/p;
     }
 }
 
