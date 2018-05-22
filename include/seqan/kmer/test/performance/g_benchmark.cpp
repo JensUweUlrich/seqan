@@ -37,7 +37,7 @@ using namespace seqan;
 
 // CharString baseDir{"/srv/public/enricoseiler/benchmark/"}; // lncrna
 CharString baseDir{"/group/ag_abi/seiler/benchmark/"}; // redwood
-uint64_t e{3};
+uint64_t e{2};
 
 template <typename TAlphabet, typename TFilter>
 static void insertKmer_IBF(benchmark::State& state)
@@ -129,9 +129,11 @@ static void select_IBF(benchmark::State& state)
         {
             CharString file(baseDir);
             append(file, CharString(std::to_string(bins)));
-            append(file, CharString{"/reads/bin_"});
+            // append(file, CharString{"/reads/bin_"});
+            append(file, CharString{"/bins/bin_"});
             append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
-            append(file, CharString(".fastq"));
+            // append(file, CharString(".fastq"));
+            append(file, CharString(".fasta"));
 
             CharString id;
             String<TAlphabet> seq;
