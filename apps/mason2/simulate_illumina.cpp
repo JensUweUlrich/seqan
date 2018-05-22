@@ -370,15 +370,15 @@ void IlluminaSequencingSimulator::_simulateCigar(TCigarString & cigar)
 
         if (x < pMatch || threshold == 2)  // match
             i += appendOperation(cigar, 'M').first;
-        else if (x < pMatch + pMismatch)  // point polymorphism
+        else  // point polymorphism
         {
             i += appendOperation(cigar, 'X').first;
             ++threshold;
         }
-        else if (x < pMatch + pMismatch + pInsert) // insertion
-            i += appendOperation(cigar, 'I').first;
-        else  // deletion
-            i += appendOperation(cigar, 'D').first;
+        // else if (x < pMatch + pMismatch + pInsert) // insertion
+        //     i += appendOperation(cigar, 'I').first;
+        // else  // deletion
+        //     i += appendOperation(cigar, 'D').first;
     }
 }
 
