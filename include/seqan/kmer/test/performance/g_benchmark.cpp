@@ -161,7 +161,10 @@ static void select_IBF(benchmark::State& state)
                         elapsed_seconds += std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
                         mtx.unlock();
                         if (res[i])
+                        {
                             ++tp;
+                            std::cerr << 'F';
+                        }
                         else
                             ++fn;
                         c = count(res.begin(), res.end(), true);
