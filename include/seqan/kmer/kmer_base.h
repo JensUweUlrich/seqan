@@ -275,6 +275,7 @@ inline void insertKmerDir(KmerFilter<TValue, TSpec, TFilterVector> &  me, const 
                     mtx.lock();
                     std::cerr << "IBF Bin " << i << " done." << '\n';
                     mtx.unlock();
+                    return true;
                 })
             );
         }
