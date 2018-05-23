@@ -157,7 +157,7 @@ static void select_IBF(benchmark::State& state)
                         auto res = select(ibf, seq, 100-k+1 - k*e);
                         auto end   = std::chrono::high_resolution_clock::now();
                         ++readNo;
-                        elapsed_seconds += (std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
+                        elapsed_seconds += static_cast<double>((std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count());
                         if (res[i])
                             ++tp;
                         else
@@ -179,7 +179,7 @@ static void select_IBF(benchmark::State& state)
         for (auto &&task : tasks){
             task.get();
         }
-        
+
         state.SetIterationTime(elapsed_seconds);
         state.counters["5_TP"] = tp;
         state.counters["6_FN"] = fn;
