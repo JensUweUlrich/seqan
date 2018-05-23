@@ -158,7 +158,7 @@ static void select_IBF(benchmark::State& state)
                         auto end   = std::chrono::high_resolution_clock::now();
                         ++readNo;
                         mtx.lock();
-                        elapsed_seconds += std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
+                        elapsed_seconds += std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
                         mtx.unlock();
                         if (res[i])
                             ++tp;
