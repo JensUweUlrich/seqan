@@ -32,6 +32,7 @@
 #include <random>
 #include <benchmark/benchmark.h>
 #include <seqan/kmer.h>
+#include <atomic>
 
 using namespace seqan;
 
@@ -114,74 +115,71 @@ static void select_IBF(benchmark::State& state)
     retrieve(ibf, storage);
     ibf.filterVector.compress(0);
 
-    uint64_t verifications{0};
-    uint64_t c{0};
-    uint64_t tp{0};
-    uint64_t p{0};
-    uint64_t fp{0};
-    uint64_t fn{0};
-    uint64_t readNo{0};
+    std::atomic<uint64_t> verifications{0};
+    std::atomic<uint64_t> c{0};
+    std::atomic<uint64_t> tp{0};
+    std::atomic<uint64_t> p{0};
+    std::atomic<uint64_t> fp{0};
+    std::atomic<uint64_t> fn{0};
+    std::atomic<uint64_t> readNo{0};
 
     for (auto _ : state)
     {
-        double elapsed_seconds{0.0};
+        std::atomic<double> elapsed_seconds{0.0};
+        Semaphore thread_limiter(8);
+        std::mutex mtx;
+        std::vector<std::future<void>> tasks;
+
         for(int32_t i = 0; i < bins; ++i)
         {
             CharString file(baseDir);
             append(file, CharString(std::to_string(bins)));
             append(file, CharString{"/reads/bin_"});
-            // append(file, CharString{"/bins/bin_"});
             append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
             append(file, CharString(".fastq"));
-            // append(file, CharString(".fasta"));
 
-            CharString id;
-            String<TAlphabet> seq;
-            SeqFileIn seqFileIn;
-            if (!open(seqFileIn, toCString(file)))
-            {
-                CharString msg = "Unable to open contigs file: ";
-                append(msg, CharString(file));
-                throw toCString(msg);
-            }
-            while(!atEnd(seqFileIn))
-            {
-                readRecord(id, seq, seqFileIn);
-                auto start = std::chrono::high_resolution_clock::now();
-                auto res = select(ibf, seq, 100-k+1 - k*e);
-                auto end   = std::chrono::high_resolution_clock::now();
-                ++readNo;
-                elapsed_seconds += (std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
-                if (res[i])
-                    ++tp;
-                else
-                {
-                    ++fn;
-                    // std::cerr << id << " not found in bin " << i << " seq length " << length(seq) << '\n';
-                    // std::vector<uint16_t> debug = select(ibf, seq);
-                    // for (int32_t m = 0; m < bins; ++m)
-                    // {
-                    //     std::cerr << debug[m] << ' ';
-                    // }
-                    // std::cerr << '\n';
-                    // for (int32_t m = 0; m < bins; ++m)
-                    // {
-                    //     std::cerr << res[m] << ' ';
-                    // }
-                    // std::cerr << '\n';
-                }
-                c = count(res.begin(), res.end(), true);
-                verifications += c;
-                if (c > 1)
-                {
-                    if (res[i])
-                        fp += c - 1;
-                    else
-                        fp += c;
-                }
-                p += c;
-            }
+            tasks.emplace_back(
+                std::async(std::launch::async, [&, =file] {
+                    Critical_section _(thread_limiter);
+                    CharString id;
+                    String<TAlphabet> seq;
+                    SeqFileIn seqFileIn;
+                    if (!open(seqFileIn, toCString(file)))
+                    {
+                        CharString msg = "Unable to open contigs file: ";
+                        append(msg, CharString(file));
+                        throw toCString(msg);
+                    }
+                    while(!atEnd(seqFileIn))
+                    {
+                        readRecord(id, seq, seqFileIn);
+                        auto start = std::chrono::high_resolution_clock::now();
+                        auto res = select(ibf, seq, 100-k+1 - k*e);
+                        auto end   = std::chrono::high_resolution_clock::now();
+                        ++readNo;
+                        elapsed_seconds += (std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
+                        if (res[i])
+                            ++tp;
+                        else
+                            ++fn;
+                        c = count(res.begin(), res.end(), true);
+                        verifications += c;
+                        if (c > 1)
+                        {
+                            if (res[i])
+                                fp += c - 1;
+                            else
+                                fp += c;
+                        }
+                        p += c;
+                    }
+                })
+            )
         }
+        for (auto &&task : tasks){
+            task.get();
+        }
+        
         state.SetIterationTime(elapsed_seconds);
         state.counters["5_TP"] = tp;
         state.counters["6_FN"] = fn;
