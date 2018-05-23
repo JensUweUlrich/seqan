@@ -175,6 +175,7 @@ static void select_IBF(benchmark::State& state)
                         }
                         p += c;
                     }
+                    return true;
                 })
             );
         }
