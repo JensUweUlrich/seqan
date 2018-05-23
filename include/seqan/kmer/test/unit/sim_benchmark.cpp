@@ -1,5 +1,6 @@
 #include <seqan/seq_io.h>
 #include <random>
+using namespace seqan;
 
 CharString baseDir{"/group/ag_abi/seiler/benchmark/"};
 uint8_t maxErrors{2};
