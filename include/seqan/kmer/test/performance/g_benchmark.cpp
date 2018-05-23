@@ -125,7 +125,7 @@ static void select_IBF(benchmark::State& state)
     for (auto _ : state)
     {
         double elapsed_seconds{0.0};
-        Semaphore thread_limiter(8);
+        Semaphore thread_limiter(1);
         std::mutex mtx;
         std::vector<std::future<void>> tasks;
 
