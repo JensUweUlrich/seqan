@@ -89,6 +89,8 @@ int main()
                         if (dist(rng) < 0.5)
                             break;
                     }
+                    std::cerr << "seq    =" << seq << '\n';
+                    std::cerr << "segment=" << segment << '\n';
                     writeRecord(seqFileOut, id, segment);
                 }
             }
