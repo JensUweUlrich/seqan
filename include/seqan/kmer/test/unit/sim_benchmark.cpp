@@ -11,6 +11,18 @@ std::random_device rd;
 std::mt19937 rng(rd());
 std::uniform_real_distribution<double> dist(0, 1);
 
+template <typename T>
+int numDigits(T number)
+{
+    int digits = 0;
+    if (number <= 0) digits = 1; // remove this line if '-' counts as a digit
+    while (number) {
+        number /= 10;
+        digits++;
+    }
+    return digits;
+}
+
 int main()
 {
     for(uint16_t noOfBins : {64, 256, 1024, 8192})
@@ -25,13 +37,13 @@ int main()
             CharString fileIn(baseDir);
             append(fileIn, CharString(std::to_string(noOfBins)));
             append(fileIn, CharString{"/bins/bin_"});
-            append(fileIn, CharString(std::string(numDigits(bins)-numDigits(bin), '0') + (std::to_string(bin))));
+            append(fileIn, CharString(std::string(numDigits(noOfBins)-numDigits(bin), '0') + (std::to_string(bin))));
             append(fileIn, CharString(".fasta"));
 
             CharString fileOut(baseDir);
             append(fileOut, CharString(std::to_string(noOfBins)));
             append(fileOut, CharString{"/reads/bin_"});
-            append(fileOut, CharString(std::string(numDigits(bins)-numDigits(bin), '0') + (std::to_string(bin))));
+            append(fileOut, CharString(std::string(numDigits(noOfBins)-numDigits(bin), '0') + (std::to_string(bin))));
             append(fileOut, CharString(".fastq"));
 
             SeqFileIn seqFileIn;
@@ -59,12 +71,12 @@ int main()
             {
                 readRecord(id, seq, seqFileIn);
                 uint32_t refLength = length(seq);
-                std::uniform_real_distribution<uint32_t> readPos(0, refLength - readLength + 1);
-                for(uint_32_t r = 0; r < readsPerHaplotype; ++r)
+                std::uniform_int_distribution<uint32_t> readPos(0, refLength - readLength + 1);
+                for(uint32_t r = 0; r < readsPerHaplotype; ++r)
                 {
                     uint32_t pos = readPos(rng);
                     DnaString segment = infixWithLength(seq, pos, readLength);
-                    std::uniform_real_distribution<uint16_t> errorPos(0, readLength);
+                    std::uniform_int_distribution<uint16_t> errorPos(0, readLength);
                     for(uint8_t e = 0; e < maxErrors; ++e)
                     {
                         uint32_t pos = errorPos(rng);
