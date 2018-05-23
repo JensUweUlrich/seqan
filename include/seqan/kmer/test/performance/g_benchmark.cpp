@@ -176,7 +176,7 @@ static void select_IBF(benchmark::State& state)
                         p += c;
                     }
                 })
-            )
+            );
         }
         for (auto &&task : tasks){
             task.get();
