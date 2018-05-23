@@ -25,7 +25,8 @@ int numDigits(T number)
 
 int main()
 {
-    for(uint16_t noOfBins : {64, 256, 1024, 8192})
+    // for(uint16_t noOfBins : {64, 256, 1024, 8192})
+    for(uint16_t noOfBins : {64})
     {
         // Since numerator and denominator are powers of two, each bin should get an equal number of reads
         uint32_t readsPerBin = noOfReads / noOfBins;
