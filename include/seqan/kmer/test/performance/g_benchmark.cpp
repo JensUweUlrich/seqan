@@ -144,6 +144,7 @@ static void select_IBF(benchmark::State& state)
                     String<TAlphabet> seq;
                     SeqFileIn seqFileIn;
                     uint64_t c{0};
+                    std::cerr << toCString(file);
                     if (!open(seqFileIn, toCString(file)))
                     {
                         CharString msg = "Unable to open contigs file: ";
@@ -161,10 +162,7 @@ static void select_IBF(benchmark::State& state)
                         elapsed_seconds += std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
                         mtx.unlock();
                         if (res[i])
-                        {
                             ++tp;
-                            std::cerr << 'F';
-                        }
                         else
                             ++fn;
                         c = count(res.begin(), res.end(), true);
