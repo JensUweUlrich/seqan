@@ -125,7 +125,7 @@ static void select_IBF(benchmark::State& state)
     for (auto _ : state)
     {
         double elapsed_seconds{0.0};
-        Semaphore thread_limiter(1);
+        Semaphore thread_limiter(8);
         std::mutex mtx;
         std::vector<std::future<void>> tasks;
 
@@ -138,13 +138,12 @@ static void select_IBF(benchmark::State& state)
             append(file, CharString(".fastq"));
 
             tasks.emplace_back(
-                std::async(std::launch::async, [&, file] {
+                std::async(std::launch::async, [&, file, i] {
                     Critical_section _(thread_limiter);
                     CharString id;
                     String<TAlphabet> seq;
                     SeqFileIn seqFileIn;
                     uint64_t c{0};
-                    std::cerr << toCString(file);
                     if (!open(seqFileIn, toCString(file)))
                     {
                         CharString msg = "Unable to open contigs file: ";
