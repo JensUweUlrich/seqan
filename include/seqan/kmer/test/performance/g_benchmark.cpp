@@ -183,17 +183,17 @@ static void select_IBF(benchmark::State& state)
         }
 
         state.SetIterationTime(elapsed_seconds);
-        state.counters["5_TP"] = static_cast<uint64_t>(tp);
-        state.counters["6_FN"] = static_cast<uint64_t>(fn);
-        state.counters["7_FP"] = static_cast<uint64_t>(fp);
-        state.counters["8_P"] = static_cast<uint64_t>(p);
-        state.counters["99_readNo"] = static_cast<uint64_t>(readNo);
-        state.counters["9_verifications"] = static_cast<uint64_t>(verifications);
-        state.counters["0_Verifications"] = static_cast<double>(verifications)/static_cast<double>(readNo);
-        state.counters["1_Sensitivity"] = static_cast<double>(tp)/static_cast<double>(readNo);
-        state.counters["2_Precision"] = static_cast<double>(tp)/static_cast<double>(p);
-        state.counters["3_FNR"] = static_cast<double>(fn)/static_cast<double>(readNo);
-        state.counters["4_FDR"] = static_cast<double>(fp)/static_cast<double>(p);
+        state.counters["5_TP"] = tp.load();
+        state.counters["6_FN"] = fn.load();
+        state.counters["7_FP"] = fp.load();
+        state.counters["8_P"] = p.load();
+        state.counters["99_readNo"] = readNo.load();
+        state.counters["9_verifications"] = verifications.load();
+        state.counters["0_Verifications"] = static_cast<double>(verifications.load())/readNo.load();
+        state.counters["1_Sensitivity"] = static_cast<double>(tp.load())/readNo.load();
+        state.counters["2_Precision"] = static_cast<double>(tp.load())/p.load();
+        state.counters["3_FNR"] = static_cast<double>(fn.load())/readNo.load();
+        state.counters["4_FDR"] = static_cast<double>(fp.load())/p.load();
     }
 }
 
