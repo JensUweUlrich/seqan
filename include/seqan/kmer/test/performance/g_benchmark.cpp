@@ -116,7 +116,6 @@ static void select_IBF(benchmark::State& state)
     ibf.filterVector.compress(0);
 
     std::atomic<uint64_t> verifications{0};
-    std::atomic<uint64_t> c{0};
     std::atomic<uint64_t> tp{0};
     std::atomic<uint64_t> p{0};
     std::atomic<uint64_t> fp{0};
@@ -125,7 +124,7 @@ static void select_IBF(benchmark::State& state)
 
     for (auto _ : state)
     {
-        std::atomic<double> elapsed_seconds{0.0};
+        double elapsed_seconds{0.0};
         Semaphore thread_limiter(8);
         std::mutex mtx;
         std::vector<std::future<void>> tasks;
@@ -139,11 +138,12 @@ static void select_IBF(benchmark::State& state)
             append(file, CharString(".fastq"));
 
             tasks.emplace_back(
-                std::async(std::launch::async, [&, =file] {
+                std::async(std::launch::async, [&, file] {
                     Critical_section _(thread_limiter);
                     CharString id;
                     String<TAlphabet> seq;
                     SeqFileIn seqFileIn;
+                    uint64_t c{0};
                     if (!open(seqFileIn, toCString(file)))
                     {
                         CharString msg = "Unable to open contigs file: ";
@@ -157,7 +157,9 @@ static void select_IBF(benchmark::State& state)
                         auto res = select(ibf, seq, 100-k+1 - k*e);
                         auto end   = std::chrono::high_resolution_clock::now();
                         ++readNo;
-                        elapsed_seconds += static_cast<double>((std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count());
+                        mtx.lock();
+                        elapsed_seconds += std::chrono::duration_cast<std::chrono::duration<double> >(end - start)).count();
+                        mtx.unlock();
                         if (res[i])
                             ++tp;
                         else
@@ -181,17 +183,17 @@ static void select_IBF(benchmark::State& state)
         }
 
         state.SetIterationTime(elapsed_seconds);
-        state.counters["5_TP"] = tp;
-        state.counters["6_FN"] = fn;
-        state.counters["7_FP"] = fp;
-        state.counters["8_P"] = p;
-        state.counters["99_readNo"] = readNo;
-        state.counters["9_verifications"] = verifications;
-        state.counters["0_Verifications"] = static_cast<double>(verifications)/readNo;
-        state.counters["1_Sensitivity"] = static_cast<double>(tp)/readNo;
-        state.counters["2_Precision"] = static_cast<double>(tp)/p;
-        state.counters["3_FNR"] = static_cast<double>(fn)/readNo;
-        state.counters["4_FDR"] = static_cast<double>(fp)/p;
+        state.counters["5_TP"] = static_cast<uint64_t>(tp);
+        state.counters["6_FN"] = static_cast<uint64_t>(fn);
+        state.counters["7_FP"] = static_cast<uint64_t>(fp);
+        state.counters["8_P"] = static_cast<uint64_t>(p);
+        state.counters["99_readNo"] = static_cast<uint64_t>(readNo);
+        state.counters["9_verifications"] = static_cast<uint64_t>(verifications);
+        state.counters["0_Verifications"] = static_cast<double>(verifications)/static_cast<double>(readNo);
+        state.counters["1_Sensitivity"] = static_cast<double>(tp)/static_cast<double>(readNo);
+        state.counters["2_Precision"] = static_cast<double>(tp)/static_cast<double>(p);
+        state.counters["3_FNR"] = static_cast<double>(fn)/static_cast<double>(readNo);
+        state.counters["4_FDR"] = static_cast<double>(fp)/static_cast<double>(p);
     }
 }
 
