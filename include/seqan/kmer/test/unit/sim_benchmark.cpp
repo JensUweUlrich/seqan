@@ -77,6 +77,7 @@ int main()
                 {
                     uint32_t pos = readPos(rng);
                     DnaString segment = infixWithLength(seq, pos, readLength);
+                    std::cerr << "old=" << segment << '\n';
                     std::uniform_int_distribution<uint16_t> errorPos(0, readLength);
                     for(uint8_t e = 0; e < maxErrors; ++e)
                     {
@@ -89,8 +90,7 @@ int main()
                         if (dist(rng) < 0.5)
                             break;
                     }
-                    std::cerr << "seq    =" << seq << '\n';
-                    std::cerr << "segment=" << segment << '\n';
+                    std::cerr << "new=" << segment << '\n';
                     writeRecord(seqFileOut, id, segment);
                 }
             }
