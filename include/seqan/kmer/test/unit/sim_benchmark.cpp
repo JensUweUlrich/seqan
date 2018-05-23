@@ -25,8 +25,7 @@ int numDigits(T number)
 
 int main()
 {
-    // for(uint16_t noOfBins : {64, 256, 1024, 8192})
-    for(uint16_t noOfBins : {64})
+    for(uint16_t noOfBins : {64, 256, 1024, 8192})
     {
         // Since numerator and denominator are powers of two, each bin should get an equal number of reads
         uint32_t readsPerBin = noOfReads / noOfBins;
@@ -77,7 +76,6 @@ int main()
                 {
                     uint32_t pos = readPos(rng);
                     DnaString segment = infixWithLength(seq, pos, readLength);
-                    std::cerr << "old=" << segment << '\n';
                     std::uniform_int_distribution<uint16_t> errorPos(0, readLength);
                     for(uint8_t e = 0; e < maxErrors; ++e)
                     {
@@ -90,7 +88,6 @@ int main()
                         if (dist(rng) < 0.5)
                             break;
                     }
-                    std::cerr << "new=" << segment << '\n';
                     writeRecord(seqFileOut, id, segment);
                 }
             }
