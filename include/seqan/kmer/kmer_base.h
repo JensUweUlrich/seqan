@@ -211,8 +211,11 @@ inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> &  me, const cha
     SeqFileIn seqFileIn;
     for (uint8_t i = 0; i < me.filterVector.noOfChunks; ++i)
     {
-        if constexpr (batch && std::is_same_v<TFilterVector, CompressedArray>)
-            i = batchChunkNo;
+        if constexpr (std::is_same_v<TFilterVector, CompressedArray>)
+        {
+            if (batch)
+                i = batchChunkNo;
+        }
         if (!open(seqFileIn, fastaFile))
         {
             CharString msg = "Unable to open contigs file: ";
@@ -233,8 +236,11 @@ inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> &  me, const cha
         if (!batch)
             me.filterVector.compress(i);
         close(seqFileIn); // No rewind() for FormattedFile ?
-        if constexpr (batch && std::is_same_v<TFilterVector, CompressedArray>)
-            break;
+        if constexpr (&& std::is_same_v<TFilterVector, CompressedArray>)
+        {
+            if (batch)
+                break;
+        }
     }
 }
 
