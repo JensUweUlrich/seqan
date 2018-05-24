@@ -222,7 +222,8 @@ public:
      * \param counts Vector to be filled with counts.
      * \param text Text to count occurences for.
      */
-    void select(std::vector<uint16_t> & counts, TString const & text) // TODO uint16_t
+    template<typename TAnyString>
+    void select(std::vector<uint16_t> & counts, TAnyString const & text) // TODO uint16_t
     {
         uint16_t possible = length(text) - kmerSize + 1; // Supports text lengths up to 65535 + k
 
@@ -300,8 +301,8 @@ public:
      * \param text Text to count occurences for.
      * \param threshold Minimal count (>=) of containing k-mers to report bin as containing text.
      */
-    template<typename TInt>
-    inline void select(std::vector<bool> & selected, TString const & text, TInt && threshold)
+    template<typename TAnyString, typename TInt>
+    inline void select(std::vector<bool> & selected, TAnyString const & text, TInt && threshold)
     {
         std::vector<uint16_t> counts(noOfBins, 0);
         select(counts, text);
