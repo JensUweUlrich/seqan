@@ -204,7 +204,7 @@ inline void clear(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<TI
  * over the input files. In each iteration the kmers are inserted into one chunk.
  */
 template<typename TValue, typename TSpec, typename TFilterVector, typename TInt>
-inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> &  me, const char * fastaFile, TInt && binNo, bool batch=false, uint8_t batchChunkNo=0)
+inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> &  me, const char * fastaFile, TInt && binNo, bool batch=false, [[maybe_unused]] uint8_t batchChunkNo=0)
 {
     CharString id;
     String<TValue> seq;
