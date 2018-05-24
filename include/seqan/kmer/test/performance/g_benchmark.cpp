@@ -109,7 +109,7 @@ static void select_IBF(benchmark::State& state)
     }
     else
     {
-        return 0;
+        throw "Invalid template";
     }
     append(storage, CharString("_ibf.filter"));
     retrieve(ibf, storage);
