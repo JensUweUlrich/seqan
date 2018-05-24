@@ -236,7 +236,7 @@ inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> &  me, const cha
         if (!batch)
             me.filterVector.compress(i);
         close(seqFileIn); // No rewind() for FormattedFile ?
-        if constexpr (&& std::is_same_v<TFilterVector, CompressedArray>)
+        if constexpr (std::is_same_v<TFilterVector, CompressedArray>)
         {
             if (batch)
                 break;
