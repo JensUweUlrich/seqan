@@ -222,7 +222,7 @@ public:
      * \param counts Vector to be filled with counts.
      * \param text Text to count occurences for.
      */
-    template<typename TTest>
+    <template typename TTest>
     void select(std::vector<uint16_t> & counts, String<TTest> const & text) // TODO uint16_t
     {
         uint16_t possible = length(text) - kmerSize + 1; // Supports text lengths up to 65535 + k
