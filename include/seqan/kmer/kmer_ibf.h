@@ -109,6 +109,13 @@ public:
         noOfBits(0),
         filterVector() {}
 
+    KmerFilter(CharString fileName):
+        filterVector(fileName)
+    {
+        getMetadata(*this);
+        init();
+    }
+
     /*!
      * \brief Constructs an IBF given parameters.
      * \param n_bins Number of bins. Preferably a multiple of 64.
