@@ -112,8 +112,19 @@ static void select_IBF(benchmark::State& state)
         throw "Invalid template";
     }
     append(storage, CharString("_ibf.filter"));
+
+    double loadingTime{0.0};
+    auto start = std::chrono::high_resolution_clock::now();
     retrieve(ibf, storage);
+    auto end   = std::chrono::high_resolution_clock::now();
+    loadingTime = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
+
+
+    double compressionTime{0.0};
+    start = std::chrono::high_resolution_clock::now();
     ibf.filterVector.compress(0);
+    end   = std::chrono::high_resolution_clock::now();
+    compressionTime = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
 
     std::atomic<uint64_t> verifications{0};
     std::atomic<uint64_t> tp{0};
@@ -182,6 +193,7 @@ static void select_IBF(benchmark::State& state)
             task.get();
         }
 
+        std::cerr << elapsed_seconds << '\n';
         state.SetIterationTime(elapsed_seconds);
         state.counters["5_TP"] = tp.load();
         state.counters["6_FN"] = fn.load();
@@ -194,6 +206,8 @@ static void select_IBF(benchmark::State& state)
         state.counters["2_Precision"] = static_cast<double>(tp.load())/p.load();
         state.counters["3_FNR"] = static_cast<double>(fn.load())/readNo.load();
         state.counters["4_FDR"] = static_cast<double>(fp.load())/p.load();
+        state.counters["compressionTime"] = compressionTime;
+        state.counters["loadingTime"] = loadingTime;
     }
 }
 
