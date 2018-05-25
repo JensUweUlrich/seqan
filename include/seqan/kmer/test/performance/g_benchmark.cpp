@@ -137,9 +137,11 @@ static void select_IBF(benchmark::State& state)
 
     for (auto _ : state)
     {
-        double elapsed_seconds{0.0};
+        double selectTime{0.0};
+        double ioTime{0.0};
         Semaphore thread_limiter(8);
         std::mutex mtx;
+        std::mutex mtx2;
         std::vector<std::future<void>> tasks;
 
         for(int32_t i = 0; i < bins; ++i)
@@ -165,14 +167,21 @@ static void select_IBF(benchmark::State& state)
                     }
                     while(!atEnd(seqFileIn))
                     {
-                        readRecord(id, seq, seqFileIn);
                         auto start = std::chrono::high_resolution_clock::now();
-                        auto res = select(ibf, seq, 100-k+1 - k*e);
+                        readRecord(id, seq, seqFileIn);
                         auto end   = std::chrono::high_resolution_clock::now();
+                        mtx.lock();
+                        ioTime += std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
+                        mtx.unlock();
+
+                        start = std::chrono::high_resolution_clock::now();
+                        auto res = select(ibf, seq, 100-k+1 - k*e);
+                        end   = std::chrono::high_resolution_clock::now();
                         ++readNo;
                         mtx.lock();
-                        elapsed_seconds += std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
+                        selectTime += std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
                         mtx.unlock();
+
                         if (res[i])
                             ++tp;
                         else
@@ -210,6 +219,8 @@ static void select_IBF(benchmark::State& state)
         state.counters["4_FDR"] = static_cast<double>(fp.load())/p.load();
         state.counters["compressionTime"] = compressionTime;
         state.counters["loadingTime"] = loadingTime;
+        state.counters["ioTime"] = ioTime;
+        state.counters["selectTime"] = selectTime;
         state.counters["vectorSize"] = ibf.filterVector.size_in_mega_bytes();
         state.counters["fullTime"] = std::chrono::duration_cast<std::chrono::duration<double> >(fullTime2 - fullTime).count();
     }
