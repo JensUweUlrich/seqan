@@ -170,9 +170,9 @@ static void select_IBF(benchmark::State& state)
                         auto start = std::chrono::high_resolution_clock::now();
                         readRecord(id, seq, seqFileIn);
                         auto end   = std::chrono::high_resolution_clock::now();
-                        mtx.lock();
+                        mtx2.lock();
                         ioTime += std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
-                        mtx.unlock();
+                        mtx2.unlock();
 
                         start = std::chrono::high_resolution_clock::now();
                         auto res = select(ibf, seq, 100-k+1 - k*e);
