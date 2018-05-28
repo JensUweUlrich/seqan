@@ -124,7 +124,7 @@ static void select_IBF(benchmark::State& state)
 
     double compressionTime{0.0};
     start = std::chrono::high_resolution_clock::now();
-    ibf.filterVector.compress(0);
+    ibf.filterVector.compress(0); // Loading automatically compresses
     end   = std::chrono::high_resolution_clock::now();
     compressionTime = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
 
