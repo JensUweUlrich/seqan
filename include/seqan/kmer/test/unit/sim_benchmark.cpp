@@ -86,7 +86,7 @@ int main()
                         while (newBase == currentBase)
                             newBase = Dna(static_cast<int>(dist(rng) / 0.25));
                         segment[pos] = newBase;
-                        if (dist(rng) < 0.5)
+                        if (dist(rng) < 1.0/static_cast<double>(maxErrors))
                             break;
                     }
                     writeRecord(seqFileOut, id, segment);
