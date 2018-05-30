@@ -399,7 +399,7 @@ static void select_DA(benchmark::State& state)
         state.counters["loadingTime"] = loadingTime;
         state.counters["ioTime"] = ioTime;
         state.counters["selectTime"] = selectTime;
-        state.counters["vectorSize"] = ibf.filterVector.size_in_mega_bytes();
+        state.counters["vectorSize"] = da.filterVector.size_in_mega_bytes();
         state.counters["fullTime"] = std::chrono::duration_cast<std::chrono::duration<double> >(fullTime2 - fullTime).count();
     }
 }
