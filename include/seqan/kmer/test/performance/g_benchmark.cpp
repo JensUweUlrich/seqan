@@ -281,8 +281,6 @@ static void select_DA(benchmark::State& state)
     append(storage, CharString(std::to_string(bins)));
     append(storage, CharString("_"));
     append(storage, CharString(std::to_string(k)));
-    append(storage, CharString("_"));
-    append(storage, CharString(std::to_string(bits)));
     if constexpr (std::is_same_v<TFilter, Uncompressed> || std::is_same_v<TFilter, CompressedSimple>) {
         append(storage, CharString("_Uncompressed"));
     }
