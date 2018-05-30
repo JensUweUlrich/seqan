@@ -402,6 +402,7 @@ static void select_DA(benchmark::State& state)
     }
 }
 
+[[maybe_unused]]
 static void IBFArguments(benchmark::internal::Benchmark* b)
 {
     for (int32_t binNo = 64; binNo <= 8192; binNo *= 2)
