@@ -399,6 +399,7 @@ static void select_DA(benchmark::State& state)
         state.counters["selectTime"] = selectTime;
         state.counters["vectorSize"] = da.filterVector.size_in_mega_bytes();
         state.counters["fullTime"] = std::chrono::duration_cast<std::chrono::duration<double> >(fullTime2 - fullTime).count();
+        break;
     }
 }
 
@@ -449,8 +450,8 @@ static void DAArguments(benchmark::internal::Benchmark* b)
 // BENCHMARK_TEMPLATE(select_IBF, Dna, Uncompressed)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedSimple)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedArray)->Apply(IBFWhichArguments)->UseManualTime();
-// BENCHMARK_TEMPLATE(select_DA, Dna, Uncompressed)->Apply(DAArguments);
-BENCHMARK_TEMPLATE(select_DA, Dna, CompressedSimple)->Apply(DAArguments);
+BENCHMARK_TEMPLATE(select_DA, Dna, Uncompressed)->Apply(DAArguments);
+// BENCHMARK_TEMPLATE(select_DA, Dna, CompressedSimple)->Apply(DAArguments);
 // BENCHMARK_TEMPLATE(select_DA, Dna, CompressedArray)->Apply(DAWhichArguments));
 
 BENCHMARK_MAIN();
