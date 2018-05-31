@@ -449,8 +449,8 @@ static void DAArguments(benchmark::internal::Benchmark* b)
 // BENCHMARK_TEMPLATE(select_IBF, Dna, Uncompressed)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedSimple)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedArray)->Apply(IBFWhichArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(select_DA, Dna, Uncompressed)->Apply(DAArguments);
-// BENCHMARK_TEMPLATE(select_DA, Dna, CompressedSimple)->Apply(DAArguments);
+// BENCHMARK_TEMPLATE(select_DA, Dna, Uncompressed)->Apply(DAArguments);
+BENCHMARK_TEMPLATE(select_DA, Dna, CompressedSimple)->Apply(DAArguments);
 // BENCHMARK_TEMPLATE(select_DA, Dna, CompressedArray)->Apply(DAWhichArguments));
 
 BENCHMARK_MAIN();
