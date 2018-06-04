@@ -13,9 +13,9 @@ do
     mkdir -p $bin/reads
     cd $bin/bins
     # Simulate reference
-    ../../mason_limited/mason_genome -l $length -o ref.fasta -s $seed &> /dev/null
+    ../../mason_limited/mason_genome -l $length -o ref.fasta -s $seed &>/dev/null
     # Evenly distribute it over 64 bins
-    pyfasta split -n $bin -k $binLength ref.fasta
+    pyfasta split -n $bin -k $binLength ref.fasta &>/dev/null
     # We do not need the reference anymore
     rm ref.fasta
     # Rename the bins
@@ -27,8 +27,7 @@ do
         -ir $i \
         -n 16 \
         -of $(basename $i .fa).fasta \
-        -ov ../info/$(basename $i .fa).vcf && rm $i \
-        &> /dev/null
+        -ov ../info/$(basename $i .fa).vcf &>/dev/null && rm $i
     done
     cd ../..
 done
