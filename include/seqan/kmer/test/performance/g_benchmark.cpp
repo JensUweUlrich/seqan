@@ -37,7 +37,7 @@
 using namespace seqan;
 
 // CharString baseDir{"/srv/public/enricoseiler/benchmark/"}; // lncrna
-CharString baseDir{"/group/ag_abi/seiler/benchmark/"}; // redwood
+CharString baseDir{"/group/ag_abi/seiler/small_benchmark/"}; // redwood
 uint64_t e{2};
 
 template <typename TAlphabet, typename TFilter>
@@ -410,10 +410,10 @@ static void IBFArguments(benchmark::internal::Benchmark* b)
     {
         if ((binNo > 1 && binNo < 64) || binNo==128 || binNo==512 || binNo==2048 || binNo==4096)
             continue;
-        for (int32_t k = 17; k < 20; ++k)
+        for (int32_t k = 14; k < 20; ++k)
         {
             // 35 = 4GiB, 36 = 8GiB, 37 = 16GiB
-            for (int32_t bits = 35; bits <= 37; ++bits )
+            for (int32_t bits = 31; bits <= 37; ++bits )
             {
                 for (int32_t hashNo = 3; hashNo < 4; ++hashNo)
                 {
@@ -432,25 +432,25 @@ static void DAArguments(benchmark::internal::Benchmark* b)
     {
         if ((binNo > 1 && binNo < 64) || binNo==128 || binNo==512 || binNo==2048 || binNo==4096)
             continue;
-        for (int32_t k = 13; k <= 15; ++k)
+        for (int32_t k = 10; k <= 14; ++k)
         {
-            if (binNo == 8192 && k == 15)
+            if (binNo == 8192 && k == 14)
                 continue;
             b->Args({binNo, k});
         }
     }
 }
 
-// BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Uncompressed)->Apply(IBFArguments);
+BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Uncompressed)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, CompressedSimple)->Apply(IBFArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, CompressedArray)->Apply(IBFAddArguments)->UseManualTime();
-// BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Uncompressed)->Apply(DAArguments);
+BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Uncompressed)->Apply(DAArguments);
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, CompressedSimple)->Apply(DAArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, CompressedArray)->Apply(DAAddArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(select_IBF, Dna, Uncompressed)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedSimple)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedArray)->Apply(IBFWhichArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(select_DA, Dna, Uncompressed)->Apply(DAArguments);
+// BENCHMARK_TEMPLATE(select_DA, Dna, Uncompressed)->Apply(DAArguments);
 // BENCHMARK_TEMPLATE(select_DA, Dna, CompressedSimple)->Apply(DAArguments);
 // BENCHMARK_TEMPLATE(select_DA, Dna, CompressedArray)->Apply(DAWhichArguments));
 
