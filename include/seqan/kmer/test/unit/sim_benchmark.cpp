@@ -72,12 +72,12 @@ int main()
             {
                 readRecord(id, seq, seqFileIn);
                 uint32_t refLength = length(seq);
-                std::uniform_int_distribution<uint32_t> readPos(0, refLength - readLength + 1);
+                std::uniform_int_distribution<uint32_t> readPos(0, refLength - readLength);
                 for(uint32_t r = 0; r < readsPerHaplotype; ++r)
                 {
                     uint32_t pos = readPos(rng);
                     DnaString segment = infixWithLength(seq, pos, readLength);
-                    std::uniform_int_distribution<uint16_t> errorPos(0, readLength);
+                    std::uniform_int_distribution<uint16_t> errorPos(0, readLength-1);
                     for(uint8_t e = 0; e < maxErrors; ++e)
                     {
                         uint32_t pos = errorPos(rng);
