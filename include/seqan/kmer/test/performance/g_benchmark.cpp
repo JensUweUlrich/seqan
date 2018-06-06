@@ -413,7 +413,7 @@ static void IBFArguments(benchmark::internal::Benchmark* b)
         for (int32_t k = 14; k < 20; ++k)
         {
             // 35 = 4GiB, 36 = 8GiB, 37 = 16GiB
-            for (int32_t bits = 30; bits <= 35; ++bits )
+            for (int32_t bits = 25; bits <= 29; ++bits )
             {
                 for (int32_t hashNo = 3; hashNo < 4; ++hashNo)
                 {
@@ -432,7 +432,7 @@ static void DAArguments(benchmark::internal::Benchmark* b)
     {
         if ((binNo > 1 && binNo < 64) || binNo==128 || binNo==512 || binNo==2048 || binNo==4096)
             continue;
-        for (int32_t k = 10; k <= 14; ++k)
+        for (int32_t k = 5; k <= 9; ++k)
         {
             if (binNo == 8192 && k == 14)
                 continue;
@@ -441,10 +441,10 @@ static void DAArguments(benchmark::internal::Benchmark* b)
     }
 }
 
-// BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Uncompressed)->Apply(IBFArguments);
+BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Uncompressed)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, CompressedSimple)->Apply(IBFArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, CompressedArray)->Apply(IBFAddArguments)->UseManualTime();
-// BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Uncompressed)->Apply(DAArguments);
+BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Uncompressed)->Apply(DAArguments);
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, CompressedSimple)->Apply(DAArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, CompressedArray)->Apply(DAAddArguments)->UseManualTime();
 BENCHMARK_TEMPLATE(select_IBF, Dna, Uncompressed)->Apply(IBFArguments);
