@@ -19,6 +19,8 @@ int main()
         append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
         append(file, CharString(".fastq"));
 
+        CharString fileOut{"false_positives.fastq"};
+
         CharString id;
         String<Dna> seq;
         SeqFileIn seqFileIn;
@@ -27,6 +29,14 @@ int main()
         {
             CharString msg = "Unable to open contigs file: ";
             append(msg, CharString(file));
+            throw toCString(msg);
+        }
+        SeqFileOut seqFileOut;
+        if (!open(seqFileOut, toCString(fileOut)))
+        {
+            CharString msg = "Unable to open contigs file: ";
+            append(msg, CharString(fileOut));
+            std::cerr << msg << '\n';
             throw toCString(msg);
         }
         while(!atEnd(seqFileIn))
@@ -38,7 +48,8 @@ int main()
             c = count(res.begin(), res.end(), true);
             if (c > 1)
             {
-                std::cout << "Read from bin " << i << ":\n" << seq << '\n';
+                writeRecord(seqFileOut, id, seq);
+                // std::cout << "Read from bin " << i << ":\n" << seq << '\n';
                 // auto it = res.begin();
                 // while (it != res.end())
                 // {
