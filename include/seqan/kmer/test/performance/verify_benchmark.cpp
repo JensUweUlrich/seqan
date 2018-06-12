@@ -40,7 +40,7 @@ int main()
             {
                 std::cout << "False positive. Read from bin " << i << " matched in bins ";
                 auto iter = res.begin();
-                while((iter = std::find_if(iter, res.end(), true)) != res.end())
+                while((iter = std::find(iter, res.end(), true)) != res.end())
                     std::cout << std::distance(iter, res.begin()) << ' ';
                 std::cout << '\n';
             }
