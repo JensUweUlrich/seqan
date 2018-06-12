@@ -8,8 +8,8 @@ int main()
     retrieve(ibf, CharString{"/group/ag_abi/seiler/benchmark/filter/256_17_35_Uncompressed_ibf.filter"});
     uint16_t k{17};
     uint16_t e{2};
-    uint16_t bins{256}
-    CharString baseDir{"/group/ag_abi/seiler/benchmark/"}
+    uint16_t bins{256};
+    CharString baseDir{"/group/ag_abi/seiler/benchmark/"};
 
     for(int32_t i = 0; i < bins; ++i)
     {
