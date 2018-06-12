@@ -49,7 +49,7 @@ int main()
             if (c > 1)
             {
                 writeRecord(seqFileOut, id, seq);
-                std::cout << 1;
+                std::cout << id << ' ' << seq << '\n'; 
                 // std::cout << "Read from bin " << i << ":\n" << seq << '\n';
                 // auto it = res.begin();
                 // while (it != res.end())
