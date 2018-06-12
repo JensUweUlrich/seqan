@@ -38,20 +38,20 @@ int main()
             c = count(res.begin(), res.end(), true);
             if (c > 1)
             {
-                std::cout << "False positive. Read from bin " << i << " matched in bins ";
-                auto it = res.begin();
-                while (it != res.end())
-                {
-                    it = std::find(it, res.end(), true);
-                    if (it != res.end())
-                    {
-                        auto const idx = std::distance(res.begin(), it);
-                        if (idx != i)
-                            std::cout << idx << ' ';
-                        ++it;
-                    }
-                }
-                std::cout << '\n';
+                std::cout << "Read from bin " << i << ":\n" << seq << '\n';
+                // auto it = res.begin();
+                // while (it != res.end())
+                // {
+                //     it = std::find(it, res.end(), true);
+                //     if (it != res.end())
+                //     {
+                //         auto const idx = std::distance(res.begin(), it);
+                //         if (idx != i)
+                //             std::cout << idx << ' ';
+                //         ++it;
+                //     }
+                // }
+                // std::cout << '\n';
             }
         }
     }
