@@ -11,6 +11,16 @@ int main()
     uint16_t bins{256};
     CharString baseDir{"/group/ag_abi/seiler/benchmark/"};
 
+    CharString fileOut{"false_positives.fastq"};
+    SeqFileOut seqFileOut;
+    if (!open(seqFileOut, toCString(fileOut)))
+    {
+        CharString msg = "Unable to open contigs file: ";
+        append(msg, CharString(fileOut));
+        std::cerr << msg << '\n';
+        throw toCString(msg);
+    }
+
     for(int32_t i = 0; i < bins; ++i)
     {
         CharString file(baseDir);
@@ -18,8 +28,6 @@ int main()
         append(file, CharString{"/reads/bin_"});
         append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
         append(file, CharString(".fastq"));
-
-        CharString fileOut{"false_positives.fastq"};
 
         CharString id;
         String<Dna> seq;
@@ -29,14 +37,6 @@ int main()
         {
             CharString msg = "Unable to open contigs file: ";
             append(msg, CharString(file));
-            throw toCString(msg);
-        }
-        SeqFileOut seqFileOut;
-        if (!open(seqFileOut, toCString(fileOut)))
-        {
-            CharString msg = "Unable to open contigs file: ";
-            append(msg, CharString(fileOut));
-            std::cerr << msg << '\n';
             throw toCString(msg);
         }
         while(!atEnd(seqFileIn))
@@ -49,7 +49,6 @@ int main()
             if (c > 1)
             {
                 writeRecord(seqFileOut, id, seq);
-                std::cout << id << ' ' << seq << '\n'; 
                 // std::cout << "Read from bin " << i << ":\n" << seq << '\n';
                 // auto it = res.begin();
                 // while (it != res.end())
