@@ -39,9 +39,18 @@ int main()
             if (c > 1)
             {
                 std::cout << "False positive. Read from bin " << i << " matched in bins ";
-                auto iter = res.begin();
-                while((iter = std::find(iter, res.end(), true)) != res.end())
-                    std::cout << std::distance(iter, res.begin()) << ' ';
+                auto it = res.begin();
+                while (it != res.end())
+                {
+                    it = std::find(it, res.end(), true);
+                    if (it != res.end())
+                    {
+                        auto const idx = std::distance(res.begin(), it);
+                        if (idx != i)
+                            std::cout << idx << ' ';
+                        ++it;
+                    }
+                }
                 std::cout << '\n';
             }
         }
