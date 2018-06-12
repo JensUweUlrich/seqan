@@ -20,7 +20,7 @@ int main()
         append(file, CharString(".fastq"));
 
         CharString id;
-        String<TAlphabet> seq;
+        String<Dna> seq;
         SeqFileIn seqFileIn;
         uint64_t c{0};
         if (!open(seqFileIn, toCString(file)))
