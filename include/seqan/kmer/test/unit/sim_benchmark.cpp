@@ -2,7 +2,7 @@
 #include <random>
 using namespace seqan;
 
-CharString baseDir{"/group/ag_abi/seiler/small_benchmark/"};
+CharString baseDir{"/group/ag_abi/seiler/benchmark/"};
 uint8_t maxErrors{2};
 uint16_t readLength{100};
 uint32_t noOfReads{1UL<<20};
@@ -25,8 +25,8 @@ int numDigits(T number)
 
 int main()
 {
-    for(uint16_t noOfBins : {64, 256, 1024, 8192})
-    // for(uint16_t noOfBins : {8192})
+    // for(uint16_t noOfBins : {64, 256, 1024, 8192})
+    for(uint16_t noOfBins : {256})
     {
         // Since numerator and denominator are powers of two, each bin should get an equal number of reads
         uint32_t readsPerBin = noOfReads / noOfBins;
