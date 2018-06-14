@@ -8,7 +8,7 @@ uint16_t readLength{100};
 uint32_t noOfReads{1UL<<20};
 uint8_t noOfHaplotypes{16};
 std::random_device rd;
-std::mt19937 rng(rd(124));
+std::mt19937 rng(rd());
 std::uniform_real_distribution<double> dist(0, 1);
 
 template <typename T>
