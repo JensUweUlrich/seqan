@@ -406,15 +406,15 @@ static void select_DA(benchmark::State& state)
 [[maybe_unused]]
 static void IBFArguments(benchmark::internal::Benchmark* b)
 {
-    // for (int32_t binNo = 64; binNo <= 8192; binNo *= 2)
-    for (int32_t binNo = 256; binNo <= 256; binNo *= 2)
+    for (int32_t binNo = 64; binNo <= 8192; binNo *= 2)
+    // for (int32_t binNo = 256; binNo <= 256; binNo *= 2)
     {
         if ((binNo > 1 && binNo < 64) || binNo==128 || binNo==512 || binNo==2048 || binNo==4096)
             continue;
-        for (int32_t k = 17; k < 20; ++k)
+        for (int32_t k = 19; k < 20; ++k)
         {
             // 35 = 4GiB, 36 = 8GiB, 37 = 16GiB
-            for (int32_t bits = 35; bits <= 37; ++bits )
+            for (int32_t bits = 20; bits <= 30; ++bits )
             {
                 for (int32_t hashNo = 3; hashNo < 4; ++hashNo)
                 {
