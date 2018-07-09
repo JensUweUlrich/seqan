@@ -416,7 +416,6 @@ static void IBFArguments(benchmark::internal::Benchmark* b)
             // 35 = 4GiB, 36 = 8GiB, 37 = 16GiB
             for (int32_t hashNo = 3; hashNo < 4; ++hashNo)
             {
-                b->Args({binNo, k, 1L<<22+1L<<19})
                 int32_t bits{1L<<22};
                 for (int i = 0; i<8; ++i)
                 {
