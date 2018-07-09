@@ -47,7 +47,7 @@ static void insertKmer_IBF(benchmark::State& state)
     auto k = state.range(1);
     auto bits = state.range(2);
     auto hash = state.range(3);
-    KmerFilter<TAlphabet, InterleavedBloomFilter, TFilter> ibf (bins, hash, k, (1ULL<<bits));
+    KmerFilter<TAlphabet, InterleavedBloomFilter, TFilter> ibf (bins, hash, k, bits);
 
     for (auto _ : state)
     {
@@ -96,7 +96,7 @@ static void select_IBF(benchmark::State& state)
     auto k = state.range(1);
     auto bits = state.range(2);
     auto hash = state.range(3);
-    KmerFilter<TAlphabet, InterleavedBloomFilter, TFilter> ibf(bins, hash, k, (1ULL<<bits));
+    KmerFilter<TAlphabet, InterleavedBloomFilter, TFilter> ibf(bins, hash, k, bits);
 
     CharString storage("");
     append(storage, CharString(std::to_string(bins)));
@@ -411,15 +411,23 @@ static void IBFArguments(benchmark::internal::Benchmark* b)
     {
         if ((binNo > 1 && binNo < 64) || binNo==128 || binNo==512 || binNo==2048 || binNo==4096)
             continue;
-        for (int32_t k = 19; k < 20; ++k)
+        for (int32_t k = 14; k < 20; ++k)
         {
             // 35 = 4GiB, 36 = 8GiB, 37 = 16GiB
-            for (int32_t bits = 20; bits <= 30; ++bits )
+            for (int32_t hashNo = 3; hashNo < 4; ++hashNo)
             {
-                for (int32_t hashNo = 3; hashNo < 4; ++hashNo)
+                b->Args({binNo, k, 1L<<22+1L<<19})
+                int32_t bits{1L<<22};
+                for (int i = 0; i<8; ++i)
                 {
-
-                    b->Args({binNo, k, bits, hashNo});
+                    bits += 1L<<19;
+                    b->Args({binNo, k, bits, hashNo})
+                }
+                int32_t bits{1L<<24};
+                for (int i = 0; i<4; ++i)
+                {
+                    bits += 1L<<21;
+                    b->Args({binNo, k, bits, hashNo})
                 }
             }
         }
