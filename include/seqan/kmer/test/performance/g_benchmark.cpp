@@ -417,7 +417,7 @@ static void IBFArguments(benchmark::internal::Benchmark* b)
             for (int32_t hashNo = 3; hashNo < 4; ++hashNo)
             {
                 int32_t bits{1L<<22};
-                for (int i = 0; i<8; ++i)
+                for (int i = 0; i<7; ++i)
                 {
                     bits += 1L<<19;
                     b->Args({binNo, k, bits, hashNo});
