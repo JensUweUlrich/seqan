@@ -420,13 +420,13 @@ static void IBFArguments(benchmark::internal::Benchmark* b)
                 for (int i = 0; i<8; ++i)
                 {
                     bits += 1L<<19;
-                    b->Args({binNo, k, bits, hashNo})
+                    b->Args({binNo, k, bits, hashNo});
                 }
-                int32_t bits{1L<<24};
+                bits = 1L<<24;
                 for (int i = 0; i<4; ++i)
                 {
                     bits += 1L<<21;
-                    b->Args({binNo, k, bits, hashNo})
+                    b->Args({binNo, k, bits, hashNo});
                 }
             }
         }
