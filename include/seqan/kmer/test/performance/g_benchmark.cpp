@@ -37,7 +37,7 @@
 using namespace seqan;
 
 // CharString baseDir{"/srv/public/enricoseiler/benchmark/"}; // lncrna
-CharString baseDir{"/group/ag_abi/seiler/benchmark/"}; // redwood
+CharString baseDir{"/group/ag_abi/seiler/small_benchmark/"}; // redwood
 uint64_t e{2};
 
 template <typename TAlphabet, typename TFilter>
@@ -449,14 +449,14 @@ static void DAArguments(benchmark::internal::Benchmark* b)
     }
 }
 
-// BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Uncompressed)->Apply(IBFArguments);
+BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Uncompressed)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, CompressedSimple)->Apply(IBFArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, CompressedArray)->Apply(IBFAddArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Uncompressed)->Apply(DAArguments);
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, CompressedSimple)->Apply(DAArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, CompressedArray)->Apply(DAAddArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(select_IBF, Dna, Uncompressed)->Apply(IBFArguments);
-BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedSimple)->Apply(IBFArguments);
+// BENCHMARK_TEMPLATE(select_IBF, Dna, Uncompressed)->Apply(IBFArguments);
+// BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedSimple)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedArray)->Apply(IBFWhichArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(select_DA, Dna, Uncompressed)->Apply(DAArguments);
 // BENCHMARK_TEMPLATE(select_DA, Dna, CompressedSimple)->Apply(DAArguments);
