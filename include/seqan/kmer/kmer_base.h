@@ -141,12 +141,12 @@ class KmerFilter;
 template<typename TValue, typename TSpec, typename TFilterVector>
 struct Value<KmerFilter<TValue, TSpec, TFilterVector> >
 {
-    typedef uint16_t noOfBins;
+    typedef uint32_t noOfBins;
     typedef uint16_t kmerSize;
     typedef uint64_t noOfBits;
     typedef uint64_t noOfBlocks;
     typedef uint16_t binWidth;
-    typedef uint16_t blockBitSize;
+    typedef uint32_t blockBitSize;
     typedef uint8_t  intSize;
     typedef uint16_t filterMetadataSize;
     typedef uint8_t  noOfHashFunc;
@@ -263,11 +263,11 @@ inline void insertKmerDir(KmerFilter<TValue, TSpec, TFilterVector> &  me, const 
     std::mutex mtx;
     std::vector<std::future<void>> tasks;
 
-    uint16_t bins = me.noOfBins;
+    uint32_t bins = me.noOfBins;
     for (uint8_t c = 0; c < me.filterVector.noOfChunks; ++c)
     {
         me.filterVector.decompress(c);
-        for(int16_t i = 0; i < bins; ++i)
+        for(uint32_t i = 0; i < bins; ++i)
         {
             CharString file(baseDir);
             append(file, CharString(std::to_string(bins)));
@@ -299,7 +299,7 @@ inline void insertKmerDir(KmerFilter<TValue, TSpec, TFilterVector> &  me, const 
  * \param text A single text to count all contained k-mers for.
  */
 template<typename TValue, typename TSpec,  typename TFilterVector>
-inline void select(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<uint16_t> & counts, String<TValue> const & text)
+inline void select(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<uint32_t> & counts, String<TValue> const & text)
 {
     me.select(counts, text);
 }
@@ -311,9 +311,9 @@ inline void select(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<u
  * \returns std::vector<uint64_t> of size binNo containing counts.
  */
 template<typename TValue, typename TSpec, typename TFilterVector>
-inline std::vector<uint16_t> select(KmerFilter<TValue, TSpec, TFilterVector> &  me, String<TValue> const & text)
+inline std::vector<uint32_t> select(KmerFilter<TValue, TSpec, TFilterVector> &  me, String<TValue> const & text)
 {
-    std::vector<uint16_t> counts(me.noOfBins, 0);
+    std::vector<uint32_t> counts(me.noOfBins, 0);
     select(me, counts, text);
     return counts;
 }
