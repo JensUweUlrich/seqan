@@ -125,11 +125,11 @@ int main()
     // ==========================================================================
     std::cout << "Testing select" << '\n';
 
-    std::vector<uint16_t> ctor_default_set;
+    std::vector<uint32_t> ctor_default_set;
 
-    std::vector<bool> which = select(ctor_default, DnaString(std::string(kmerSize, 'A')), 1);
+    std::vector<bool> which = select(ctor_default, DnaString(std::string(kmerSize, 'A')), 1U);
     (void) select(ctor_default, DnaString(std::string(kmerSize, 'T')));
-    for (uint16_t i = 0; i < which.size(); ++i)
+    for (uint32_t i = 0; i < which.size(); ++i)
     {
         if (i == 1 || i == 5 || i == 8)
         {
