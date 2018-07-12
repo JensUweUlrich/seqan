@@ -66,9 +66,9 @@ int main()
     typedef InterleavedBloomFilter TSpec;
     // typedef DirectAddressing       TSpec;
 
-    // typedef Uncompressed TFilter;
+    typedef Uncompressed TFilter;
     // typedef CompressedSimple TFilter;
-    typedef CompressedArray TFilter;
+    // typedef CompressedArray TFilter;
 
     // Empty default constructor
     KmerFilter<Dna, TSpec, TFilter> ctor_empty;
