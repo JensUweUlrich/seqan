@@ -183,7 +183,7 @@ public:
      * \param threads Number of threads to use.
      */
     template<typename TInt>
-    void clear(std::vector<uint16_t> const & bins, TInt&& threads)
+    void clear(std::vector<uint32_t> const & bins, TInt&& threads)
     {
         std::vector<std::future<void>> tasks;
         uint64_t chunkBlocks = filterVector.chunkSize / filterVector.blockBitSize;
@@ -212,7 +212,7 @@ public:
                     {
                         uint64_t vecPos = hashBlock * filterVector.blockBitSize;
                         uint8_t chunkNo = vecPos / filterVector.chunkSize;
-                        for(uint16_t binNo : bins)
+                        for(uint32_t binNo : bins)
                         {
                             if (chunk == chunkNo)
                                 filterVector.unset_pos(vecPos + binNo);
@@ -234,7 +234,7 @@ public:
      * \param counts Vector to be filled with counts.
      * \param text Text to count occurences for.
      */
-    void select(std::vector<uint16_t> & counts, TString const & text)
+    void select(std::vector<uint32_t> & counts, TString const & text)
     {
         uint16_t possible = length(text) - kmerSize + 1; // Supports text lengths up to 65535 + k
         std::vector<uint64_t> kmerHashes(possible, 0);
@@ -254,8 +254,8 @@ public:
             // Move to first bit representing the hash kmerHash for bin 0, the next bit would be for bin 1, and so on
             kmerHash *= blockBitSize;
 
-            uint16_t binNo = 0;
-            for (uint16_t batchNo = 0; batchNo < binWidth; ++batchNo)
+            uint32_t binNo = 0;
+            for (uint32_t batchNo = 0; batchNo < binWidth; ++batchNo)
             {
                 binNo = batchNo * intSize;
                 // get_int(idx, len) returns the integer value of the binary string of length len starting
@@ -304,9 +304,9 @@ public:
     template<typename TInt>
     inline void select(std::vector<bool> & selected, TString const & text, TInt && threshold)
     {
-        std::vector<uint16_t> counts(noOfBins, 0);
+        std::vector<uint32_t> counts(noOfBins, 0);
         select(counts, text);
-        for(uint16_t binNo=0; binNo < noOfBins; ++binNo)
+        for(uint32_t binNo=0; binNo < noOfBins; ++binNo)
         {
             if(counts[binNo] >= threshold)
                 selected[binNo] = true;
