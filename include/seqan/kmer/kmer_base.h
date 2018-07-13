@@ -260,7 +260,7 @@ template<typename TValue, typename TSpec, typename TFilterVector>
 inline void insertKmerDir(KmerFilter<TValue, TSpec, TFilterVector> &  me, const char * baseDir, uint8_t threads)
 {
     Semaphore thread_limiter(threads);
-    std::mutex mtx;
+    // std::mutex mtx;
     std::vector<std::future<void>> tasks;
 
     uint32_t bins = me.noOfBins;
@@ -275,12 +275,12 @@ inline void insertKmerDir(KmerFilter<TValue, TSpec, TFilterVector> &  me, const 
             append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
             append(file, CharString(".fasta"));
             tasks.emplace_back(
-                std::async(std::launch::async, [=, &thread_limiter, &me, &mtx] {
+                std::async(std::launch::async, [=, &thread_limiter, &me] { // &mtx
                     Critical_section _(thread_limiter);
                     insertKmer(me, toCString(file), i, true, c);
-                    mtx.lock();
-                    std::cerr << "IBF Bin " << i << " done." << '\n';
-                    mtx.unlock();
+                    // mtx.lock();
+                    // std::cerr << "IBF Bin " << i << " done." << '\n';
+                    // mtx.unlock();
                 })
             );
         }
