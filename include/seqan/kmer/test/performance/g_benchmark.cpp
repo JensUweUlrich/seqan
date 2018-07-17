@@ -37,7 +37,7 @@
 using namespace seqan;
 
 // CharString baseDir{"/srv/public/enricoseiler/benchmark/"}; // lncrna
-CharString baseDir{"/group/ag_abi/seiler/benchmark/"}; // redwood
+CharString baseDir{"/group/ag_abi/seiler/small_benchmark/"}; // redwood
 uint64_t e{2};
 
 template <typename TAlphabet, typename TFilter>
