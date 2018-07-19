@@ -33,17 +33,17 @@
 // ==========================================================================
 #include <random>
 
-#if __has_include(<filesystem>)
-#include <filesystem>
-#else
-#include <experimental/filesystem>
-#endif
+// #if __has_include(<filesystem>)
+// #include <filesystem>
+// #else
+// #include <experimental/filesystem>
+// #endif
 
-#if __has_include(<filesystem>)
-namespace filesystem = std::filesystem;
-#else
-namespace filesystem = std::experimental::filesystem;
-#endif
+// #if __has_include(<filesystem>)
+// namespace filesystem = std::filesystem;
+// #else
+// namespace filesystem = std::experimental::filesystem;
+// #endif
 
 namespace seqan {
 
