@@ -120,7 +120,7 @@ struct CompressedArray_;
 typedef Tag<CompressedArray_> CompressedArray;
 
 template<typename TSpec>
-class FilterVector;
+struct FilterVector;
 
 // --------------------------------------------------------------------------
 // Class BinningDirectory
