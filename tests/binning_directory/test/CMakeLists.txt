@@ -33,14 +33,14 @@
 
 cmake_minimum_required (VERSION 3.2)
 
-project(kmer_benchmarks CXX)
+project(binning_directory CXX)
 
 # ----------------------------------------------------------------------------
 # Define paths
 # ----------------------------------------------------------------------------
 
 # CMAKE_SOURCE_DIR is seqan/include/seqan/kmer/test (the path of this CMakeLists.txt)
-set(SEQAN_ROOT "${CMAKE_SOURCE_DIR}/../../../..")
+set(SEQAN_ROOT "${CMAKE_SOURCE_DIR}/../../../")
 message(STATUS ${SEQAN_ROOT})
 
 # SeqAn include
@@ -134,7 +134,7 @@ endmacro()
 # define all include folders
 include_directories("${BENCHMARK_ROOT}/include/")
 include_directories("${SEQAN_ROOT}/include/")
-include_directories (${SDSL_INCLUDE_DIRS})
+include_directories(${SDSL_INCLUDE_DIRS})
 
 # ----------------------------------------------------------------------------
 # Add the benchmarks

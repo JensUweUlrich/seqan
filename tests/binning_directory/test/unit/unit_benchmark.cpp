@@ -39,7 +39,7 @@
 #include <vector>
 
 #include <seqan/seq_io.h>
-#include <seqan/kmer.h>
+#include <seqan/binning_directory.h>
 
 static const uint32_t filterMetadataSize = 256;
 static const uint8_t INT_WIDTH = 0x40;
@@ -70,27 +70,29 @@ int main()
     // typedef CompressedSimple TFilter;
     // typedef CompressedArray TFilter;
 
+    typedef Shape<Dna, SimpleShape> TShape;
+
     // Empty default constructor
-    KmerFilter<Dna, TSpec, TFilter> ctor_empty;
+    BinningDirectory<Dna, TShape, TSpec, TFilter> ctor_empty;
     // Default constructor
 
-    KmerFilter<Dna, TSpec, TFilter> ctor_default (noBins, hashFunc, kmerSize, bits);
-    KmerFilter<Dna, TSpec, TFilter> ctor_default_helper1 (noBins, hashFunc, kmerSize, bits);
-    KmerFilter<Dna, TSpec, TFilter> ctor_default_helper2 (noBins, hashFunc, kmerSize, bits);
+    BinningDirectory<Dna, TShape, TSpec, TFilter> ctor_default (noBins, hashFunc, kmerSize, bits);
+    BinningDirectory<Dna, TShape, TSpec, TFilter> ctor_default_helper1 (noBins, hashFunc, kmerSize, bits);
+    BinningDirectory<Dna, TShape, TSpec, TFilter> ctor_default_helper2 (noBins, hashFunc, kmerSize, bits);
 
-    // KmerFilter<Dna, TSpec, TFilter> ctor_default (noBins, kmerSize);
-    // KmerFilter<Dna, TSpec, TFilter> ctor_default_helper1 (noBins, kmerSize);
-    // KmerFilter<Dna, TSpec, TFilter> ctor_default_helper2 (noBins, kmerSize);
+    // BinningDirectory<Dna, TSpec, TFilter> ctor_default (noBins, kmerSize);
+    // BinningDirectory<Dna, TSpec, TFilter> ctor_default_helper1 (noBins, kmerSize);
+    // BinningDirectory<Dna, TSpec, TFilter> ctor_default_helper2 (noBins, kmerSize);
 
     // Copy constructor
-    KmerFilter<Dna, TSpec, TFilter> ctor_copy (ctor_default);
+    BinningDirectory<Dna, TShape, TSpec, TFilter> ctor_copy (ctor_default);
     // Copy assignment
-    KmerFilter<Dna, TSpec, TFilter> assignment_copy;
+    BinningDirectory<Dna, TShape, TSpec, TFilter> assignment_copy;
     assignment_copy = ctor_default;
     // Move constructor
-    KmerFilter<Dna, TSpec, TFilter> ctor_move(std::move(ctor_default_helper1));
+    BinningDirectory<Dna, TShape, TSpec, TFilter> ctor_move(std::move(ctor_default_helper1));
     // Move assignment
-    KmerFilter<Dna, TSpec, TFilter> assignment_move;
+    BinningDirectory<Dna, TShape, TSpec, TFilter> assignment_move;
     assignment_move = std::move(ctor_default_helper2);
 
 
@@ -121,25 +123,43 @@ int main()
 
 
     // ==========================================================================
-    // Test select()
+    // Test count()
     // ==========================================================================
-    std::cout << "Testing select" << '\n';
+    std::cout << "Testing count" << '\n';
 
     std::vector<uint32_t> ctor_default_set;
 
-    std::vector<bool> which = select(ctor_default, DnaString(std::string(kmerSize, 'A')), 1U);
-    (void) select(ctor_default, DnaString(std::string(kmerSize, 'T')));
-    for (uint32_t i = 0; i < which.size(); ++i)
+    auto counts = count(ctor_default, DnaString(std::string(kmerSize, 'A')));
+    for (uint32_t i = 0; i < counts.size(); ++i)
     {
         if (i == 1 || i == 5 || i == 8)
         {
-            assert(which[i]);
+            assert(counts[i]);
             ctor_default_set.push_back(i);
         }
         else
-            assert(!which[i]);
+            assert(!counts[i]);
     }
 
+    // // ==========================================================================
+    // // Test select()
+    // // ==========================================================================
+    // std::cout << "Testing select" << '\n';
+    //
+    // std::vector<uint32_t> ctor_default_set;
+    //
+    // std::vector<bool> which = select(ctor_default, DnaString(std::string(kmerSize, 'A')), 1U);
+    // (void) select(ctor_default, DnaString(std::string(kmerSize, 'T')));
+    // for (uint32_t i = 0; i < which.size(); ++i)
+    // {
+    //     if (i == 1 || i == 5 || i == 8)
+    //     {
+    //         assert(which[i]);
+    //         ctor_default_set.push_back(i);
+    //     }
+    //     else
+    //         assert(!which[i]);
+    // }
 
     // ==========================================================================
     // Test clear()

@@ -359,6 +359,7 @@ struct FilterVector<CompressedSimple>
     }
 };
 
+/*
 template<>
 struct FilterVector<CompressedArray>
 {
@@ -590,4 +591,5 @@ struct FilterVector<CompressedArray>
         *this = FilterVector(fileName);
     }
 };
+*/
 }
