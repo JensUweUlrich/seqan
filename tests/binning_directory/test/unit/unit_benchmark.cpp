@@ -41,8 +41,8 @@
 #include <seqan/seq_io.h>
 #include <seqan/binning_directory.h>
 
-static const uint32_t filterMetadataSize = 256;
-static const uint8_t INT_WIDTH = 0x40;
+// static const uint32_t filterMetadataSize = 256;
+// static const uint8_t INT_WIDTH = 0x40;
 
 using namespace seqan;
 
@@ -52,10 +52,8 @@ int main()
     uint64_t threads{3};
     uint64_t noBins{10};
     uint64_t kmerSize{14};
-    [[maybe_unused]]
     uint64_t hashFunc{3};
-    [[maybe_unused]]
-    uint64_t bits{1ULL<<33};
+    uint64_t bits{3_m};
 
 
     // ==========================================================================
