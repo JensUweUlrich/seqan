@@ -32,15 +32,15 @@
 // Author:  Temesgen H. Dadi <temesgen.dadi@fu-berlin.de>
 //          Enrico Seiler <enrico.seiler@fu-berlin.de>
 // ==========================================================================
-// Header for the k-mer directories module.
+// Header for the binning directories module.
 // ==========================================================================
 
-#ifndef INCLUDE_SEQAN_KMER_H_
-#define INCLUDE_SEQAN_KMER_H_
+#ifndef INCLUDE_SEQAN_BINNING_DIRECTORY_H_
+#define INCLUDE_SEQAN_BINNING_DIRECTORY_H_
 
-#include <seqan/kmer/kmer_base.h>
-#include <seqan/kmer/filtervector.h>
-#include <seqan/kmer/kmer_direct.h>
-#include <seqan/kmer/kmer_ibf.h>
+#include <seqan/binning_directory/binning_directory_base.h>
+#include <seqan/binning_directory/filtervector.h>
+// #include <seqan/binning_directory/binning_directory_direct_addressing.h>
+#include <seqan/binning_directory/binning_directory_interleaved_bloom_filter.h>
 
 #endif
