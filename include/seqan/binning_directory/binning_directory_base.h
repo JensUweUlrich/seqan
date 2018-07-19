@@ -33,8 +33,8 @@
 //          Enrico Seiler <enrico.seiler@fu-berlin.de>
 // ==========================================================================
 
-#ifndef INCLUDE_SEQAN_KMER_KMER_BASE_H_
-#define INCLUDE_SEQAN_KMER_KMER_BASE_H_
+#ifndef INCLUDE_SEQAN_BINNING_DIRECTORY_BINNING_DIRECTORY_BASE_H_
+#define INCLUDE_SEQAN_BINNING_DIRECTORY_BINNING_DIRECTORY_BASE_H_
 
 #include <sdsl/bit_vectors.hpp>
 #include <seqan/seq_io.h>
@@ -42,9 +42,6 @@
 #include <algorithm>
 #include <future>
 #include <mutex>
-
-// TODO change API
-// TODO change types
 
 namespace seqan {
 
@@ -126,26 +123,26 @@ template<typename TSpec>
 class FilterVector;
 
 // --------------------------------------------------------------------------
-// Class KmerFilter
+// Class BinningDirectory
 // --------------------------------------------------------------------------
 
-//!\brief The KmerFilter class.
-template<typename TValue = Dna, typename TSpec = DirectAddressing, typename TFilterVector = Uncompressed>
-class KmerFilter;
+//!\brief The BinningDirectory class.
+template<typename TValue = Dna, typename TShape = Shape<TValue, SimpleShape>, typename TSpec = InterleavedBloomFilter, typename TFilterVector = Uncompressed>
+class BinningDirectory;
 
 // ==========================================================================
 // Metafunctions
 // ==========================================================================
 
 //!\brief Type definition for variables.
-template<typename TValue, typename TSpec, typename TFilterVector>
-struct Value<KmerFilter<TValue, TSpec, TFilterVector> >
+template<typename TValue, typename TShape, typename TSpec, typename TFilterVector>
+struct Value<BinningDirectory<TValue, TShape, TSpec, TFilterVector> >
 {
     typedef uint32_t noOfBins;
     typedef uint16_t kmerSize;
     typedef uint64_t noOfBits;
     typedef uint64_t noOfBlocks;
-    typedef uint16_t binWidth;
+    typedef uint32_t binWidth;
     typedef uint32_t blockBitSize;
     typedef uint8_t  intSize;
     typedef uint16_t filterMetadataSize;
@@ -153,7 +150,22 @@ struct Value<KmerFilter<TValue, TSpec, TFilterVector> >
     typedef uint8_t  shiftValue;
     typedef uint64_t preCalcValues;
     typedef uint64_t seedValue;
+    typedef uint8_t  noOfChunks;
 };
+
+typedef uint32_t TNoOfBins;
+typedef uint16_t TKmerSize;
+typedef uint64_t TNoOfBits;
+typedef uint64_t TNoOfBlocks;
+typedef uint32_t TBinWidth;
+typedef uint32_t TBlockBitSize;
+typedef uint8_t  TIntSize;
+typedef uint16_t TFilterMetadataSize;
+typedef uint8_t  TNoOfHashFunc;
+typedef uint8_t  TShiftValue;
+typedef uint64_t TPreCalcValues;
+typedef uint64_t TSeedValue;
+typedef uint8_t  TNoOfChunks;
 
 // --------------------------------------------------------------------------
 // Metafunction MetafunctionName
@@ -169,84 +181,66 @@ struct Value<KmerFilter<TValue, TSpec, TFilterVector> >
 
 /*!
  * \brief Adds k-mers from a text to a bin in a given filter.
- * \param me The KmerFilter instance.
+ * \param me The BinningDirectory instance.
  * \param text The text from which the k-mers are to be added.
  * \param binNo The bin to add the k-mers to.
  */
-template<typename TValue, typename TSpec, typename TFilterVector, typename TString, typename TBin, typename TChunk>
-inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> & me, TString const & text, TBin && binNo, TChunk && chunkNo)
+template<typename TValue, typename TShape, typename TSpec, typename TFilterVector>
+inline void insertKmer(BinningDirectory<TValue, TShape, TSpec, TFilterVector> & me, String<TValue> const & text, TNoOfBins binNo)
 {
-    me.insertKmer(text, binNo, chunkNo);
+    me.insertKmer(text, binNo);
 }
 
 /*!
  * \brief Sets the vectors for given bins to 0.
- * \param me The KmerFilter instance.
+ * \param me The BinningDirectory instance.
  * \param bins A vector containing the bin numbers.
  * \param threads The number of threads to use.
  */
-template<typename TValue, typename TSpec, typename TFilterVector, typename TInt1, typename TInt2>
-inline void clear(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<TInt1> & bins, TInt2&& threads)
+template<typename TValue, typename TSpec, typename TFilterVector, typename TInt>
+inline void clear(BinningDirectory<TValue, TSpec, TFilterVector> &  me, std::vector<TNoOfBins> & bins, TInt&& threads)
 {
     // me.clear(bins, static_cast<uint64_t>(threads));
     me.clear(bins, threads);
 }
 
 /*!
- * \brief Adds all k-mers from a fasta file to a bin of a given KmerFilter.
- * \param me The KmerFilter instance.
+ * \brief Adds all k-mers from a fasta file to a bin of a given BinningDirectory.
+ * \param me The BinningDirectory instance.
  * \param fastaFile The fasta file to process.
  * \param binNo The bin to add the k-mers to.
  * \param batch Parallel batch insertion.
  * \param batchChunkNo Current chunk for CompressedArray in batch mode.
  *
- * If the KmerFilter's filterVector specialisation is CompressedArray, we need to iterate filterVector.noOfChunks times
+ * If the BinningDirectory's filterVector specialisation is CompressedArray, we need to iterate filterVector.noOfChunks times
  * over the input files. In each iteration the kmers are inserted into one chunk.
  */
-template<typename TValue, typename TSpec, typename TFilterVector, typename TInt>
-inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> &  me, const char * fastaFile, TInt && binNo, bool batch=false, [[maybe_unused]] uint8_t batchChunkNo=0)
+template<typename TValue, typename TShape, typename TSpec, typename TFilterVector>
+inline void insertKmer(BinningDirectory<TValue, TShape, TSpec, TFilterVector> &  me, const char * fastaFile, TNoOfBins binNo)
 {
     CharString id;
     String<TValue> seq;
     SeqFileIn seqFileIn;
-    for (uint8_t i = 0; i < me.filterVector.noOfChunks; ++i)
+    if (!open(seqFileIn, fastaFile))
     {
-        if constexpr (std::is_same_v<TFilterVector, CompressedArray>)
-        {
-            if (batch)
-                i = batchChunkNo;
-        }
-        if (!open(seqFileIn, fastaFile))
-        {
-            CharString msg = "Unable to open contigs file: ";
-            append(msg, CharString(fastaFile));
-            std::cerr << msg << std::endl;
-            throw toCString(msg);
-        }
-
-        if (!batch)
-            me.filterVector.decompress(i);
-        while(!atEnd(seqFileIn))
-        {
-            readRecord(id, seq, seqFileIn);
-            if(length(seq) < me.kmerSize)
-                continue;
-            insertKmer(me, seq, binNo, i);
-        }
-        if (!batch)
-            me.filterVector.compress(i);
-        close(seqFileIn); // No rewind() for FormattedFile ?
-        if constexpr (std::is_same_v<TFilterVector, CompressedArray>)
-        {
-            if (batch)
-                break;
-        }
+        CharString msg = "Unable to open contigs file: ";
+        append(msg, CharString(fastaFile));
+        std::cerr << msg << std::endl;
+        throw toCString(msg);
     }
+    while(!atEnd(seqFileIn))
+    {
+        readRecord(id, seq, seqFileIn);
+        if(length(seq) < me.kmerSize)
+            continue;
+        insertKmer(me, seq, binNo);
+    }
+    close(seqFileIn);
 }
 
 /*!
  * \brief Adds all fasta files from a directory to the respective bins.
- * \param me The KmerFilter instance.
+ * \param me The BinningDirectory instance.
  * \param baseDir The directory containing the fasta files in a "bins" subdirectory.
  * \param threads Number of threads to use.
  *
@@ -256,132 +250,103 @@ inline void insertKmer(KmerFilter<TValue, TSpec, TFilterVector> &  me, const cha
  * bin_01.fasta, ..., bin_63.fasta.
  * Up to <threads> fasta files are added to the filterVector at the same time.
  */
-template<typename TValue, typename TSpec, typename TFilterVector>
-inline void insertKmerDir(KmerFilter<TValue, TSpec, TFilterVector> &  me, const char * baseDir, uint8_t threads)
-{
-    Semaphore thread_limiter(threads);
-    // std::mutex mtx;
-    std::vector<std::future<void>> tasks;
-
-    uint32_t bins = me.noOfBins;
-    for (uint8_t c = 0; c < me.filterVector.noOfChunks; ++c)
-    {
-        me.filterVector.decompress(c);
-        for(uint32_t i = 0; i < bins; ++i)
-        {
-            CharString file(baseDir);
-            append(file, CharString(std::to_string(bins)));
-            append(file, CharString{"/bins/bin_"});
-            append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
-            append(file, CharString(".fasta"));
-            tasks.emplace_back(
-                std::async(std::launch::async, [=, &thread_limiter, &me] { // &mtx
-                    Critical_section _(thread_limiter);
-                    insertKmer(me, toCString(file), i, true, c);
-                    // mtx.lock();
-                    // std::cerr << "IBF Bin " << i << " done." << '\n';
-                    // mtx.unlock();
-                })
-            );
-        }
-
-        for (auto &&task : tasks){
-            task.get();
-        }
-        me.filterVector.compress(c);
-    }
-}
+// template<typename TValue, typename TSpec, typename TFilterVector>
+// inline void insertKmerDir(BinningDirectory<TValue, TSpec, TFilterVector> &  me, const char * baseDir, uint8_t threads)
+// {
+//     Semaphore thread_limiter(threads);
+//     // std::mutex mtx;
+//     std::vector<std::future<void>> tasks;
+//
+//     uint32_t bins = me.noOfBins;
+//     for (uint8_t c = 0; c < me.filterVector.noOfChunks; ++c)
+//     {
+//         me.filterVector.decompress(c);
+//         for(uint32_t i = 0; i < bins; ++i)
+//         {
+//             CharString file(baseDir);
+//             append(file, CharString(std::to_string(bins)));
+//             append(file, CharString{"/bins/bin_"});
+//             append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
+//             append(file, CharString(".fasta"));
+//             tasks.emplace_back(
+//                 std::async(std::launch::async, [=, &thread_limiter, &me] { // &mtx
+//                     Critical_section _(thread_limiter);
+//                     insertKmer(me, toCString(file), i, true, c);
+//                     // mtx.lock();
+//                     // std::cerr << "IBF Bin " << i << " done." << '\n';
+//                     // mtx.unlock();
+//                 })
+//             );
+//         }
+//
+//         for (auto &&task : tasks){
+//             task.get();
+//         }
+//         me.filterVector.compress(c);
+//     }
+// }
 
 /*!
  * \brief Calculates the k-mer counts of a given text.
- * \param me The KmerFilter instance.
+ * \param me The BinningDirectory instance.
  * \param counts Vector of length binNo to save counts to.
  * \param text A single text to count all contained k-mers for.
  */
-template<typename TValue, typename TSpec,  typename TFilterVector>
-inline void select(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<uint32_t> & counts, String<TValue> const & text)
+template<typename TValue, typename TShape, typename TSpec,  typename TFilterVector>
+inline void count(BinningDirectory<TValue, TShape, TSpec, TFilterVector> &  me, std::vector<TNoOfBins> & counts, String<TValue> const & text)
 {
-    me.select(counts, text);
+    me.count(counts, text);
 }
 
 /*!
  * \brief Returns the k-mer counts of a given text.
- * \param me The KmerFilter instance.
+ * \param me The BinningDirectory instance.
  * \param text A single text to count all contained k-mers for.
  * \returns std::vector<uint64_t> of size binNo containing counts.
  */
-template<typename TValue, typename TSpec, typename TFilterVector>
-inline std::vector<uint32_t> select(KmerFilter<TValue, TSpec, TFilterVector> &  me, String<TValue> const & text)
+template<typename TValue, typename TShape, typename TSpec, typename TFilterVector>
+inline std::vector<TNoOfBins> count(BinningDirectory<TValue, TShape, TSpec, TFilterVector> &  me, String<TValue> const & text)
 {
-    std::vector<uint32_t> counts(me.noOfBins, 0);
-    select(me, counts, text);
+    std::vector<TNoOfBins> counts(me.noOfBins, 0);
+    count(me, counts, text);
     return counts;
 }
 
 /*!
- * \brief Checks for which bins the counts of all k-mers in a text exceed a threshold.
- * \param me The KmerFilter instance.
- * \param selected Vector of length binNo to save true/false to.
- * \param text A single text to count all contained k-mers for.
- * \param threshold The minimal number of occurences to return true for the bin.
- */
-template<typename TValue, typename TSpec, typename TFilterVector, typename TInt>
-inline void select(KmerFilter<TValue, TSpec, TFilterVector> &  me, std::vector<bool> & selected, String<TValue> const & text, TInt threshold)
-{
-    // me.select(selected, text, static_cast<uint16_t>(threshold));
-    me.select(selected, text, threshold);
-}
-
-/*!
- * \brief Returns for which bins the counts of all k-mers in a text exceed a threshold.
- * \param me The KmerFilter instance.
- * \param text A single text to count all contained k-mers for.
- * \param threshold The minimal number of occurences to return true for the bin.
- * \returns std::vector<bool> of size binNo indicating whether the text is in the bin.
- */
-template<typename TValue, typename TSpec, typename TFilterVector, typename TInt>
-inline std::vector<bool> select(KmerFilter<TValue, TSpec, TFilterVector> &  me, String<TValue> const & text, TInt && threshold)
-{
-    std::vector<bool> selected(me.noOfBins, false);
-    select(me, selected, text, threshold);
-    return selected;
-}
-
-/*!
  * \brief Returns the number of bins.
- * \param me The KmerFilter instance.
- * \returns Value<KmerFilter<TValue, TSpec> >::Type Number of bins.
+ * \param me The BinningDirectory instance.
+ * \returns Value<BinningDirectory<TValue, TSpec> >::Type Number of bins.
  */
-template<typename TValue, typename TSpec, typename TFilterVector>
-inline typename Value<KmerFilter<TValue, TSpec, TFilterVector> >::noOfBins getNumberOfBins(KmerFilter<TValue, TSpec, TFilterVector> &  me)
+template<typename TValue, typename TShape, typename TSpec, typename TFilterVector>
+inline TNoOfBins getNumberOfBins(BinningDirectory<TValue, TShape, TSpec, TFilterVector> &  me)
 {
     return me.noOfBins;
 }
 
 /*!
  * \brief Returns the k-mer size.
- * \param me The KmerFilter instance.
- * \returns Value<KmerFilter<TValue, TSpec> >::Type k-mer size.
+ * \param me The BinningDirectory instance.
+ * \returns Value<BinningDirectory<TValue, TSpec> >::Type k-mer size.
  */
-template<typename TValue, typename TSpec, typename TFilterVector>
-inline typename Value<KmerFilter<TValue, TSpec, TFilterVector> >::kmerSize getKmerSize(KmerFilter<TValue, TSpec, TFilterVector> &  me)
+template<typename TValue, typename TShape, typename TSpec, typename TFilterVector>
+inline TKmerSize getKmerSize(BinningDirectory<TValue, TShape, TSpec, TFilterVector> &  me)
 {
     return me.kmerSize;
 }
 
 /*!
  * \brief Reads the metadata.
- * \param me The KmerFilter instance.
+ * \param me The BinningDirectory instance.
  */
-template<typename TValue, typename TSpec, typename TFilterVector>
-inline void getMetadata(KmerFilter<TValue, TSpec, TFilterVector> &  me)
+template<typename TValue, typename TShape, typename TSpec, typename TFilterVector>
+inline void getMetadata(BinningDirectory<TValue, TShape, TSpec, TFilterVector> &  me)
 {
     //-------------------------------------------------------------------
     //| kmer_size | n_hash_func | n_bins |              bf              |
     //-------------------------------------------------------------------
     me.noOfBits = me.filterVector.noOfBits;
 
-    typename Value<KmerFilter<TValue, TSpec, TFilterVector> >::noOfBits metadataStart = me.filterVector.noOfBits;
+    TNoOfBits metadataStart = me.filterVector.noOfBits;
     me.noOfBins = me.filterVector.get_int(metadataStart);
     me.noOfHashFunc = me.filterVector.get_int(metadataStart+64);
     me.kmerSize = me.filterVector.get_int(metadataStart+128);
@@ -389,16 +354,16 @@ inline void getMetadata(KmerFilter<TValue, TSpec, TFilterVector> &  me)
 
 /*!
  * \brief Writes the metadata.
- * \param me The KmerFilter instance.
+ * \param me The BinningDirectory instance.
  */
-template<typename TValue, typename TSpec, typename TFilterVector>
-inline void setMetadata(KmerFilter<TValue, TSpec, TFilterVector> &  me)
+template<typename TValue, typename TShape, typename TSpec, typename TFilterVector>
+inline void setMetadata(BinningDirectory<TValue, TShape, TSpec, TFilterVector> &  me)
 {
     //-------------------------------------------------------------------
     //| kmer_size | n_hash_func | n_bins |              bf              |
     //-------------------------------------------------------------------
 
-    typename Value<KmerFilter<TValue, TSpec, TFilterVector> >::noOfBits metadataStart = me.noOfBits;
+    TNoOfBits metadataStart = me.noOfBits;
 
     // TODO also store TValue (alphabet)
     me.filterVector.set_int(metadataStart, me.noOfBins);
@@ -408,23 +373,23 @@ inline void setMetadata(KmerFilter<TValue, TSpec, TFilterVector> &  me)
 
 /*!
  * \brief Returns the of the filter vector in MB.
- * \param me The KmerFilter instance.
+ * \param me The BinningDirectory instance.
  * \returns double filter vector size in MB.
  */
-template<typename TValue, typename TSpec, typename TFilterVector>
-inline double size(KmerFilter<TValue, TSpec, TFilterVector> &  me)
+template<typename TValue, typename TShape, typename TSpec, typename TFilterVector>
+inline double size(BinningDirectory<TValue, TShape, TSpec, TFilterVector> &  me)
 {
     return me.filterVector.size_in_mega_bytes();
 }
 
 /*!
  * \brief Writes the filter vector to a file.
- * \param me The KmerFilter instance.
+ * \param me The BinningDirectory instance.
  * \param fileName Name of the file to write to.
  * \returns bool Indicates if the operation was successful.
  */
-template<typename TValue, typename TSpec, typename TFilterVector>
-inline bool store(KmerFilter<TValue, TSpec, TFilterVector> &  me, CharString fileName)
+template<typename TValue, typename TShape, typename TSpec, typename TFilterVector>
+inline bool store(BinningDirectory<TValue, TShape, TSpec, TFilterVector> &  me, CharString fileName)
 {
     setMetadata(me);
     return me.filterVector.store(fileName);
@@ -432,12 +397,12 @@ inline bool store(KmerFilter<TValue, TSpec, TFilterVector> &  me, CharString fil
 
 /*!
  * \brief Loads the filter vector from a file.
- * \param me The KmerFilter instance.
+ * \param me The BinningDirectory instance.
  * \param fileName Name of the file to read from.
  * \returns bool Indicates if the operation was successful.
  */
-template<typename TValue, typename TSpec, typename TFilterVector>
-inline bool retrieve(KmerFilter<TValue, TSpec, TFilterVector> &  me, CharString fileName)
+template<typename TValue, typename TShape, typename TSpec, typename TFilterVector>
+inline bool retrieve(BinningDirectory<TValue, TShape, TSpec, TFilterVector> &  me, CharString fileName)
 {
     me.filterVector.retrieve(fileName);
     getMetadata(me);
@@ -445,17 +410,14 @@ inline bool retrieve(KmerFilter<TValue, TSpec, TFilterVector> &  me, CharString 
     return true;
 }
 
-/*!
- * \brief Indicates whether a bit is set in an integer.
- * \param me The KmerFilter instance.
- * \param num Integer to check.
- * \param bit bit position to check.
- * \returns bool Indicates if the bit is set.
- */
-template<typename TValue, typename TSpec, typename TFilterVector, typename TInt1, typename TInt2>
-inline bool isBitSet(KmerFilter<TValue, TSpec, TFilterVector> &  me, TInt1&& num, TInt2&& bit)
+constexpr unsigned long long int operator""_g ( unsigned long long int g )
 {
-    return 1 == ( (num >> bit) & 1);
+    return g*8*1024*1024*1024;
+}
+
+constexpr unsigned long long int operator""_m ( unsigned long long int m )
+{
+    return m*8*1024*1024;
 }
 
 }  // namespace seqan
