@@ -31,6 +31,10 @@
 // ==========================================================================
 // Author:  Enrico Seiler <enrico.seiler@fu-berlin.de>
 // ==========================================================================
+
+#ifndef INCLUDE_SEQAN_BINNING_DIRECTORY_BITVECTOR_BASE_H_
+#define INCLUDE_SEQAN_BINNING_DIRECTORY_BITVECTOR_BASE_H_
+
 #include <random>
 
 namespace seqan {
@@ -65,4 +69,6 @@ struct BitvectorBase
          return str.substr(0, 32);
     }
 };
-}
+}   // namespace seqan
+
+#endif  // INCLUDE_SEQAN_BINNING_DIRECTORY_BITVECTOR_BASE_H_
