@@ -79,10 +79,9 @@ public:
     typedef typename Value<BinningDirectory>::seedValue             TSeedValue;
     typedef typename Value<BinningDirectory>::intSize               TIntSize;
     typedef typename Value<BinningDirectory>::filterMetadataSize    TFilterMetadataSize;
-    typedef typename Value<BinningDirectory>::noOfChunks            TNoOfChunks;
 
 
-    TNoOfChunks currentChunk;
+    uint16_t currentChunk{0};
     //!\brief The number of Bins.
     TNoOfBins        noOfBins;
     //!\brief The number of hash functions.
@@ -371,7 +370,7 @@ public:
                 uint64_t vecIndex = preCalcValues[i] * kmerHash;
                 hashToIndex(vecIndex);
                 vecIndex += binNo;
-                bitvector.set_pos(vecIndex, currentChunk);
+                bitvector.set_pos(vecIndex);
             }
         }
     }

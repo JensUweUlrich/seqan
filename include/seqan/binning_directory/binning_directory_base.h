@@ -150,7 +150,6 @@ struct Value<BinningDirectory<TValue, TShape, TSpec, TBitvector> >
     typedef uint8_t  shiftValue;
     typedef uint64_t preCalcValues;
     typedef uint64_t seedValue;
-    typedef uint8_t  noOfChunks;
 };
 
 typedef uint32_t TNoOfBins;
@@ -165,7 +164,6 @@ typedef uint8_t  TNoOfHashFunc;
 typedef uint8_t  TShiftValue;
 typedef uint64_t TPreCalcValues;
 typedef uint64_t TSeedValue;
-typedef uint8_t  TNoOfChunks;
 
 // --------------------------------------------------------------------------
 // Metafunction MetafunctionName
