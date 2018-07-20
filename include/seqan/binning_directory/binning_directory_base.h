@@ -186,7 +186,8 @@ typedef uint64_t TSeedValue;
 template<typename TValue, typename TShape, typename TSpec, typename TBitvector>
 inline void insertKmer(BinningDirectory<TValue, TShape, TSpec, TBitvector> & me, String<TValue> const & text, TNoOfBins binNo)
 {
-    me.insertKmer(text, binNo);
+    if(length(text) >= me.kmerSize)
+        me.insertKmer(text, binNo);
 }
 
 /*!
