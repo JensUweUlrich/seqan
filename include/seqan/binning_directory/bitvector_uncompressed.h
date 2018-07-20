@@ -126,7 +126,7 @@ struct Bitvector<Uncompressed> : BitvectorBase
         uncompressed_vector->set_int(idx, val);
     }
 
-    inline void set_pos(uint64_t idx, uint64_t)
+    inline void set_pos(uint64_t idx)
     {
         (*uncompressed_vector)[idx] = true;
     }

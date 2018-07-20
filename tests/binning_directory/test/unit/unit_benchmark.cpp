@@ -49,11 +49,11 @@ using namespace seqan;
 int main()
 {
     //SeqAnBloomFilter<> filter (10, 1, 12, 16777216);
-    uint64_t threads{3};
+    uint64_t threads{2};
     uint64_t noBins{10};
-    uint64_t kmerSize{14};
-    uint64_t hashFunc{3};
-    uint64_t bits{3_m};
+    uint64_t kmerSize{4};
+    // uint64_t hashFunc{3};
+    // uint64_t bits{3_m};
 
 
     // ==========================================================================
@@ -61,8 +61,8 @@ int main()
     // ==========================================================================
     std::cout << "Testing ctors" << '\n';
 
-    typedef InterleavedBloomFilter TSpec;
-    // typedef DirectAddressing       TSpec;
+    // typedef InterleavedBloomFilter TSpec;
+    typedef DirectAddressing       TSpec;
 
     typedef Uncompressed TFilter;
     // typedef CompressedSimple TFilter;
@@ -74,13 +74,13 @@ int main()
     BinningDirectory<Dna, TShape, TSpec, TFilter> ctor_empty;
     // Default constructor
 
-    BinningDirectory<Dna, TShape, TSpec, TFilter> ctor_default (noBins, hashFunc, kmerSize, bits);
-    BinningDirectory<Dna, TShape, TSpec, TFilter> ctor_default_helper1 (noBins, hashFunc, kmerSize, bits);
-    BinningDirectory<Dna, TShape, TSpec, TFilter> ctor_default_helper2 (noBins, hashFunc, kmerSize, bits);
+    // BinningDirectory<Dna, TShape, TSpec, TFilter> ctor_default (noBins, hashFunc, kmerSize, bits);
+    // BinningDirectory<Dna, TShape, TSpec, TFilter> ctor_default_helper1 (noBins, hashFunc, kmerSize, bits);
+    // BinningDirectory<Dna, TShape, TSpec, TFilter> ctor_default_helper2 (noBins, hashFunc, kmerSize, bits);
 
-    // BinningDirectory<Dna, TSpec, TFilter> ctor_default (noBins, kmerSize);
-    // BinningDirectory<Dna, TSpec, TFilter> ctor_default_helper1 (noBins, kmerSize);
-    // BinningDirectory<Dna, TSpec, TFilter> ctor_default_helper2 (noBins, kmerSize);
+    BinningDirectory<Dna, TShape, TSpec, TFilter> ctor_default (noBins, kmerSize);
+    BinningDirectory<Dna, TShape, TSpec, TFilter> ctor_default_helper1 (noBins, kmerSize);
+    BinningDirectory<Dna, TShape, TSpec, TFilter> ctor_default_helper2 (noBins, kmerSize);
 
     // Copy constructor
     BinningDirectory<Dna, TShape, TSpec, TFilter> ctor_copy (ctor_default);
