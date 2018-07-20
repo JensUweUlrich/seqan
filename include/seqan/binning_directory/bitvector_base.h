@@ -29,20 +29,40 @@
 // DAMAGE.
 //
 // ==========================================================================
-// Author:  Temesgen H. Dadi <temesgen.dadi@fu-berlin.de>
-//          Enrico Seiler <enrico.seiler@fu-berlin.de>
+// Author:  Enrico Seiler <enrico.seiler@fu-berlin.de>
 // ==========================================================================
-// Header for the binning directories module.
-// ==========================================================================
+#include <random>
 
-#ifndef INCLUDE_SEQAN_BINNING_DIRECTORY_H_
-#define INCLUDE_SEQAN_BINNING_DIRECTORY_H_
+namespace seqan {
 
-#include <seqan/binning_directory/binning_directory_base.h>
-#include <seqan/binning_directory/bitvector_base.h>
-#include <seqan/binning_directory/bitvector_uncompressed.h>
-#include <seqan/binning_directory/bitvector_compressed.h>
-// #include <seqan/binning_directory/binning_directory_direct_addressing.h>
-#include <seqan/binning_directory/binning_directory_interleaved_bloom_filter.h>
+struct BitvectorBase
+{
+    typedef uint32_t TNoOfBins;
+    typedef uint64_t TNoOfBits;
+    typedef uint64_t TNoOfBlocks;
+    typedef uint32_t TBinWidth;
+    typedef uint32_t TBlockBitSize;
+    typedef uint8_t  TIntSize;
+    typedef uint16_t TFilterMetadataSize;
 
-#endif
+    bool compressed = false;
+
+    static const TFilterMetadataSize FILTER_METADATA_SIZE{256};
+    static const TIntSize INT_SIZE{0x40};
+
+    inline void decompress(uint8_t) {}
+    inline void compress(uint8_t) {}
+
+    std::string random_string()
+    {
+         std::string str("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+
+         std::random_device rd;
+         std::mt19937 generator(rd());
+
+         std::shuffle(str.begin(), str.end(), generator);
+
+         return str.substr(0, 32);
+    }
+};
+}
