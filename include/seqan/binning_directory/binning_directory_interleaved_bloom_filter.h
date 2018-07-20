@@ -391,6 +391,6 @@ public:
             preCalcValues[i] = i ^  (kmerSize * seedValue);
     }
 };
-}
+}   // namespace seqan
 
-#endif  // INCLUDE_SEQAN_KMER_KMER_IBF_H_
+#endif  // INCLUDE_SEQAN_BINNING_DIRECTORY_BINNING_DIRECTORY_INTERLEAVED_BLOOM_FILTER_H_

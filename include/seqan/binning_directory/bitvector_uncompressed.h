@@ -32,6 +32,9 @@
 // Author:  Enrico Seiler <enrico.seiler@fu-berlin.de>
 // ==========================================================================
 
+#ifndef INCLUDE_SEQAN_BINNING_DIRECTORY_BITVECTOR_UNCOMPRESSED_H_
+#define INCLUDE_SEQAN_BINNING_DIRECTORY_BITVECTOR_UNCOMPRESSED_H_
+
 namespace seqan {
 
 template<>
@@ -143,4 +146,6 @@ struct Bitvector<Uncompressed> : BitvectorBase
         *this = Bitvector(fileName);
     }
 };
-}
+}   //  namespace seqan
+
+#endif  // INCLUDE_SEQAN_BINNING_DIRECTORY_BITVECTOR_UNCOMPRESSED_H_
