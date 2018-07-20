@@ -168,7 +168,7 @@ int main()
     bool ctor_default_any = false;
     for (uint64_t i = 0; i < ctor_default.noOfBlocks * ctor_default.noOfBins; ++i)
     {
-        if (ctor_default.filterVector.get_pos(i))
+        if (ctor_default.bitvector.get_pos(i))
         {
             ctor_default_any = true;
             break;
@@ -183,7 +183,7 @@ int main()
     ctor_default_any = false;
     for (uint64_t i = 0; i < ctor_default.noOfBlocks * ctor_default.noOfBins; ++i)
     {
-        if (ctor_default.filterVector.get_pos(i))
+        if (ctor_default.bitvector.get_pos(i))
         {
             ctor_default_any = true;
             break;
