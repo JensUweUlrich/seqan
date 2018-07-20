@@ -60,8 +60,8 @@ namespace seqan{
  * ```
  *
  */
-template<typename TValue, typename TFilterVector>
-class BinningDirectory<TValue, DirectAddressing, TFilterVector>
+template<typename TValue, typename TBitvector>
+class BinningDirectory<TValue, DirectAddressing, TBitvector>
 {
 public:
     //!\brief The type of the variables.
@@ -80,7 +80,7 @@ public:
     typename Value<BinningDirectory>::blockBitSize    blockBitSize;
 
     //!\brief The bit vector storing the bloom filters.
-    FilterVector<TFilterVector>         filterVector;
+    Bitvector<TBitvector>         bitvector;
     //!\brief How many bits we can represent in the biggest unsigned int available.
     static const typename Value<BinningDirectory>::intSize    intSize{0x40};
     //!\brief Size in bits of the meta data.
@@ -108,25 +108,25 @@ public:
     BinningDirectory(typename Value<BinningDirectory>::noOfBins n_bins, typename Value<BinningDirectory>::kmerSize kmer_size):
         noOfBins(n_bins),
         kmerSize(kmer_size),
-        filterVector(n_bins, ipow(ValueSize<TValue>::VALUE, kmerSize) * std::ceil((double)noOfBins / intSize) * intSize)
+        bitvector(n_bins, ipow(ValueSize<TValue>::VALUE, kmerSize) * std::ceil((double)noOfBins / intSize) * intSize)
     {
         init();
     }
 
     //!\brief Copy constructor
-    BinningDirectory(BinningDirectory<TValue, DirectAddressing, TFilterVector> & other)
+    BinningDirectory(BinningDirectory<TValue, DirectAddressing, TBitvector> & other)
     {
         *this = other;
     }
 
     //!\brief Copy assignment
-    BinningDirectory<TValue, DirectAddressing, TFilterVector> & operator=(BinningDirectory<TValue, DirectAddressing, TFilterVector> & other)
+    BinningDirectory<TValue, DirectAddressing, TBitvector> & operator=(BinningDirectory<TValue, DirectAddressing, TBitvector> & other)
     {
         noOfBins = other.noOfBins;
         kmerSize = other.kmerSize;
         noOfBits = other.noOfBits;
         noOfBlocks = other.noOfBlocks;
-        filterVector = other.filterVector;
+        bitvector = other.bitvector;
         binWidth = other.binWidth;
         blockBitSize = other.blockBitSize;
         noOfBlocks = other.noOfBlocks;
@@ -134,19 +134,19 @@ public:
     }
 
     //!\brief Move constrcutor
-    BinningDirectory(BinningDirectory<TValue, DirectAddressing, TFilterVector> && other)
+    BinningDirectory(BinningDirectory<TValue, DirectAddressing, TBitvector> && other)
     {
         *this = std::move(other);
     }
 
     //!\brief Move assignment
-    BinningDirectory<TValue, DirectAddressing, TFilterVector> & operator=(BinningDirectory<TValue, DirectAddressing, TFilterVector> && other)
+    BinningDirectory<TValue, DirectAddressing, TBitvector> & operator=(BinningDirectory<TValue, DirectAddressing, TBitvector> && other)
     {
         noOfBins = std::move(other.noOfBins);
         kmerSize = std::move(other.kmerSize);
         noOfBits = std::move(other.noOfBits);
         noOfBlocks = std::move(other.noOfBlocks);
-        filterVector = std::move(other.filterVector);
+        bitvector = std::move(other.bitvector);
         binWidth = std::move(other.binWidth);
         blockBitSize = std::move(other.blockBitSize);
         noOfBlocks = std::move(other.noOfBlocks);
@@ -154,8 +154,8 @@ public:
     }
 
     //!\brief Destructor
-    // ~BinningDirectory<TValue, DirectAddressing, TFilterVector>() = default;
-    ~BinningDirectory<TValue, DirectAddressing, TFilterVector>() = default;
+    // ~BinningDirectory<TValue, DirectAddressing, TBitvector>() = default;
+    ~BinningDirectory<TValue, DirectAddressing, TBitvector>() = default;
     //!\}
 
     /*!
@@ -186,12 +186,12 @@ public:
     void clear(std::vector<uint32_t> const & bins, TInt&& threads)
     {
         std::vector<std::future<void>> tasks;
-        uint64_t chunkBlocks = filterVector.chunkSize / filterVector.blockBitSize;
+        uint64_t chunkBlocks = bitvector.chunkSize / bitvector.blockBitSize;
 
-        for (uint8_t chunk = 0; chunk < filterVector.noOfChunks; ++chunk)
+        for (uint8_t chunk = 0; chunk < bitvector.noOfChunks; ++chunk)
         {
             tasks.clear();
-            filterVector.decompress(chunk);
+            bitvector.decompress(chunk);
 
             // We have so many blocks that we want to distribute to so many threads
             uint64_t batchSize = chunkBlocks / threads;
@@ -201,7 +201,7 @@ public:
             {
                 // hashBlock is the number of the block the thread will work on. Each block contains binNo bits that
                 // represent the individual bins. Each thread has to work on batchSize blocks. We can get the position in
-                // our filterVector by multiplying the hashBlock with noOfBins. Then we just need to add the respective
+                // our bitvector by multiplying the hashBlock with noOfBins. Then we just need to add the respective
                 // binNo. We have to make sure that the vecPos we generate is not out of bounds, only the case in the last
                 // thread if the blocks could not be evenly distributed, and that we do not clear a bin that is assigned to
                 // another thread.
@@ -210,12 +210,12 @@ public:
                         hashBlock < chunkBlocks && hashBlock < (taskNo +1) * batchSize;
                         ++hashBlock)
                     {
-                        uint64_t vecPos = hashBlock * filterVector.blockBitSize;
-                        uint8_t chunkNo = vecPos / filterVector.chunkSize;
+                        uint64_t vecPos = hashBlock * bitvector.blockBitSize;
+                        uint8_t chunkNo = vecPos / bitvector.chunkSize;
                         for(uint32_t binNo : bins)
                         {
                             if (chunk == chunkNo)
-                                filterVector.unset_pos(vecPos + binNo);
+                                bitvector.unset_pos(vecPos + binNo);
                         }
                     }
                 }));
@@ -225,7 +225,7 @@ public:
                 task.get();
             }
 
-            filterVector.compress(chunk);
+            bitvector.compress(chunk);
         }
     }
 
@@ -260,7 +260,7 @@ public:
                 binNo = batchNo * intSize;
                 // get_int(idx, len) returns the integer value of the binary string of length len starting
                 // at position idx, i.e. len+idx-1|_______|idx, Vector is right to left.
-                uint64_t tmp = filterVector.get_int(kmerHash, intSize);
+                uint64_t tmp = bitvector.get_int(kmerHash, intSize);
 
                 // Behaviour for a bit shift with >= maximal size is undefined, i.e. shifting a 64 bit integer by 64
                 // positions is not defined and hence we need a special case for this.
@@ -311,7 +311,7 @@ public:
         {
             uint64_t kmerHash = hashNext(kmerShape, begin(text) + i);
             uint64_t vecIndex = kmerHash * blockBitSize + binNo;
-            filterVector.set_pos(vecIndex, chunkNo);
+            bitvector.set_pos(vecIndex, chunkNo);
         }
     }
 
@@ -326,7 +326,7 @@ public:
         noOfBlocks = ipow(ValueSize<TValue>::VALUE, kmerSize);
         // Size of the bit vector
         noOfBits = noOfBlocks * blockBitSize;
-        // filterVector = FilterVector<TFilterVector>(noOfBins, noOfBits);
+        // bitvector = Bitvector<TBitvector>(noOfBins, noOfBits);
     }
 };
 }
