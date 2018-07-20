@@ -196,8 +196,8 @@ inline void insertKmer(BinningDirectory<TValue, TShape, TSpec, TBitvector> & me,
  * \param bins A vector containing the bin numbers.
  * \param threads The number of threads to use.
  */
-template<typename TValue, typename TSpec, typename TBitvector, typename TInt>
-inline void clear(BinningDirectory<TValue, TSpec, TBitvector> &  me, std::vector<TNoOfBins> & bins, TInt&& threads)
+template<typename TValue, typename TShape, typename TSpec, typename TBitvector, typename TInt>
+inline void clear(BinningDirectory<TValue, TShape, TSpec, TBitvector> &  me, std::vector<TNoOfBins> & bins, TInt&& threads)
 {
     // me.clear(bins, static_cast<uint64_t>(threads));
     me.clear(bins, threads);
