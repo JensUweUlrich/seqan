@@ -376,6 +376,57 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, count)
     }
 }
 
+// clear
+SEQAN_TYPED_TEST(BinningDirectoryIBFTest, clear)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 3, 12, 32_m);
+
+    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
+    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
+    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
+
+    std::vector<uint32_t> bins{1};
+
+    clear(bd, bins, 2);
+
+    auto result = count(bd, DnaString{"TAAC"});
+    SEQAN_ASSERT_NEQ(result[0], 0u);
+    SEQAN_ASSERT_EQ(result[1], 0u);
+    SEQAN_ASSERT_NEQ(result[2], 0u);
+
+    for (uint16_t i = 3; i < 64; ++i)
+    {
+        SEQAN_ASSERT_EQ(result[i], 0u);
+    }
+}
+
+SEQAN_TYPED_TEST(BinningDirectoryDATest, clear)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 4);
+
+    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
+    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
+    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
+
+    std::vector<uint32_t> bins{1};
+
+    clear(bd, bins, 2);
+
+    auto result = count(bd, DnaString{"TAAC"});
+    SEQAN_ASSERT_NEQ(result[0], 0u);
+    SEQAN_ASSERT_EQ(result[1], 0u);
+    SEQAN_ASSERT_NEQ(result[2], 0u);
+
+    for (uint16_t i = 3; i < 64; ++i)
+    {
+        SEQAN_ASSERT_EQ(result[i], 0u);
+    }
+}
+
 // store
 SEQAN_TYPED_TEST(BinningDirectoryIBFTest, store)
 {
@@ -426,6 +477,44 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, retrieve)
 
     SEQAN_ASSERT_EQ(bd2.kmerSize, 2u);
     SEQAN_ASSERT_EQ(bd2.noOfBins, 32u);
+}
+
+// getKmerSize
+SEQAN_TYPED_TEST(BinningDirectoryIBFTest, getKmerSize)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(32, 3, 11, 32_m);
+
+    SEQAN_ASSERT_EQ(bd.kmerSize, getKmerSize(bd));
+}
+
+SEQAN_TYPED_TEST(BinningDirectoryDATest, getKmerSize)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(32, 2);
+
+    SEQAN_ASSERT_EQ(bd.kmerSize, getKmerSize(bd));
+}
+
+// getNumberOfBins
+SEQAN_TYPED_TEST(BinningDirectoryIBFTest, getNumberOfBins)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(32, 3, 11, 32_m);
+
+    SEQAN_ASSERT_EQ(bd.noOfBins, getNumberOfBins(bd));
+}
+
+SEQAN_TYPED_TEST(BinningDirectoryDATest, getNumberOfBins)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(32, 2);
+
+    SEQAN_ASSERT_EQ(bd.noOfBins, getNumberOfBins(bd));
 }
 
 #endif  // TESTS_BINNING_DIRECTORY_TEST_BINNING_DIRECTORY_H_
