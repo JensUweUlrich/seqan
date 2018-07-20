@@ -329,6 +329,6 @@ public:
         // bitvector = Bitvector<TBitvector>(noOfBins, noOfBits);
     }
 };
-}
+}   // namespace seqan
 
-#endif  // INCLUDE_SEQAN_KMER_KMER_DIRECT_H_
+#endif  // INCLUDE_SEQAN_BINNING_DIRECTORY_BINNING_DIRECTORY_DIRECT_ADDRESSING_H_
