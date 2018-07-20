@@ -422,4 +422,4 @@ constexpr unsigned long long int operator""_m ( unsigned long long int m )
 
 }  // namespace seqan
 
-#endif  // INCLUDE_SEQAN_KMER_KMER_BASE_H_
+#endif  // INCLUDE_SEQAN_BINNING_DIRECTORY_BINNING_DIRECTORY_BASE_H_
