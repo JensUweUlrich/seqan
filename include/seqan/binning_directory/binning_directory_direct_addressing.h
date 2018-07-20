@@ -60,35 +60,45 @@ namespace seqan{
  * ```
  *
  */
-template<typename TValue, typename TBitvector>
-class BinningDirectory<TValue, DirectAddressing, TBitvector>
+template<typename TValue, typename TShape, typename TBitvector>
+class BinningDirectory<TValue, TShape, DirectAddressing, TBitvector>
 {
 public:
     //!\brief The type of the variables.
-    typedef String<TValue>                            TString;
-    //!\brief The number of Bins.
-    typename Value<BinningDirectory>::noOfBins        noOfBins;
-    //!\brief The k-mer size.
-    typename Value<BinningDirectory>::kmerSize        kmerSize;
-    //!\brief The size of the bit vector.
-    typename Value<BinningDirectory>::noOfBits        noOfBits;
-    //!\brief The number of possible hash values that can fit into a single block.
-    typename Value<BinningDirectory>::noOfBlocks      noOfBlocks;
-    //!\brief The number of 64 bit blocks needed to represent the number of bins.
-    typename Value<BinningDirectory>::binWidth        binWidth;
-    //!\brief Bits we need to represent noBins bits. Multiple of intSize.
-    typename Value<BinningDirectory>::blockBitSize    blockBitSize;
+    typedef String<TValue>                                          TString;
+    typedef typename Value<BinningDirectory>::noOfBins              TNoOfBins;
+    typedef typename Value<BinningDirectory>::noOfHashFunc          TNoOfHashFunc;
+    typedef typename Value<BinningDirectory>::kmerSize              TKmerSize;
+    typedef typename Value<BinningDirectory>::noOfBits              TNoOfBits;
+    typedef typename Value<BinningDirectory>::noOfBlocks            TNoOfBlocks;
+    typedef typename Value<BinningDirectory>::binWidth              TBinWidth;
+    typedef typename Value<BinningDirectory>::blockBitSize          TBlockBitSize;
+    typedef typename Value<BinningDirectory>::intSize               TIntSize;
+    typedef typename Value<BinningDirectory>::filterMetadataSize    TFilterMetadataSize;
 
-    //!\brief The bit vector storing the bloom filters.
+
+    uint16_t currentChunk{0};
+    //!\brief The number of Bins.
+    TNoOfBins        noOfBins;
+    //!\brief The k-mer size.
+    TKmerSize        kmerSize;
+    //!\brief The size of the bit vector.
+    TNoOfBits        noOfBits;
+    //!\brief The number of possible hash values that can fit into a single block.
+    TNoOfBlocks      noOfBlocks;
+    //!\brief The number of 64 bit blocks needed to represent the number of bins.
+    TBinWidth        binWidth;
+    //!\brief Bits we need to represent noBins bits. Multiple of intSize.
+    TBlockBitSize    blockBitSize;
+
+    //!\brief The bit vector storing the k-mer directory.
     Bitvector<TBitvector>         bitvector;
     //!\brief How many bits we can represent in the biggest unsigned int available.
-    static const typename Value<BinningDirectory>::intSize    intSize{0x40};
+    static const TIntSize               intSize{0x40};
     //!\brief Size in bits of the meta data.
-    static const typename Value<BinningDirectory>::filterMetadataSize filterMetadataSize{256};
+    static const TFilterMetadataSize    filterMetadataSize{256};
     //!\brief The number of used hash functions. Not used but needed for meta data template functions.
-    typename Value<BinningDirectory>::blockBitSize    noOfHashFunc{1};
-    //!\brief A ungapped Shape over our filter alphabet.
-    typedef Shape<TValue, SimpleShape>  TShape;
+    TNoOfHashFunc    noOfHashFunc{1};
 
     /* rule of six */
     /*\name Constructor, destructor and assignment
@@ -105,7 +115,7 @@ public:
      * \param n_bins Number of bins. Preferably a multiple of 64.
      * \param kmer_size The Size of the k-mer.
      */
-    BinningDirectory(typename Value<BinningDirectory>::noOfBins n_bins, typename Value<BinningDirectory>::kmerSize kmer_size):
+    BinningDirectory(TNoOfBins n_bins, TKmerSize kmer_size):
         noOfBins(n_bins),
         kmerSize(kmer_size),
         bitvector(n_bins, ipow(ValueSize<TValue>::VALUE, kmerSize) * std::ceil((double)noOfBins / intSize) * intSize)
@@ -114,13 +124,13 @@ public:
     }
 
     //!\brief Copy constructor
-    BinningDirectory(BinningDirectory<TValue, DirectAddressing, TBitvector> & other)
+    BinningDirectory(BinningDirectory<TValue, TShape, DirectAddressing, TBitvector> & other)
     {
         *this = other;
     }
 
     //!\brief Copy assignment
-    BinningDirectory<TValue, DirectAddressing, TBitvector> & operator=(BinningDirectory<TValue, DirectAddressing, TBitvector> & other)
+    BinningDirectory<TValue, TShape, DirectAddressing, TBitvector> & operator=(BinningDirectory<TValue, TShape, DirectAddressing, TBitvector> & other)
     {
         noOfBins = other.noOfBins;
         kmerSize = other.kmerSize;
@@ -134,13 +144,13 @@ public:
     }
 
     //!\brief Move constrcutor
-    BinningDirectory(BinningDirectory<TValue, DirectAddressing, TBitvector> && other)
+    BinningDirectory(BinningDirectory<TValue, TShape, DirectAddressing, TBitvector> && other)
     {
         *this = std::move(other);
     }
 
     //!\brief Move assignment
-    BinningDirectory<TValue, DirectAddressing, TBitvector> & operator=(BinningDirectory<TValue, DirectAddressing, TBitvector> && other)
+    BinningDirectory<TValue, TShape, DirectAddressing, TBitvector> & operator=(BinningDirectory<TValue, TShape, DirectAddressing, TBitvector> && other)
     {
         noOfBins = std::move(other.noOfBins);
         kmerSize = std::move(other.kmerSize);
@@ -155,7 +165,7 @@ public:
 
     //!\brief Destructor
     // ~BinningDirectory<TValue, DirectAddressing, TBitvector>() = default;
-    ~BinningDirectory<TValue, DirectAddressing, TBitvector>() = default;
+    ~BinningDirectory<TValue, TShape, DirectAddressing, TBitvector>() = default;
     //!\}
 
     /*!
@@ -183,49 +193,37 @@ public:
      * \param threads Number of threads to use.
      */
     template<typename TInt>
-    void clear(std::vector<uint32_t> const & bins, TInt&& threads)
+    void clear(std::vector<TNoOfBins> const & bins, TInt&& threads)
     {
         std::vector<std::future<void>> tasks;
-        uint64_t chunkBlocks = bitvector.chunkSize / bitvector.blockBitSize;
+        // We have so many blocks that we want to distribute to so many threads
+        uint64_t batchSize = noOfBlocks / threads;
+        if(batchSize * threads < noOfBlocks) ++batchSize;
 
-        for (uint8_t chunk = 0; chunk < bitvector.noOfChunks; ++chunk)
+        for (uint8_t taskNo = 0; taskNo < threads; ++taskNo) // TODO Rather divide by chunks?
         {
-            tasks.clear();
-            bitvector.decompress(chunk);
-
-            // We have so many blocks that we want to distribute to so many threads
-            uint64_t batchSize = chunkBlocks / threads;
-            if(batchSize * threads < chunkBlocks) ++batchSize;
-
-            for (uint8_t taskNo = 0; taskNo < threads; ++taskNo) // TODO Rather divide by chunks?
-            {
-                // hashBlock is the number of the block the thread will work on. Each block contains binNo bits that
-                // represent the individual bins. Each thread has to work on batchSize blocks. We can get the position in
-                // our bitvector by multiplying the hashBlock with noOfBins. Then we just need to add the respective
-                // binNo. We have to make sure that the vecPos we generate is not out of bounds, only the case in the last
-                // thread if the blocks could not be evenly distributed, and that we do not clear a bin that is assigned to
-                // another thread.
-                tasks.emplace_back(std::async([=] {
-                    for (uint64_t hashBlock=taskNo*batchSize;
-                        hashBlock < chunkBlocks && hashBlock < (taskNo +1) * batchSize;
-                        ++hashBlock)
+            // hashBlock is the number of the block the thread will work on. Each block contains binNo bits that
+            // represent the individual bins. Each thread has to work on batchSize blocks. We can get the position in
+            // our bitvector by multiplying the hashBlock with noOfBins. Then we just need to add the respective
+            // binNo. We have to make sure that the vecPos we generate is not out of bounds, only the case in the last
+            // thread if the blocks could not be evenly distributed, and that we do not clear a bin that is assigned to
+            // another thread.
+            tasks.emplace_back(std::async([=] {
+                for (uint64_t hashBlock=taskNo*batchSize;
+                    hashBlock < noOfBlocks && hashBlock < (taskNo +1) * batchSize;
+                    ++hashBlock)
+                {
+                    uint64_t vecPos = hashBlock * bitvector.blockBitSize;
+                    for(uint32_t binNo : bins)
                     {
-                        uint64_t vecPos = hashBlock * bitvector.blockBitSize;
-                        uint8_t chunkNo = vecPos / bitvector.chunkSize;
-                        for(uint32_t binNo : bins)
-                        {
-                            if (chunk == chunkNo)
-                                bitvector.unset_pos(vecPos + binNo);
-                        }
+                        bitvector.unset_pos(vecPos + binNo);
                     }
-                }));
-            }
-            for (auto &&task : tasks)
-            {
-                task.get();
-            }
-
-            bitvector.compress(chunk);
+                }
+            }));
+        }
+        for (auto &&task : tasks)
+        {
+            task.get();
         }
     }
 
@@ -234,7 +232,8 @@ public:
      * \param counts Vector to be filled with counts.
      * \param text Text to count occurences for.
      */
-    void count(std::vector<uint32_t> & counts, TString const & text)
+    template<typename TAnyString>
+    void count(std::vector<TNoOfBins> & counts, TAnyString const & text)
     {
         uint16_t possible = length(text) - kmerSize + 1; // Supports text lengths up to 65535 + k
         std::vector<uint64_t> kmerHashes(possible, 0);
@@ -254,8 +253,8 @@ public:
             // Move to first bit representing the hash kmerHash for bin 0, the next bit would be for bin 1, and so on
             kmerHash *= blockBitSize;
 
-            uint32_t binNo = 0;
-            for (uint32_t batchNo = 0; batchNo < binWidth; ++batchNo)
+            TNoOfBins binNo = 0;
+            for (TBinWidth batchNo = 0; batchNo < binWidth; ++batchNo)
             {
                 binNo = batchNo * intSize;
                 // get_int(idx, len) returns the integer value of the binary string of length len starting
@@ -295,13 +294,25 @@ public:
         }
     }
 
+
     /*!
      * \brief Adds all k-mers from a text to the IBF.
      * \param text Text to process.
      * \param binNo bin ID to insertKmer k-mers in.
      */
-    template<typename TBin, typename TChunk>
-    inline void insert(TString const & text, TBin && binNo, TChunk && chunkNo)
+    template<typename TChunk>
+    inline void insertKmer(TString const & text, TNoOfBins binNo, TChunk && chunkNo)
+    {
+        currentChunk = chunkNo;
+        insertKmer(text, binNo);
+    }
+
+    /*!
+     * \brief Adds all k-mers from a text to the IBF.
+     * \param text Text to process.
+     * \param binNo bin ID to insertKmer k-mers in.
+     */
+    inline void insertKmer(TString const & text, TNoOfBins binNo)
     {
         TShape kmerShape;
         resize(kmerShape, kmerSize);
@@ -311,7 +322,7 @@ public:
         {
             uint64_t kmerHash = hashNext(kmerShape, begin(text) + i);
             uint64_t vecIndex = kmerHash * blockBitSize + binNo;
-            bitvector.set_pos(vecIndex, chunkNo);
+            bitvector.set_pos(vecIndex);
         }
     }
 
