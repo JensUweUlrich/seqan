@@ -145,7 +145,7 @@ SEQAN_TEST(BinningDirectoryDATest, literals)
 }
 
 SEQAN_TYPED_TEST_CASE(BinningDirectoryIBFTest, BinningDirectoriesIBF);
-SEQAN_TYPED_TEST_CASE(BinningDirectoryDATest, BinningDirectoriesIBF);
+SEQAN_TYPED_TEST_CASE(BinningDirectoryDATest, BinningDirectoriesDA);
 
 // Empty constructor
 SEQAN_TYPED_TEST(BinningDirectoryIBFTest, empty_constructor)
@@ -183,14 +183,249 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, default_constructor)
     SEQAN_ASSERT_EQ(bd.noOfBits, 32_m);
 }
 
-// SEQAN_TYPED_TEST(BinningDirectoryDATest, default_constructor)
-// {
-//     typedef typename TestFixture::TBinning      TBinning;
-//
-//     TBinning bd;
-//
-//     SEQAN_ASSERT_EQ(bd.kmerSize, 0u);
-//     SEQAN_ASSERT_EQ(bd.noOfBins, 0u);
-// }
+SEQAN_TYPED_TEST(BinningDirectoryDATest, default_constructor)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 4);
+
+    SEQAN_ASSERT_EQ(bd.kmerSize, 4u);
+    SEQAN_ASSERT_EQ(bd.noOfBins, 64u);
+}
+
+// Copy constructor
+SEQAN_TYPED_TEST(BinningDirectoryIBFTest, copy_constructor)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 3, 12, 32_m);
+    TBinning bd2(bd);
+
+    SEQAN_ASSERT_EQ(bd2.kmerSize, 12u);
+    SEQAN_ASSERT_EQ(bd2.noOfBins, 64u);
+    SEQAN_ASSERT_EQ(bd2.noOfHashFunc, 3u);
+    SEQAN_ASSERT_EQ(bd2.noOfBits, 32_m);
+}
+
+SEQAN_TYPED_TEST(BinningDirectoryDATest, copy_constructor)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 4);
+    TBinning bd2(bd);
+
+    SEQAN_ASSERT_EQ(bd2.kmerSize, 4u);
+    SEQAN_ASSERT_EQ(bd2.noOfBins, 64u);
+}
+
+// Copy assignment
+SEQAN_TYPED_TEST(BinningDirectoryIBFTest, copy_assignment)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 3, 12, 32_m);
+    TBinning bd2;
+    bd2 = bd;
+
+    SEQAN_ASSERT_EQ(bd2.kmerSize, 12u);
+    SEQAN_ASSERT_EQ(bd2.noOfBins, 64u);
+    SEQAN_ASSERT_EQ(bd2.noOfHashFunc, 3u);
+    SEQAN_ASSERT_EQ(bd2.noOfBits, 32_m);
+}
+
+SEQAN_TYPED_TEST(BinningDirectoryDATest, copy_assignment)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 4);
+    TBinning bd2;
+    bd2 = bd;
+
+    SEQAN_ASSERT_EQ(bd2.kmerSize, 4u);
+    SEQAN_ASSERT_EQ(bd2.noOfBins, 64u);
+}
+
+// Move constructor
+SEQAN_TYPED_TEST(BinningDirectoryIBFTest, move_constructor)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 3, 12, 32_m);
+    TBinning bd2(std::move(bd));
+
+    SEQAN_ASSERT_EQ(bd2.kmerSize, 12u);
+    SEQAN_ASSERT_EQ(bd2.noOfBins, 64u);
+    SEQAN_ASSERT_EQ(bd2.noOfHashFunc, 3u);
+    SEQAN_ASSERT_EQ(bd2.noOfBits, 32_m);
+}
+
+SEQAN_TYPED_TEST(BinningDirectoryDATest, move_constructor)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 4);
+    TBinning bd2(std::move(bd));
+
+    SEQAN_ASSERT_EQ(bd2.kmerSize, 4u);
+    SEQAN_ASSERT_EQ(bd2.noOfBins, 64u);
+}
+
+// Move assignment
+SEQAN_TYPED_TEST(BinningDirectoryIBFTest, move_assignment)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 3, 12, 32_m);
+    TBinning bd2;
+    bd2 = std::move(bd);
+
+    SEQAN_ASSERT_EQ(bd2.kmerSize, 12u);
+    SEQAN_ASSERT_EQ(bd2.noOfBins, 64u);
+    SEQAN_ASSERT_EQ(bd2.noOfHashFunc, 3u);
+    SEQAN_ASSERT_EQ(bd2.noOfBits, 32_m);
+}
+
+SEQAN_TYPED_TEST(BinningDirectoryDATest, move_assignment)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 4);
+    TBinning bd2;
+    bd2 = std::move(bd);
+
+    SEQAN_ASSERT_EQ(bd2.kmerSize, 4u);
+    SEQAN_ASSERT_EQ(bd2.noOfBins, 64u);
+}
+
+// insertKmer from text
+SEQAN_TYPED_TEST(BinningDirectoryIBFTest, insertKmerText)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 3, 4, 32_m);
+
+    insertKmer(bd, DnaString{""}, 1);
+    insertKmer(bd, DnaString{"ACG"}, 63);
+    insertKmer(bd, DnaString{"ACGA"}, 0);
+    insertKmer(bd, DnaString{"ACGATGCTAGCTAGCTGAC"}, 5);
+}
+
+SEQAN_TYPED_TEST(BinningDirectoryDATest, insertKmerText)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 4);
+
+    insertKmer(bd, DnaString{""}, 1);
+    insertKmer(bd, DnaString{"A"}, 63);
+    insertKmer(bd, DnaString{"ACGA"}, 0);
+    insertKmer(bd, DnaString{"ACGATGCTAGCTAGCTGAC"}, 5);
+}
+
+// insertKmer from file
+SEQAN_TYPED_TEST(BinningDirectoryIBFTest, insertKmerFile)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 3, 12, 32_m);
+
+    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 5);
+}
+
+SEQAN_TYPED_TEST(BinningDirectoryDATest, insertKmerFile)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 4);
+
+    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 5);
+}
+
+// count
+SEQAN_TYPED_TEST(BinningDirectoryIBFTest, count)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 3, 12, 32_m);
+    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
+
+    auto result = count(bd, DnaString{"TAACTTTTTTAT"});
+
+    SEQAN_ASSERT_NEQ(result[0], 0u);
+
+    for (uint16_t i = 1; i < 64; ++i)
+    {
+        SEQAN_ASSERT_EQ(result[i], 0u);
+    }
+}
+
+SEQAN_TYPED_TEST(BinningDirectoryDATest, count)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 4);
+    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
+
+    auto result = count(bd, DnaString{"TAAC"});
+
+    SEQAN_ASSERT_NEQ(result[0], 0u);
+
+    for (uint16_t i = 1; i < 64; ++i)
+    {
+        SEQAN_ASSERT_EQ(result[i], 0u);
+    }
+}
+
+// store
+SEQAN_TYPED_TEST(BinningDirectoryIBFTest, store)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 3, 12, 32_m);
+
+    store(bd, CharString(SEQAN_TEMP_FILENAME()));
+}
+
+SEQAN_TYPED_TEST(BinningDirectoryDATest, store)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 4);
+
+    store(bd, CharString(SEQAN_TEMP_FILENAME()));
+}
+
+// retrieve
+SEQAN_TYPED_TEST(BinningDirectoryIBFTest, retrieve)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(32, 3, 11, 32_m);
+    TBinning bd2(64, 3, 12, 16_m);
+
+    auto tmp = CharString(SEQAN_TEMP_FILENAME());
+    store(bd, tmp);
+    retrieve(bd2, tmp);
+
+    SEQAN_ASSERT_EQ(bd2.kmerSize, 11u);
+    SEQAN_ASSERT_EQ(bd2.noOfBins, 32u);
+    SEQAN_ASSERT_EQ(bd2.noOfHashFunc, 3u);
+    SEQAN_ASSERT_EQ(bd2.noOfBits, 32_m);
+}
+
+SEQAN_TYPED_TEST(BinningDirectoryDATest, retrieve)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(32, 2);
+    TBinning bd2(64, 4);
+
+    auto tmp = CharString(SEQAN_TEMP_FILENAME());
+    store(bd, tmp);
+    retrieve(bd2, tmp);
+
+    SEQAN_ASSERT_EQ(bd2.kmerSize, 2u);
+    SEQAN_ASSERT_EQ(bd2.noOfBins, 32u);
+}
 
 #endif  // TESTS_BINNING_DIRECTORY_TEST_BINNING_DIRECTORY_H_
