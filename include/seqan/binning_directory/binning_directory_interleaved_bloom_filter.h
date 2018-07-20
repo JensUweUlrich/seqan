@@ -61,8 +61,8 @@ namespace seqan{
  * ```
  *
  */
-template<typename TValue, typename TShape, typename TFilterVector>
-class BinningDirectory<TValue, TShape, InterleavedBloomFilter, TFilterVector>
+template<typename TValue, typename TShape, typename TBitvector>
+class BinningDirectory<TValue, TShape, InterleavedBloomFilter, TBitvector>
 {
 public:
     //!\brief The type of the variables.
@@ -107,7 +107,7 @@ public:
     //!\brief How many bits we can represent in the biggest unsigned int available.
     static const TIntSize               intSize{0x40};
     //!\brief The bit vector storing the bloom filters.
-    FilterVector<TFilterVector>         filterVector;
+    Bitvector<TBitvector>         bitvector;
     //!\brief Size in bits of the meta data.
     static const TFilterMetadataSize    filterMetadataSize{256};
 
@@ -121,10 +121,10 @@ public:
         noOfHashFunc(0),
         kmerSize(0),
         noOfBits(0),
-        filterVector() {}
+        bitvector() {}
 
     BinningDirectory(CharString fileName):
-        filterVector(fileName)
+        bitvector(fileName)
     {
         getMetadata(*this);
         init();
@@ -142,49 +142,49 @@ public:
         noOfHashFunc(n_hash_func),
         kmerSize(kmer_size),
         noOfBits(vec_size),
-        filterVector(noOfBins, noOfBits)
+        bitvector(noOfBins, noOfBits)
     {
         init();
     }
 
     //!\brief Copy constructor
-    BinningDirectory(BinningDirectory<TValue, TShape, InterleavedBloomFilter, TFilterVector> & other)
+    BinningDirectory(BinningDirectory<TValue, TShape, InterleavedBloomFilter, TBitvector> & other)
     {
         *this = other;
     }
 
     //!\brief Copy assignment
-    BinningDirectory<TValue, TShape, InterleavedBloomFilter, TFilterVector> & operator=(BinningDirectory<TValue, TShape, InterleavedBloomFilter, TFilterVector> & other)
+    BinningDirectory<TValue, TShape, InterleavedBloomFilter, TBitvector> & operator=(BinningDirectory<TValue, TShape, InterleavedBloomFilter, TBitvector> & other)
     {
         noOfBins = other.noOfBins;
         noOfHashFunc = other.noOfHashFunc;
         kmerSize = other.kmerSize;
         noOfBits = other.noOfBits;
-        filterVector = other.filterVector;
+        bitvector = other.bitvector;
         init();
         return *this;
     }
 
     //!\brief Move constrcutor
-    BinningDirectory(BinningDirectory<TValue, TShape, InterleavedBloomFilter, TFilterVector> && other)
+    BinningDirectory(BinningDirectory<TValue, TShape, InterleavedBloomFilter, TBitvector> && other)
     {
         *this = std::move(other);
     }
 
     //!\brief Move assignment
-    BinningDirectory<TValue, TShape, InterleavedBloomFilter, TFilterVector> & operator=(BinningDirectory<TValue, TShape, InterleavedBloomFilter, TFilterVector> && other)
+    BinningDirectory<TValue, TShape, InterleavedBloomFilter, TBitvector> & operator=(BinningDirectory<TValue, TShape, InterleavedBloomFilter, TBitvector> && other)
     {
         noOfBins = std::move(other.noOfBins);
         noOfHashFunc = std::move(other.noOfHashFunc);
         kmerSize = std::move(other.kmerSize);
         noOfBits = std::move(other.noOfBits);
-        filterVector = std::move(other.filterVector);
+        bitvector = std::move(other.bitvector);
         init();
         return *this;
     }
 
     //!\brief Destructor
-    ~BinningDirectory<TValue, TShape, InterleavedBloomFilter, TFilterVector>() = default;
+    ~BinningDirectory<TValue, TShape, InterleavedBloomFilter, TBitvector>() = default;
     //!\}
 
     /*!
@@ -196,45 +196,34 @@ public:
     void clear(std::vector<TNoOfBins> const & bins, TInt&& threads)
     {
         std::vector<std::future<void>> tasks;
-        uint64_t chunkBlocks = filterVector.chunkSize / filterVector.blockBitSize;
+        // We have so many blocks that we want to distribute to so many threads
+        uint64_t batchSize = noOfBlocks / threads;
+        if(batchSize * threads < noOfBlocks) ++batchSize;
 
-        for (TNoOfChunks chunk = 0; chunk < filterVector.noOfChunks; ++chunk)
+        for (uint8_t taskNo = 0; taskNo < threads; ++taskNo) // TODO Rather divide by chunks?
         {
-            tasks.clear();
-            filterVector.decompress(chunk);
-
-            // We have so many blocks that we want to distribute to so many threads
-            uint64_t batchSize = noOfBlocks / threads;
-            if(batchSize * threads < noOfBlocks) ++batchSize;
-
-            for (uint8_t taskNo = 0; taskNo < threads; ++taskNo) // TODO Rather divide by chunks?
-            {
-                // hashBlock is the number of the block the thread will work on. Each block contains binNo bits that
-                // represent the individual bins. Each thread has to work on batchSize blocks. We can get the position in
-                // our filterVector by multiplying the hashBlock with noOfBins. Then we just need to add the respective
-                // binNo. We have to make sure that the vecPos we generate is not out of bounds, only the case in the last
-                // thread if the blocks could not be evenly distributed, and that we do not clear a bin that is assigned to
-                // another thread.
-                tasks.emplace_back(std::async([=] {
-                    for (uint64_t hashBlock=taskNo*batchSize;
-                        hashBlock < chunkBlocks && hashBlock < (taskNo +1) * batchSize;
-                        ++hashBlock)
+            // hashBlock is the number of the block the thread will work on. Each block contains binNo bits that
+            // represent the individual bins. Each thread has to work on batchSize blocks. We can get the position in
+            // our bitvector by multiplying the hashBlock with noOfBins. Then we just need to add the respective
+            // binNo. We have to make sure that the vecPos we generate is not out of bounds, only the case in the last
+            // thread if the blocks could not be evenly distributed, and that we do not clear a bin that is assigned to
+            // another thread.
+            tasks.emplace_back(std::async([=] {
+                for (uint64_t hashBlock=taskNo*batchSize;
+                    hashBlock < noOfBlocks && hashBlock < (taskNo +1) * batchSize;
+                    ++hashBlock)
+                {
+                    uint64_t vecPos = hashBlock * bitvector.blockBitSize;
+                    for(uint32_t binNo : bins)
                     {
-                        uint64_t vecPos = hashBlock * filterVector.blockBitSize;
-                        TNoOfChunks  chunkNo = vecPos / filterVector.chunkSize;
-                        for(uint32_t binNo : bins)
-                        {
-                            if (chunk == chunkNo)
-                                filterVector.unset_pos(vecPos + binNo);
-                        }
+                        bitvector.unset_pos(vecPos + binNo);
                     }
-                }));
-            }
-            for (auto &&task : tasks)
-            {
-                task.get();
-            }
-            filterVector.compress(chunk);
+                }
+            }));
+        }
+        for (auto &&task : tasks)
+        {
+            task.get();
         }
     }
 
@@ -274,12 +263,12 @@ public:
                 binNo = batchNo * intSize;
                 // get_int(idx, len) returns the integer value of the binary string of length len starting
                 // at position idx, i.e. len+idx-1|_______|idx, Vector is right to left.
-                uint64_t tmp = filterVector.get_int(vecIndices[0], intSize);
+                uint64_t tmp = bitvector.get_int(vecIndices[0], intSize);
 
                 // A k-mer is in a bin of the IBF iff all hash functions return 1 for the bin.
                 for(TNoOfHashFunc i = 1; i < noOfHashFunc;  ++i)
                 {
-                    tmp &= filterVector.get_int(vecIndices[i], intSize);
+                    tmp &= bitvector.get_int(vecIndices[i], intSize);
                 }
 
                 // Behaviour for a bit shift with >= maximal size is undefined, i.e. shifting a 64 bit integer by 64
@@ -382,7 +371,7 @@ public:
                 uint64_t vecIndex = preCalcValues[i] * kmerHash;
                 hashToIndex(vecIndex);
                 vecIndex += binNo;
-                filterVector.set_pos(vecIndex, currentChunk);
+                bitvector.set_pos(vecIndex, currentChunk);
             }
         }
     }
