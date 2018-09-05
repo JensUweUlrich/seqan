@@ -517,4 +517,41 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, getNumberOfBins)
     SEQAN_ASSERT_EQ(bd.noOfBins, getNumberOfBins(bd));
 }
 
+SEQAN_TEST(BinningDirectoryIBFTest, resize)
+{
+    typedef BinningDirectory<Dna, Shape<Dna, SimpleShape>, InterleavedBloomFilter, Uncompressed> TBinning;
+
+    TBinning bd(64, 3, 4, 32_m);
+    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
+
+    TBinning bd2 = bd;
+    bd2.resizeBins(73);
+    uint64_t bds = bd.bitvector.size() - bd.filterMetadataSize;
+    uint64_t bd2s = bd2.bitvector.size() - bd2.filterMetadataSize;
+
+    SEQAN_ASSERT_EQ(2*bds, bd2s);
+
+    for (uint64_t i = 0, j = 0; i < bds && j < bd2s; ++i, ++j)
+    {
+        if (!(i % 64) && i > 0)
+        {
+            j += 64;
+        }
+        SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i), bd2.bitvector.get_pos(j));
+    }
+
+    auto result1 = count(bd, DnaString{"TAAC"});
+    auto result2 = count(bd2, DnaString{"TAAC"});
+    SEQAN_ASSERT_EQ(73, result2.size());
+
+    for (uint64_t i = 0; i < 64; ++i)
+    {
+        SEQAN_ASSERT_EQ(result1[i], result2[i]);
+    }
+    for (uint64_t i = 64; i < 73; ++i)
+    {
+        SEQAN_ASSERT_EQ(result2[i], 0u);
+    }
+}
+
 #endif  // TESTS_BINNING_DIRECTORY_TEST_BINNING_DIRECTORY_H_

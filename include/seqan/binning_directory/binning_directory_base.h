@@ -42,6 +42,7 @@
 #include <algorithm>
 #include <future>
 #include <mutex>
+#include <type_traits>
 
 namespace seqan {
 
