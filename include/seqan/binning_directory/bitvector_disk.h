@@ -119,7 +119,7 @@ struct FilterVector<CompressedArray>
         // How big is then a block (multiple of 64 bit)
         blockBitSize = binWidth * INT_SIZE;
         // How many hash values can we represent
-        noOfBlocks = (noOfBits + FILTER_METADATA_SIZE) / blockBitSize;
+        noOfBlocks = noOfBits / blockBitSize;
 
         // If we split, we need to split at the end of a block.
         chunkSize = std::min((double)noOfBlocks * blockBitSize, std::ceil((double)MAX_VEC/blockBitSize) * blockBitSize);
