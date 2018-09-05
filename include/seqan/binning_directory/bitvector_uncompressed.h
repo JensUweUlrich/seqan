@@ -52,6 +52,11 @@ struct Bitvector<Uncompressed> : BitvectorBase
         return sdsl::size_in_mega_bytes(*uncompressed_vector);
     }
 
+    uint64_t size()
+    {
+        return uncompressed_vector->size();
+    }
+
     Bitvector() {}
 
     Bitvector(uint32_t bins, uint64_t bits):
@@ -144,6 +149,46 @@ struct Bitvector<Uncompressed> : BitvectorBase
     void retrieve(CharString fileName)
     {
         *this = Bitvector(fileName);
+    }
+
+    auto resize(uint32_t bins)
+    {
+        CharString file{random_string()};
+        store(file);
+        TBlockBitSize newBlockBitSize = std::ceil((double)bins / INT_SIZE) * INT_SIZE;
+        TBlockBitSize delta = newBlockBitSize - blockBitSize + 1;
+        if (delta == 1)
+        {
+            return std::make_tuple(noOfBits, bins, binWidth, blockBitSize);
+        }
+        TNoOfBits newNoOfBits = noOfBlocks * newBlockBitSize;
+        uncompressed_vector.reset(new sdsl::bit_vector(newNoOfBits+FILTER_METADATA_SIZE,0));
+        sdsl::int_vector_buffer<1> buffered_vector(toCString(file));
+        TNoOfBits pos{0};
+        TNoOfBits posBuff{0};
+        for (auto it = buffered_vector.begin(); it != buffered_vector.end() && pos != newNoOfBits; ++it)
+        {
+            if (*it)
+            {
+              set_pos(pos);
+            }
+            if (posBuff == blockBitSize -1)
+            {
+                posBuff = 0;
+                pos += delta;
+            }
+            else
+            {
+                ++pos;
+                ++posBuff;
+            }
+        }
+        sdsl::remove(toCString(file));
+        noOfBits = newNoOfBits;
+        noOfBins = bins;
+        binWidth = std::ceil((double)noOfBins / INT_SIZE);
+        blockBitSize = newBlockBitSize;
+        return std::make_tuple(noOfBits, noOfBins, binWidth, blockBitSize);
     }
 };
 }   //  namespace seqan

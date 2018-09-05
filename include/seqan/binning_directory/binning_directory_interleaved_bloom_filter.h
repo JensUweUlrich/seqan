@@ -389,6 +389,17 @@ public:
         for(TNoOfHashFunc i = 0; i < noOfHashFunc ; i++)
             preCalcValues[i] = i ^  (kmerSize * seedValue);
     }
+
+    void resizeBins(TNoOfBins bins)
+    {
+        static_assert(std::is_same<TBitvector, Uncompressed>::value,
+            "Resize is only available for Uncompressed Bitvectors.");
+        auto result = bitvector.resize(bins);
+        noOfBits = std::get<0>(result);
+        noOfBins = std::get<1>(result);
+        binWidth = std::get<2>(result);
+        blockBitSize = std::get<3>(result);
+    }
 };
 }   // namespace seqan
 
