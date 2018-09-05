@@ -96,7 +96,7 @@ struct Bitvector<Compressed> : BitvectorBase
         // How big is then a block (multiple of 64 bit)
         blockBitSize = binWidth * INT_SIZE;
         // How many hash values can we represent
-        noOfBlocks = (noOfBits + FILTER_METADATA_SIZE) / blockBitSize;
+        noOfBlocks = noOfBits / blockBitSize;
 
         uncompressed_vector = std::make_unique<sdsl::bit_vector>(noOfBits+FILTER_METADATA_SIZE,0);
         compressed_vector = std::make_unique<sdsl::sd_vector<> >();
@@ -147,7 +147,7 @@ struct Bitvector<Compressed> : BitvectorBase
         // How big is then a block (multiple of 64 bit)
         blockBitSize = binWidth * INT_SIZE;
         // How many hash values can we represent
-        noOfBlocks = (noOfBits + FILTER_METADATA_SIZE) / blockBitSize;
+        noOfBlocks = noOfBits / blockBitSize;
     }
 
     inline uint64_t get_int(uint64_t idx, uint64_t len = 1ULL<<6)
