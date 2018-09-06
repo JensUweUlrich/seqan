@@ -339,6 +339,30 @@ public:
         noOfBits = noOfBlocks * blockBitSize;
         // bitvector = Bitvector<TBitvector>(noOfBins, noOfBits);
     }
+
+    /*!
+     * \brief Increases the number of bins in the binning directory.
+     * \param bins The new number of bins.
+     * This function only works for uncompressed bitvectors.
+     * The resulting bitvector has an increased size proportional to the increase in the binWidth, e.g.
+     * resizing a BD with 40 bins to 73 bins also increases the binWidth from 64 to 128 and hence the new bitvector
+     * will be twice the size.
+     * This increase in size is necessary due to the direct addressing used.
+     * The function will store the underlying bitvector to disk, read it from disk (buffered) and store the old values  * in the new bitvector, i.e. you only need enough memory to hold the new bitvector.
+     */
+    void resizeBins(TNoOfBins bins)
+    {
+        static_assert(std::is_same<TBitvector, Uncompressed>::value,
+            "Resize is only available for Uncompressed Bitvectors.");
+        TBinWidth newBinWidth = std::ceil((double)bins / intSize);
+        TBlockBitSize newBlockBitSize = newBinWidth * intSize;
+        TNoOfBits newNoOfBits = noOfBlocks * newBlockBitSize;
+        bitvector.resize(bins, newNoOfBits, newBlockBitSize, newBinWidth);
+        noOfBins = bins;
+        binWidth = newBinWidth;
+        blockBitSize = newBlockBitSize;
+        noOfBits = newNoOfBits;
+    }
 };
 }   // namespace seqan
 
