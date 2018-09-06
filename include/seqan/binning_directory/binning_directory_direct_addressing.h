@@ -60,8 +60,8 @@ namespace seqan{
  * ```
  *
  */
-template<typename TValue, typename TShape, typename TBitvector>
-class BinningDirectory<TValue, TShape, DirectAddressing, TBitvector>
+template<typename TValue, typename THash, typename TBitvector>
+class BinningDirectory<TValue, THash, DirectAddressing, TBitvector>
 {
 public:
     //!\brief The type of the variables.
@@ -124,13 +124,13 @@ public:
     }
 
     //!\brief Copy constructor
-    BinningDirectory(BinningDirectory<TValue, TShape, DirectAddressing, TBitvector> & other)
+    BinningDirectory(BinningDirectory<TValue, THash, DirectAddressing, TBitvector> & other)
     {
         *this = other;
     }
 
     //!\brief Copy assignment
-    BinningDirectory<TValue, TShape, DirectAddressing, TBitvector> & operator=(BinningDirectory<TValue, TShape, DirectAddressing, TBitvector> & other)
+    BinningDirectory<TValue, THash, DirectAddressing, TBitvector> & operator=(BinningDirectory<TValue, THash, DirectAddressing, TBitvector> & other)
     {
         noOfBins = other.noOfBins;
         kmerSize = other.kmerSize;
@@ -144,13 +144,13 @@ public:
     }
 
     //!\brief Move constrcutor
-    BinningDirectory(BinningDirectory<TValue, TShape, DirectAddressing, TBitvector> && other)
+    BinningDirectory(BinningDirectory<TValue, THash, DirectAddressing, TBitvector> && other)
     {
         *this = std::move(other);
     }
 
     //!\brief Move assignment
-    BinningDirectory<TValue, TShape, DirectAddressing, TBitvector> & operator=(BinningDirectory<TValue, TShape, DirectAddressing, TBitvector> && other)
+    BinningDirectory<TValue, THash, DirectAddressing, TBitvector> & operator=(BinningDirectory<TValue, THash, DirectAddressing, TBitvector> && other)
     {
         noOfBins = std::move(other.noOfBins);
         kmerSize = std::move(other.kmerSize);
@@ -165,7 +165,7 @@ public:
 
     //!\brief Destructor
     // ~BinningDirectory<TValue, DirectAddressing, TBitvector>() = default;
-    ~BinningDirectory<TValue, TShape, DirectAddressing, TBitvector>() = default;
+    ~BinningDirectory<TValue, THash, DirectAddressing, TBitvector>() = default;
     //!\}
 
     /*!
@@ -238,13 +238,13 @@ public:
         uint16_t possible = length(text) - kmerSize + 1; // Supports text lengths up to 65535 + k
         std::vector<uint64_t> kmerHashes(possible, 0);
 
-        TShape kmerShape;
-        resize(kmerShape, kmerSize);
-        hashInit(kmerShape, begin(text));
+        BDHash<TValue, THash> shape;
+        shape.resize(kmerSize);
+        shape.hashInit(begin(text));
         auto it = begin(text);
         for (uint16_t i = 0; i < possible; ++i)
         {
-            kmerHashes[i] = hashNext(kmerShape, it);
+            kmerHashes[i] = shape.hashNext(it);
             ++it;
         }
 
@@ -314,13 +314,13 @@ public:
      */
     inline void insertKmer(TString const & text, TNoOfBins binNo)
     {
-        TShape kmerShape;
-        resize(kmerShape, kmerSize);
-        hashInit(kmerShape, begin(text));
+        BDHash<TValue, THash> shape;
+        shape.resize(kmerSize);
+        shape.hashInit(begin(text));
 
-        for (uint64_t i = 0; i < length(text) - length(kmerShape) + 1; ++i)
+        for (uint64_t i = 0; i < length(text) - shape.length() + 1; ++i)
         {
-            uint64_t kmerHash = hashNext(kmerShape, begin(text) + i);
+            uint64_t kmerHash = shape.hashNext(begin(text) + i);
             uint64_t vecIndex = kmerHash * blockBitSize + binNo;
             bitvector.set_pos(vecIndex);
         }

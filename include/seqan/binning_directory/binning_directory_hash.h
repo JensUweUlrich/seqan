@@ -29,21 +29,46 @@
 // DAMAGE.
 //
 // ==========================================================================
-// Author:  Temesgen H. Dadi <temesgen.dadi@fu-berlin.de>
-//          Enrico Seiler <enrico.seiler@fu-berlin.de>
-// ==========================================================================
-// Header for the binning directories module.
+// Author:  Enrico Seiler <enrico.seiler@fu-berlin.de>
 // ==========================================================================
 
-#ifndef INCLUDE_SEQAN_BINNING_DIRECTORY_H_
-#define INCLUDE_SEQAN_BINNING_DIRECTORY_H_
+#ifndef INCLUDE_SEQAN_BINNING_DIRECTORY_BINNING_DIRECTORY_HASH_H_
+#define INCLUDE_SEQAN_BINNING_DIRECTORY_BINNING_DIRECTORY_HASH_H_
 
-#include <seqan/binning_directory/binning_directory_base.h>
-#include <seqan/binning_directory/bitvector_base.h>
-#include <seqan/binning_directory/bitvector_uncompressed.h>
-#include <seqan/binning_directory/bitvector_compressed.h>
-#include <seqan/binning_directory/binning_directory_hash.h>
-#include <seqan/binning_directory/binning_directory_direct_addressing.h>
-#include <seqan/binning_directory/binning_directory_interleaved_bloom_filter.h>
+// --------------------------------------------------------------------------
+// Class
+// --------------------------------------------------------------------------
+namespace seqan{
 
-#endif
+template<typename TValue>
+struct BDHash<TValue, Normal>
+{
+public:
+    Shape<TValue, SimpleShape> kmerShape;
+
+    inline void resize(TKmerSize kmerSize)
+    {
+        seqan::resize(kmerShape, kmerSize);
+    }
+
+    template<typename TIt>
+    inline void hashInit(TIt it)
+    {
+        seqan::hashInit(kmerShape, it);
+    }
+
+    template<typename TIt>
+    inline auto hashNext(TIt it)
+    {
+        return seqan::hashNext(kmerShape, it);
+    }
+
+    inline auto length()
+    {
+        return seqan::length(kmerShape);
+    }
+};
+
+}   // namespace seqan
+
+#endif  // INCLUDE_SEQAN_BINNING_DIRECTORY_BINNING_DIRECTORY_HASH_H_

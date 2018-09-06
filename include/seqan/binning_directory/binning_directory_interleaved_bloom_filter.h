@@ -61,8 +61,8 @@ namespace seqan{
  * ```
  *
  */
-template<typename TValue, typename TShape, typename TBitvector>
-class BinningDirectory<TValue, TShape, InterleavedBloomFilter, TBitvector>
+template<typename TValue, typename THash, typename TBitvector>
+class BinningDirectory<TValue, THash, InterleavedBloomFilter, TBitvector>
 {
 public:
     //!\brief The type of the variables.
@@ -147,13 +147,13 @@ public:
     }
 
     //!\brief Copy constructor
-    BinningDirectory(BinningDirectory<TValue, TShape, InterleavedBloomFilter, TBitvector> & other)
+    BinningDirectory(BinningDirectory<TValue, THash, InterleavedBloomFilter, TBitvector> & other)
     {
         *this = other;
     }
 
     //!\brief Copy assignment
-    BinningDirectory<TValue, TShape, InterleavedBloomFilter, TBitvector> & operator=(BinningDirectory<TValue, TShape, InterleavedBloomFilter, TBitvector> & other)
+    BinningDirectory<TValue, THash, InterleavedBloomFilter, TBitvector> & operator=(BinningDirectory<TValue, THash, InterleavedBloomFilter, TBitvector> & other)
     {
         noOfBins = other.noOfBins;
         noOfHashFunc = other.noOfHashFunc;
@@ -165,13 +165,13 @@ public:
     }
 
     //!\brief Move constrcutor
-    BinningDirectory(BinningDirectory<TValue, TShape, InterleavedBloomFilter, TBitvector> && other)
+    BinningDirectory(BinningDirectory<TValue, THash, InterleavedBloomFilter, TBitvector> && other)
     {
         *this = std::move(other);
     }
 
     //!\brief Move assignment
-    BinningDirectory<TValue, TShape, InterleavedBloomFilter, TBitvector> & operator=(BinningDirectory<TValue, TShape, InterleavedBloomFilter, TBitvector> && other)
+    BinningDirectory<TValue, THash, InterleavedBloomFilter, TBitvector> & operator=(BinningDirectory<TValue, THash, InterleavedBloomFilter, TBitvector> && other)
     {
         noOfBins = std::move(other.noOfBins);
         noOfHashFunc = std::move(other.noOfHashFunc);
@@ -183,7 +183,7 @@ public:
     }
 
     //!\brief Destructor
-    ~BinningDirectory<TValue, TShape, InterleavedBloomFilter, TBitvector>() = default;
+    ~BinningDirectory<TValue, THash, InterleavedBloomFilter, TBitvector>() = default;
     //!\}
 
     /*!
@@ -238,13 +238,13 @@ public:
 
         std::vector<uint64_t> kmerHashes(possible, 0);
 
-        TShape kmerShape;
-        resize(kmerShape, kmerSize);
-        hashInit(kmerShape, begin(text));
+        BDHash<TValue, THash> shape;
+        shape.resize(kmerSize);
+        shape.hashInit(begin(text));
         auto it = begin(text);
         for (uint16_t i = 0; i < possible; ++i)
         {
-            kmerHashes[i] = hashNext(kmerShape, it);
+            kmerHashes[i] = shape.hashNext(it);
             ++it;
         }
         for (uint64_t kmerHash : kmerHashes)
@@ -357,13 +357,13 @@ public:
     inline void insertKmer(TString const & text, TNoOfBins binNo)
     {
 
-        TShape kmerShape;
-        resize(kmerShape, kmerSize);
-        hashInit(kmerShape, begin(text));
+        BDHash<TValue, THash> shape;
+        shape.resize(kmerSize);
+        shape.hashInit(begin(text));
 
-        for (uint64_t i = 0; i < length(text) - length(kmerShape) + 1; ++i)
+        for (uint64_t i = 0; i < length(text) - shape.length() + 1; ++i)
         {
-            uint64_t kmerHash = hashNext(kmerShape, begin(text) + i);
+            uint64_t kmerHash = shape.hashNext(begin(text) + i);
 
             for(TNoOfHashFunc i = 0; i < noOfHashFunc ; ++i)
             {
