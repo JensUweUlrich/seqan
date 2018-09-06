@@ -129,6 +129,15 @@ struct Bitvector;
 template<typename TValue, typename TSpec>
 struct BDHash;
 
+template<uint16_t>
+struct Offset;
+
+template<typename>
+struct is_offset : std::false_type {};
+
+template<uint16_t o>
+struct is_offset<Offset<o>> : std::true_type {};
+
 // --------------------------------------------------------------------------
 // Class BinningDirectory
 // --------------------------------------------------------------------------
@@ -194,7 +203,16 @@ template<typename TValue, typename THash, typename TSpec, typename TBitvector>
 inline void insertKmer(BinningDirectory<TValue, THash, TSpec, TBitvector> & me, String<TValue> const & text, TNoOfBins binNo)
 {
     if(length(text) >= me.kmerSize)
-        me.insertKmer(text, binNo);
+        {
+            if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
+            {
+                me.template insertKmer<Normal>(text, binNo);
+            }
+            else
+            {
+                me.template insertKmer<THash>(text, binNo);
+            }
+        }
 }
 
 /*!
