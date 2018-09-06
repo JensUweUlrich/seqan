@@ -151,17 +151,15 @@ struct Bitvector<Uncompressed> : BitvectorBase
         *this = Bitvector(fileName);
     }
 
-    auto resize(uint32_t bins)
+    void resize(TNoOfBins bins, TNoOfBits newNoOfBits, TBlockBitSize newBlockBitSize, TBinWidth newBinWidth)
     {
         CharString file{random_string()};
         store(file);
-        TBlockBitSize newBlockBitSize = std::ceil((double)bins / INT_SIZE) * INT_SIZE;
         TBlockBitSize delta = newBlockBitSize - blockBitSize + 1;
         if (delta == 1)
         {
-            return std::make_tuple(noOfBits, bins, binWidth, blockBitSize);
+            return;
         }
-        TNoOfBits newNoOfBits = noOfBlocks * newBlockBitSize;
         uncompressed_vector.reset(new sdsl::bit_vector(newNoOfBits+FILTER_METADATA_SIZE,0));
         sdsl::int_vector_buffer<1> buffered_vector(toCString(file));
         TNoOfBits pos{0};
@@ -184,11 +182,10 @@ struct Bitvector<Uncompressed> : BitvectorBase
             }
         }
         sdsl::remove(toCString(file));
-        noOfBits = newNoOfBits;
         noOfBins = bins;
-        binWidth = std::ceil((double)noOfBins / INT_SIZE);
+        binWidth = newBinWidth;
         blockBitSize = newBlockBitSize;
-        return std::make_tuple(noOfBits, noOfBins, binWidth, blockBitSize);
+        noOfBits = newNoOfBits;
     }
 };
 }   //  namespace seqan
