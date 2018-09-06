@@ -39,10 +39,10 @@
 #define INCLUDE_SEQAN_BINNING_DIRECTORY_H_
 
 #include <seqan/binning_directory/binning_directory_base.h>
+#include <seqan/binning_directory/binning_directory_hash.h>
 #include <seqan/binning_directory/bitvector_base.h>
 #include <seqan/binning_directory/bitvector_uncompressed.h>
 #include <seqan/binning_directory/bitvector_compressed.h>
-#include <seqan/binning_directory/binning_directory_hash.h>
 #include <seqan/binning_directory/binning_directory_direct_addressing.h>
 #include <seqan/binning_directory/binning_directory_interleaved_bloom_filter.h>
 
