@@ -231,10 +231,10 @@ public:
      * \param counts Vector to be filled with counts.
      * \param text Text to count occurences for.
      */
-    template<typename TAnyString>
+    template<typename THashCount, typename TAnyString>
     void count(std::vector<TNoOfBins> & counts, TAnyString const & text)
     {
-        BDHash<TValue, THash> shape;
+        BDHash<TValue, THashCount> shape;
         shape.resize(kmerSize);
         std::vector<uint64_t> kmerHashes = shape.getHash(text);
 
@@ -348,7 +348,7 @@ public:
     template<typename THashInsert>
     inline void insertKmer(TString const & text, TNoOfBins binNo)
     {
-        BDHash<TValue, THashInsert> shape; // DEBUG
+        BDHash<TValue, THashInsert> shape;
         shape.resize(kmerSize);
         std::vector<uint64_t> kmerHashes = shape.getHash(text);
 
