@@ -234,19 +234,10 @@ public:
     template<typename TAnyString>
     void count(std::vector<TNoOfBins> & counts, TAnyString const & text)
     {
-        uint16_t possible = length(text) - kmerSize + 1; // Supports text lengths up to 65535 + k
-
-        std::vector<uint64_t> kmerHashes(possible, 0);
-
         BDHash<TValue, THash> shape;
         shape.resize(kmerSize);
-        shape.hashInit(begin(text));
-        auto it = begin(text);
-        for (uint16_t i = 0; i < possible; ++i)
-        {
-            kmerHashes[i] = shape.hashNext(it);
-            ++it;
-        }
+        std::vector<uint64_t> kmerHashes = shape.getHash(text);
+
         for (uint64_t kmerHash : kmerHashes)
         {
             std::vector<uint64_t> vecIndices = preCalcValues;
@@ -354,17 +345,15 @@ public:
      * \param text Text to process.
      * \param binNo bin ID to insertKmer k-mers in.
      */
+    template<typename THashInsert>
     inline void insertKmer(TString const & text, TNoOfBins binNo)
     {
-
-        BDHash<TValue, THash> shape;
+        BDHash<TValue, THashInsert> shape; // DEBUG
         shape.resize(kmerSize);
-        shape.hashInit(begin(text));
+        std::vector<uint64_t> kmerHashes = shape.getHash(text);
 
-        for (uint64_t i = 0; i < length(text) - shape.length() + 1; ++i)
+        for (auto kmerHash : kmerHashes)
         {
-            uint64_t kmerHash = shape.hashNext(begin(text) + i);
-
             for(TNoOfHashFunc i = 0; i < noOfHashFunc ; ++i)
             {
                 uint64_t vecIndex = preCalcValues[i] * kmerHash;
@@ -408,7 +397,6 @@ public:
         TBinWidth newBinWidth = std::ceil((double)bins / intSize);
         TBlockBitSize newBlockBitSize = newBinWidth * intSize;
         TNoOfBits newNoOfBits = noOfBlocks * newBlockBitSize;
-        std::cerr << "old " << noOfBits << " new " << newNoOfBits << '\n';
         bitvector.resize(bins, newNoOfBits, newBlockBitSize, newBinWidth);
         noOfBins = bins;
         binWidth = newBinWidth;
