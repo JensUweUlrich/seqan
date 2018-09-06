@@ -120,15 +120,21 @@ typedef Tag<Compressed_> Compressed;
 struct CompressedArray_;
 typedef Tag<CompressedArray_> CompressedArray;
 
+struct Normal_;
+typedef Tag<Normal_> Normal;
+
 template<typename TSpec>
 struct Bitvector;
+
+template<typename TValue, typename TSpec>
+struct BDHash;
 
 // --------------------------------------------------------------------------
 // Class BinningDirectory
 // --------------------------------------------------------------------------
 
 //!\brief The BinningDirectory class.
-template<typename TValue = Dna, typename TShape = Shape<TValue, SimpleShape>, typename TSpec = InterleavedBloomFilter, typename TBitvector = Uncompressed>
+template<typename TValue = Dna, typename THash = Normal, typename TSpec = InterleavedBloomFilter, typename TBitvector = Uncompressed>
 class BinningDirectory;
 
 // ==========================================================================
@@ -136,8 +142,8 @@ class BinningDirectory;
 // ==========================================================================
 
 //!\brief Type definition for variables.
-template<typename TValue, typename TShape, typename TSpec, typename TBitvector>
-struct Value<BinningDirectory<TValue, TShape, TSpec, TBitvector> >
+template<typename TValue, typename THash, typename TSpec, typename TBitvector>
+struct Value<BinningDirectory<TValue, THash, TSpec, TBitvector> >
 {
     typedef uint32_t noOfBins;
     typedef uint16_t kmerSize;
@@ -184,8 +190,8 @@ typedef uint64_t TSeedValue;
  * \param text The text from which the k-mers are to be added.
  * \param binNo The bin to add the k-mers to.
  */
-template<typename TValue, typename TShape, typename TSpec, typename TBitvector>
-inline void insertKmer(BinningDirectory<TValue, TShape, TSpec, TBitvector> & me, String<TValue> const & text, TNoOfBins binNo)
+template<typename TValue, typename THash, typename TSpec, typename TBitvector>
+inline void insertKmer(BinningDirectory<TValue, THash, TSpec, TBitvector> & me, String<TValue> const & text, TNoOfBins binNo)
 {
     if(length(text) >= me.kmerSize)
         me.insertKmer(text, binNo);
@@ -197,8 +203,8 @@ inline void insertKmer(BinningDirectory<TValue, TShape, TSpec, TBitvector> & me,
  * \param bins A vector containing the bin numbers.
  * \param threads The number of threads to use.
  */
-template<typename TValue, typename TShape, typename TSpec, typename TBitvector, typename TInt>
-inline void clear(BinningDirectory<TValue, TShape, TSpec, TBitvector> &  me, std::vector<TNoOfBins> & bins, TInt&& threads)
+template<typename TValue, typename THash, typename TSpec, typename TBitvector, typename TInt>
+inline void clear(BinningDirectory<TValue, THash, TSpec, TBitvector> &  me, std::vector<TNoOfBins> & bins, TInt&& threads)
 {
     // me.clear(bins, static_cast<uint64_t>(threads));
     me.clear(bins, threads);
@@ -215,8 +221,8 @@ inline void clear(BinningDirectory<TValue, TShape, TSpec, TBitvector> &  me, std
  * If the BinningDirectory's bitvector specialisation is CompressedArray, we need to iterate bitvector.noOfChunks times
  * over the input files. In each iteration the kmers are inserted into one chunk.
  */
-template<typename TValue, typename TShape, typename TSpec, typename TBitvector>
-inline void insertKmer(BinningDirectory<TValue, TShape, TSpec, TBitvector> &  me, const char * fastaFile, TNoOfBins binNo)
+template<typename TValue, typename THash, typename TSpec, typename TBitvector>
+inline void insertKmer(BinningDirectory<TValue, THash, TSpec, TBitvector> &  me, const char * fastaFile, TNoOfBins binNo)
 {
     CharString id;
     String<TValue> seq;
@@ -292,8 +298,8 @@ inline void insertKmer(BinningDirectory<TValue, TShape, TSpec, TBitvector> &  me
  * \param counts Vector of length binNo to save counts to.
  * \param text A single text to count all contained k-mers for.
  */
-template<typename TValue, typename TShape, typename TSpec,  typename TBitvector>
-inline void count(BinningDirectory<TValue, TShape, TSpec, TBitvector> &  me, std::vector<TNoOfBins> & counts, String<TValue> const & text)
+template<typename TValue, typename THash, typename TSpec,  typename TBitvector>
+inline void count(BinningDirectory<TValue, THash, TSpec, TBitvector> &  me, std::vector<TNoOfBins> & counts, String<TValue> const & text)
 {
     me.count(counts, text);
 }
@@ -304,8 +310,8 @@ inline void count(BinningDirectory<TValue, TShape, TSpec, TBitvector> &  me, std
  * \param text A single text to count all contained k-mers for.
  * \returns std::vector<uint64_t> of size binNo containing counts.
  */
-template<typename TValue, typename TShape, typename TSpec, typename TBitvector>
-inline std::vector<TNoOfBins> count(BinningDirectory<TValue, TShape, TSpec, TBitvector> &  me, String<TValue> const & text)
+template<typename TValue, typename THash, typename TSpec, typename TBitvector>
+inline std::vector<TNoOfBins> count(BinningDirectory<TValue, THash, TSpec, TBitvector> &  me, String<TValue> const & text)
 {
     std::vector<TNoOfBins> counts(me.noOfBins, 0);
     count(me, counts, text);
@@ -317,8 +323,8 @@ inline std::vector<TNoOfBins> count(BinningDirectory<TValue, TShape, TSpec, TBit
  * \param me The BinningDirectory instance.
  * \returns Value<BinningDirectory<TValue, TSpec> >::Type Number of bins.
  */
-template<typename TValue, typename TShape, typename TSpec, typename TBitvector>
-inline TNoOfBins getNumberOfBins(BinningDirectory<TValue, TShape, TSpec, TBitvector> &  me)
+template<typename TValue, typename THash, typename TSpec, typename TBitvector>
+inline TNoOfBins getNumberOfBins(BinningDirectory<TValue, THash, TSpec, TBitvector> &  me)
 {
     return me.noOfBins;
 }
@@ -328,8 +334,8 @@ inline TNoOfBins getNumberOfBins(BinningDirectory<TValue, TShape, TSpec, TBitvec
  * \param me The BinningDirectory instance.
  * \returns Value<BinningDirectory<TValue, TSpec> >::Type k-mer size.
  */
-template<typename TValue, typename TShape, typename TSpec, typename TBitvector>
-inline TKmerSize getKmerSize(BinningDirectory<TValue, TShape, TSpec, TBitvector> &  me)
+template<typename TValue, typename THash, typename TSpec, typename TBitvector>
+inline TKmerSize getKmerSize(BinningDirectory<TValue, THash, TSpec, TBitvector> &  me)
 {
     return me.kmerSize;
 }
@@ -338,8 +344,8 @@ inline TKmerSize getKmerSize(BinningDirectory<TValue, TShape, TSpec, TBitvector>
  * \brief Reads the metadata.
  * \param me The BinningDirectory instance.
  */
-template<typename TValue, typename TShape, typename TSpec, typename TBitvector>
-inline void getMetadata(BinningDirectory<TValue, TShape, TSpec, TBitvector> &  me)
+template<typename TValue, typename THash, typename TSpec, typename TBitvector>
+inline void getMetadata(BinningDirectory<TValue, THash, TSpec, TBitvector> &  me)
 {
     //-------------------------------------------------------------------
     //| kmer_size | n_hash_func | n_bins |              bf              |
@@ -356,8 +362,8 @@ inline void getMetadata(BinningDirectory<TValue, TShape, TSpec, TBitvector> &  m
  * \brief Writes the metadata.
  * \param me The BinningDirectory instance.
  */
-template<typename TValue, typename TShape, typename TSpec, typename TBitvector>
-inline void setMetadata(BinningDirectory<TValue, TShape, TSpec, TBitvector> &  me)
+template<typename TValue, typename THash, typename TSpec, typename TBitvector>
+inline void setMetadata(BinningDirectory<TValue, THash, TSpec, TBitvector> &  me)
 {
     //-------------------------------------------------------------------
     //| kmer_size | n_hash_func | n_bins |              bf              |
@@ -376,8 +382,8 @@ inline void setMetadata(BinningDirectory<TValue, TShape, TSpec, TBitvector> &  m
  * \param me The BinningDirectory instance.
  * \returns double filter vector size in MB.
  */
-template<typename TValue, typename TShape, typename TSpec, typename TBitvector>
-inline double size(BinningDirectory<TValue, TShape, TSpec, TBitvector> &  me)
+template<typename TValue, typename THash, typename TSpec, typename TBitvector>
+inline double size(BinningDirectory<TValue, THash, TSpec, TBitvector> &  me)
 {
     return me.bitvector.size_in_mega_bytes();
 }
@@ -388,8 +394,8 @@ inline double size(BinningDirectory<TValue, TShape, TSpec, TBitvector> &  me)
  * \param fileName Name of the file to write to.
  * \returns bool Indicates if the operation was successful.
  */
-template<typename TValue, typename TShape, typename TSpec, typename TBitvector>
-inline bool store(BinningDirectory<TValue, TShape, TSpec, TBitvector> &  me, CharString fileName)
+template<typename TValue, typename THash, typename TSpec, typename TBitvector>
+inline bool store(BinningDirectory<TValue, THash, TSpec, TBitvector> &  me, CharString fileName)
 {
     setMetadata(me);
     return me.bitvector.store(fileName);
@@ -401,8 +407,8 @@ inline bool store(BinningDirectory<TValue, TShape, TSpec, TBitvector> &  me, Cha
  * \param fileName Name of the file to read from.
  * \returns bool Indicates if the operation was successful.
  */
-template<typename TValue, typename TShape, typename TSpec, typename TBitvector>
-inline bool retrieve(BinningDirectory<TValue, TShape, TSpec, TBitvector> &  me, CharString fileName)
+template<typename TValue, typename THash, typename TSpec, typename TBitvector>
+inline bool retrieve(BinningDirectory<TValue, THash, TSpec, TBitvector> &  me, CharString fileName)
 {
     me.bitvector.retrieve(fileName);
     getMetadata(me);

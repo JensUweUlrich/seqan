@@ -65,15 +65,13 @@ using namespace seqan;
 
 // A test for strings.
 typedef
-    TagList<BinningDirectory<Dna,   Shape<Dna, SimpleShape>,    InterleavedBloomFilter,     Uncompressed>,
-    TagList<BinningDirectory<Dna,   Shape<Dna, SimpleShape>,    InterleavedBloomFilter,     Compressed>
-    > >
+    TagList<BinningDirectory<Dna,   Normal,    InterleavedBloomFilter,     Uncompressed>,
+    TagList<BinningDirectory<Dna,   Normal,    InterleavedBloomFilter,     Compressed> > >
     BinningDirectoriesIBF;
 
 typedef
-    TagList<BinningDirectory<Dna,   Shape<Dna, SimpleShape>,    DirectAddressing,           Uncompressed>,
-    TagList<BinningDirectory<Dna,   Shape<Dna, SimpleShape>,    DirectAddressing,           Compressed>
-    > >
+    TagList<BinningDirectory<Dna,   Normal,    DirectAddressing,           Uncompressed>,
+    TagList<BinningDirectory<Dna,   Normal,    DirectAddressing,           Compressed> > >
     BinningDirectoriesDA;
 
 template <typename TBinning_>
@@ -519,7 +517,7 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, getNumberOfBins)
 
 SEQAN_TEST(BinningDirectoryIBFTest, resize)
 {
-    typedef BinningDirectory<Dna, Shape<Dna, SimpleShape>, InterleavedBloomFilter, Uncompressed> TBinning;
+    typedef BinningDirectory<Dna, Normal, InterleavedBloomFilter, Uncompressed> TBinning;
 
     TBinning bd(64, 3, 4, 32_m);
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
@@ -556,7 +554,7 @@ SEQAN_TEST(BinningDirectoryIBFTest, resize)
 
 SEQAN_TEST(BinningDirectoryDATest, resize)
 {
-    typedef BinningDirectory<Dna, Shape<Dna, SimpleShape>, DirectAddressing, Uncompressed> TBinning;
+    typedef BinningDirectory<Dna, Normal, DirectAddressing, Uncompressed> TBinning;
 
     TBinning bd(64, 3);
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
