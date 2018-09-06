@@ -383,22 +383,37 @@ public:
         // How big is then a block (multiple of 64 bit)
         blockBitSize = binWidth * intSize;
         // How many hash values can we represent
-        noOfBlocks = (noOfBits - filterMetadataSize) / blockBitSize;
+        noOfBlocks = noOfBits / blockBitSize;
 
         preCalcValues.resize(noOfHashFunc);
         for(TNoOfHashFunc i = 0; i < noOfHashFunc ; i++)
             preCalcValues[i] = i ^  (kmerSize * seedValue);
     }
 
+    /*!
+     * \brief Increases the number of bins in the binning directory.
+     * \param bins The new number of bins.
+     * This function only works for uncompressed bitvectors.
+     * The resulting bitvector has an increased size proportional to the increase in the binWidth, e.g.
+     * resizing a BD with 40 bins to 73 bins also increases the binWidth from 64 to 128 and hence the new bitvector
+     * will be twice the size.
+     * This increase in size is necessary to avoid invalidating all computed hash functions.
+     * If you want to add more bins while keeping the size constant, you need to rebuild the BD.
+     * The function will store the underlying bitvector to disk, read it from disk (buffered) and store the old values  * in the new bitvector, i.e. you only need enough memory to hold the new bitvector.
+     */
     void resizeBins(TNoOfBins bins)
     {
         static_assert(std::is_same<TBitvector, Uncompressed>::value,
             "Resize is only available for Uncompressed Bitvectors.");
-        auto result = bitvector.resize(bins);
-        noOfBits = std::get<0>(result);
-        noOfBins = std::get<1>(result);
-        binWidth = std::get<2>(result);
-        blockBitSize = std::get<3>(result);
+        TBinWidth newBinWidth = std::ceil((double)bins / intSize);
+        TBlockBitSize newBlockBitSize = newBinWidth * intSize;
+        TNoOfBits newNoOfBits = noOfBlocks * newBlockBitSize;
+        std::cerr << "old " << noOfBits << " new " << newNoOfBits << '\n';
+        bitvector.resize(bins, newNoOfBits, newBlockBitSize, newBinWidth);
+        noOfBins = bins;
+        binWidth = newBinWidth;
+        blockBitSize = newBlockBitSize;
+        noOfBits = newNoOfBits;
     }
 };
 }   // namespace seqan
