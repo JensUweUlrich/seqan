@@ -203,16 +203,16 @@ template<typename TValue, typename THash, typename TSpec, typename TBitvector>
 inline void insertKmer(BinningDirectory<TValue, THash, TSpec, TBitvector> & me, String<TValue> const & text, TNoOfBins binNo)
 {
     if(length(text) >= me.kmerSize)
+    {
+        if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
         {
-            if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
-            {
-                me.template insertKmer<Normal>(text, binNo);
-            }
-            else
-            {
-                me.template insertKmer<THash>(text, binNo);
-            }
+            me.template insertKmer<Normal>(text, binNo);
         }
+        else
+        {
+            me.template insertKmer<THash>(text, binNo);
+        }
+    }
 }
 
 /*!
@@ -316,10 +316,23 @@ inline void insertKmer(BinningDirectory<TValue, THash, TSpec, TBitvector> &  me,
  * \param counts Vector of length binNo to save counts to.
  * \param text A single text to count all contained k-mers for.
  */
+template<typename THashCount, typename TValue, typename THash, typename TSpec,  typename TBitvector>
+inline void count(BinningDirectory<TValue, THash, TSpec, TBitvector> &  me, std::vector<TNoOfBins> & counts, String<TValue> const & text)
+{
+    if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
+    {
+        me.template count<THashCount>(counts, text);
+    }
+    else
+    {
+        me.template count<THash>(counts, text);
+    }
+}
+
 template<typename TValue, typename THash, typename TSpec,  typename TBitvector>
 inline void count(BinningDirectory<TValue, THash, TSpec, TBitvector> &  me, std::vector<TNoOfBins> & counts, String<TValue> const & text)
 {
-    me.count(counts, text);
+    me.template count<THash>(counts, text);
 }
 
 /*!
@@ -328,6 +341,23 @@ inline void count(BinningDirectory<TValue, THash, TSpec, TBitvector> &  me, std:
  * \param text A single text to count all contained k-mers for.
  * \returns std::vector<uint64_t> of size binNo containing counts.
  */
+template<typename THashCount, typename TValue, typename THash, typename TSpec, typename TBitvector>
+inline std::vector<TNoOfBins> count(BinningDirectory<TValue, THash, TSpec, TBitvector> &  me, String<TValue> const & text)
+{
+    std::vector<TNoOfBins> counts(me.noOfBins, 0);
+
+    if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
+    {
+        count<THashCount>(me, counts, text);
+    }
+    else
+    {
+        count<THash>(me, counts, text);
+    }
+
+    return counts;
+}
+
 template<typename TValue, typename THash, typename TSpec, typename TBitvector>
 inline std::vector<TNoOfBins> count(BinningDirectory<TValue, THash, TSpec, TBitvector> &  me, String<TValue> const & text)
 {
