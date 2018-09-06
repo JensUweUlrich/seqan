@@ -235,20 +235,11 @@ public:
     template<typename TAnyString>
     void count(std::vector<TNoOfBins> & counts, TAnyString const & text)
     {
-        uint16_t possible = length(text) - kmerSize + 1; // Supports text lengths up to 65535 + k
-        std::vector<uint64_t> kmerHashes(possible, 0);
-
         BDHash<TValue, THash> shape;
         shape.resize(kmerSize);
-        shape.hashInit(begin(text));
-        auto it = begin(text);
-        for (uint16_t i = 0; i < possible; ++i)
-        {
-            kmerHashes[i] = shape.hashNext(it);
-            ++it;
-        }
+        std::vector<uint64_t> kmerHashes = shape.getHash(text);
 
-        for (uint64_t kmerHash : kmerHashes)
+        for (auto kmerHash : kmerHashes)
         {
             // Move to first bit representing the hash kmerHash for bin 0, the next bit would be for bin 1, and so on
             kmerHash *= blockBitSize;
@@ -312,15 +303,15 @@ public:
      * \param text Text to process.
      * \param binNo bin ID to insertKmer k-mers in.
      */
+    template<typename THashInsert>
     inline void insertKmer(TString const & text, TNoOfBins binNo)
     {
-        BDHash<TValue, THash> shape;
+        BDHash<TValue, THashInsert> shape;
         shape.resize(kmerSize);
-        shape.hashInit(begin(text));
+        std::vector<uint64_t> kmerHashes = shape.getHash(text);
 
-        for (uint64_t i = 0; i < length(text) - shape.length() + 1; ++i)
+        for (auto kmerHash : kmerHashes)
         {
-            uint64_t kmerHash = shape.hashNext(begin(text) + i);
             uint64_t vecIndex = kmerHash * blockBitSize + binNo;
             bitvector.set_pos(vecIndex);
         }

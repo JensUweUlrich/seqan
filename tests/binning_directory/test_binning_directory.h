@@ -65,14 +65,24 @@ using namespace seqan;
 
 // A test for strings.
 typedef
-    TagList<BinningDirectory<Dna,   Normal,    InterleavedBloomFilter,     Uncompressed>,
-    TagList<BinningDirectory<Dna,   Normal,    InterleavedBloomFilter,     Compressed> > >
+    TagList<BinningDirectory<Dna,   Normal,       InterleavedBloomFilter,     Uncompressed>,
+    TagList<BinningDirectory<Dna,   Offset<1>,    InterleavedBloomFilter,     Uncompressed>,
+    TagList<BinningDirectory<Dna,   Normal,       InterleavedBloomFilter,     Compressed> > > >
     BinningDirectoriesIBF;
 
 typedef
-    TagList<BinningDirectory<Dna,   Normal,    DirectAddressing,           Uncompressed>,
-    TagList<BinningDirectory<Dna,   Normal,    DirectAddressing,           Compressed> > >
+    TagList<BinningDirectory<Dna,   Normal,       DirectAddressing,           Uncompressed>,
+    TagList<BinningDirectory<Dna,   Offset<1>,    DirectAddressing,           Uncompressed>,
+    TagList<BinningDirectory<Dna,   Normal,       DirectAddressing,           Compressed> > > >
     BinningDirectoriesDA;
+
+typedef
+    TagList<BDHash<Dna,   Offset<1> >,
+    TagList<BDHash<Dna,   Offset<2> >,
+    TagList<BDHash<Dna,   Offset<3> >,
+    TagList<BDHash<Dna,   Offset<4> >,
+    TagList<BDHash<Dna,   Offset<5> > > > > > >
+    Hash;
 
 template <typename TBinning_>
 class BinningDirectoryIBFTest : public Test
@@ -87,6 +97,17 @@ class BinningDirectoryDATest : public Test
 public:
     typedef TBinning_ TBinning;
 };
+
+template <typename THash_>
+class HashTest : public Test
+{
+public:
+    typedef THash_ THash;
+};
+
+SEQAN_TYPED_TEST_CASE(BinningDirectoryIBFTest, BinningDirectoriesIBF);
+SEQAN_TYPED_TEST_CASE(BinningDirectoryDATest, BinningDirectoriesDA);
+SEQAN_TYPED_TEST_CASE(HashTest, Hash);
 
 SEQAN_TEST(BinningDirectoryIBFTest, literals)
 {
@@ -141,9 +162,6 @@ SEQAN_TEST(BinningDirectoryDATest, literals)
     SEQAN_ASSERT_EQ(512_g,  4398046511104ULL);
     SEQAN_ASSERT_EQ(1024_g, 8796093022208ULL);
 }
-
-SEQAN_TYPED_TEST_CASE(BinningDirectoryIBFTest, BinningDirectoriesIBF);
-SEQAN_TYPED_TEST_CASE(BinningDirectoryDATest, BinningDirectoriesDA);
 
 // Empty constructor
 SEQAN_TYPED_TEST(BinningDirectoryIBFTest, empty_constructor)
@@ -379,7 +397,7 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, clear)
 {
     typedef typename TestFixture::TBinning      TBinning;
 
-    TBinning bd(64, 3, 12, 32_m);
+    TBinning bd(64, 3, 4, 32_m);
 
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
@@ -586,6 +604,44 @@ SEQAN_TEST(BinningDirectoryDATest, resize)
     for (uint64_t i = 64; i < 73; ++i)
     {
         SEQAN_ASSERT_EQ(result2[i], 0u);
+    }
+}
+
+SEQAN_TYPED_TEST(HashTest, offset)
+{
+    typedef typename TestFixture::THash      THash;
+
+    BDHash<Dna, Normal> h1;
+    THash h2;
+    h1.resize(5);
+    h2.resize(5);
+
+    CharString id;
+    String<Dna> seq;
+    SeqFileIn seqFileIn;
+    auto fastaFile = getAbsolutePath("tests/binning_directory/test.fasta").c_str();
+    if (!open(seqFileIn, fastaFile))
+    {
+        CharString msg = "Unable to open contigs file: ";
+        append(msg, CharString(fastaFile));
+        std::cerr << msg << std::endl;
+        throw toCString(msg);
+    }
+    readRecord(id, seq, seqFileIn);
+    close(seqFileIn);
+
+    auto result1 = h1.getHash(seq);
+    auto result2 = h2.getHash(seq);
+
+    SEQAN_ASSERT_LEQ(result2.size(), result1.size());
+
+    for (uint64_t i = 0, j = 0; i < result1.size() && j < result2.size(); ++i, ++j)
+    {
+        if (i > 0 && i != result1.size() -1)
+        {
+            i += h2.offset - 1;
+        }
+        SEQAN_ASSERT_EQ(result1[i], result2[j]);
     }
 }
 
