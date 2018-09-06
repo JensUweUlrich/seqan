@@ -365,6 +365,10 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, count)
     TBinning bd(64, 3, 12, 32_m);
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
 
+    auto result2 = count<Normal>(bd, DnaString{"TAACTTTTTTAT"});
+    auto result3 = count<Offset<1>>(bd, DnaString{"TAACTTTTTTAT"});
+    auto result4 = count<Offset<3>>(bd, DnaString{"TAACTTTTTTAT"});
+
     auto result = count(bd, DnaString{"TAACTTTTTTAT"});
 
     SEQAN_ASSERT_NEQ(result[0], 0u);

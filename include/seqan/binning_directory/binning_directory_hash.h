@@ -73,6 +73,7 @@ public:
     template<typename TString>
     inline std::vector<uint64_t> getHash(TString const & text)
     {
+        // std::cerr << "NORMAL\n";
         uint32_t possible = seqan::length(text) - kmerSize + 1;
 
         std::vector<uint64_t> kmerHashes(possible, 0);
@@ -140,6 +141,7 @@ public:
 
         for (uint32_t i = 0, j = 0; i < positions; ++i)
         {
+            // std::cerr << "OFFSET\n";
             uint64_t kmerHash = hashNext(it);
             if (x && i == positions - 1) // we take the last kmer that covers otherwise uncovered positions
             {
