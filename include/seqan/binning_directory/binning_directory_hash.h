@@ -40,8 +40,8 @@
 // --------------------------------------------------------------------------
 namespace seqan{
 
-template<typename TValue>
-struct BDHash<TValue, Normal>
+template<typename TValue, uint8_t chunks>
+struct BDHash<TValue, Normal, chunks>
 {
 public:
     Shape<TValue, SimpleShape> kmerShape;
@@ -80,10 +80,13 @@ public:
 
         hashInit(begin(text));
         auto it = begin(text);
+        uint8_t chunkOffset = 4; //ipow(ValueSize<TValue>::VALUE, std::ceil((double)ValueSize<TValue>::VALUE / chunks));
 
         for (uint32_t i = 0; i < possible; ++i)
         {
-            kmerHashes[i] = hashNext(it);
+            uint64_t kmerHash = hashNext(it);
+            kmerHash = (kmerHash >> 2) + (kmerHash & 3ULL) * chunkOffset;
+            kmerHashes[i] = kmerHash;
             ++it;
         }
 
@@ -91,8 +94,8 @@ public:
     }
 };
 
-template<typename TValue, uint16_t o>
-struct BDHash<TValue, Offset<o>>
+template<typename TValue, uint16_t o, uint8_t chunks>
+struct BDHash<TValue, Offset<o>, chunks>
 {
 public:
     Shape<TValue, SimpleShape> kmerShape;
@@ -139,17 +142,21 @@ public:
 
         uint32_t positions = seqan::length(text) - kmerSize + 1;
 
+        uint8_t chunkOffset = 4;
+
         for (uint32_t i = 0, j = 0; i < positions; ++i)
         {
             // std::cerr << "OFFSET\n";
             uint64_t kmerHash = hashNext(it);
             if (x && i == positions - 1) // we take the last kmer that covers otherwise uncovered positions
             {
+                kmerHash = (kmerHash >> 2) + (kmerHash & 3ULL) * chunkOffset;
                 kmerHashes[j] = kmerHash;
                 break;
             }
             if (i - j * offset == 0) // we found the j'th kmer with offset
             {
+                kmerHash = (kmerHash >> 2) + (kmerHash & 3ULL) * chunkOffset;
                 kmerHashes[j] = kmerHash;
                 ++j;
             }
