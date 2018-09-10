@@ -60,11 +60,14 @@ namespace seqan{
  * ```
  *
  */
-template<typename TValue, typename THash, typename TBitvector>
-class BinningDirectory<TValue, THash, DirectAddressing, TBitvector>
+template<typename TConfig>
+class BinningDirectory<DirectAddressing, TConfig>
 {
 public:
     //!\brief The type of the variables.
+    typedef typename TConfig::TValue                                TValue;
+    typedef typename TConfig::THash                                 THash;
+    typedef typename TConfig::TBitvector                            TBitvector;
     typedef String<TValue>                                          TString;
     typedef typename Value<BinningDirectory>::noOfBins              TNoOfBins;
     typedef typename Value<BinningDirectory>::noOfHashFunc          TNoOfHashFunc;
@@ -124,13 +127,13 @@ public:
     }
 
     //!\brief Copy constructor
-    BinningDirectory(BinningDirectory<TValue, THash, DirectAddressing, TBitvector> & other)
+    BinningDirectory(BinningDirectory<DirectAddressing, TConfig> & other)
     {
         *this = other;
     }
 
     //!\brief Copy assignment
-    BinningDirectory<TValue, THash, DirectAddressing, TBitvector> & operator=(BinningDirectory<TValue, THash, DirectAddressing, TBitvector> & other)
+    BinningDirectory<DirectAddressing, TConfig> & operator=(BinningDirectory<DirectAddressing, TConfig> & other)
     {
         noOfBins = other.noOfBins;
         kmerSize = other.kmerSize;
@@ -144,13 +147,13 @@ public:
     }
 
     //!\brief Move constrcutor
-    BinningDirectory(BinningDirectory<TValue, THash, DirectAddressing, TBitvector> && other)
+    BinningDirectory(BinningDirectory<DirectAddressing, TConfig> && other)
     {
         *this = std::move(other);
     }
 
     //!\brief Move assignment
-    BinningDirectory<TValue, THash, DirectAddressing, TBitvector> & operator=(BinningDirectory<TValue, THash, DirectAddressing, TBitvector> && other)
+    BinningDirectory<DirectAddressing, TConfig> & operator=(BinningDirectory<DirectAddressing, TConfig> && other)
     {
         noOfBins = std::move(other.noOfBins);
         kmerSize = std::move(other.kmerSize);
@@ -165,7 +168,7 @@ public:
 
     //!\brief Destructor
     // ~BinningDirectory<TValue, DirectAddressing, TBitvector>() = default;
-    ~BinningDirectory<TValue, THash, DirectAddressing, TBitvector>() = default;
+    ~BinningDirectory<DirectAddressing, TConfig>() = default;
     //!\}
 
     /*!
