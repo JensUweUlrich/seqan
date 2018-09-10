@@ -332,9 +332,13 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, insertKmerText)
 
     TBinning bd(64, 4);
 
+    // std::cerr << "Insert \"\"\n";
     insertKmer(bd, DnaString{""}, 1);
+    // std::cerr << "Insert \"A\"\n";
     insertKmer(bd, DnaString{"A"}, 63);
+    // std::cerr << "Insert \"ACGA\"\n";
     insertKmer(bd, DnaString{"ACGA"}, 0);
+    // std::cerr << "Insert \"ACGATGCTAGCTAGCTGAC\"\n";
     insertKmer(bd, DnaString{"ACGATGCTAGCTAGCTGAC"}, 5);
 }
 
@@ -644,6 +648,11 @@ SEQAN_TYPED_TEST(HashTest, offset)
         if (i > 0 && i != result1.size() -1)
         {
             i += h2.offset - 1;
+        }
+        if (result1[i] != result2[j])
+        {
+            std::cerr << "i=" << i << " value=" << result1[i] << '\n';
+            std::cerr << "j=" << j << " value=" << result2[j] << '\n';
         }
         SEQAN_ASSERT_EQ(result1[i], result2[j]);
     }

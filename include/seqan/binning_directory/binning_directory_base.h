@@ -126,7 +126,7 @@ typedef Tag<Normal_> Normal;
 template<typename TSpec>
 struct Bitvector;
 
-template<typename TValue, typename TSpec>
+template<typename TValue, typename TSpec, uint8_t = 4>
 struct BDHash;
 
 template<uint16_t>
