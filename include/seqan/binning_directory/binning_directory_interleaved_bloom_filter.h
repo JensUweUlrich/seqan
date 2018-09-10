@@ -61,11 +61,14 @@ namespace seqan{
  * ```
  *
  */
-template<typename TValue, typename THash, typename TBitvector>
-class BinningDirectory<TValue, THash, InterleavedBloomFilter, TBitvector>
+template<typename TConfig>
+class BinningDirectory<InterleavedBloomFilter, TConfig>
 {
 public:
     //!\brief The type of the variables.
+    typedef typename TConfig::TValue                                TValue;
+    typedef typename TConfig::THash                                 THash;
+    typedef typename TConfig::TBitvector                            TBitvector;
     typedef String<TValue>                                          TString;
     typedef typename Value<BinningDirectory>::noOfBins              TNoOfBins;
     typedef typename Value<BinningDirectory>::noOfHashFunc          TNoOfHashFunc;
@@ -147,13 +150,13 @@ public:
     }
 
     //!\brief Copy constructor
-    BinningDirectory(BinningDirectory<TValue, THash, InterleavedBloomFilter, TBitvector> & other)
+    BinningDirectory(BinningDirectory<InterleavedBloomFilter, TConfig> & other)
     {
         *this = other;
     }
 
     //!\brief Copy assignment
-    BinningDirectory<TValue, THash, InterleavedBloomFilter, TBitvector> & operator=(BinningDirectory<TValue, THash, InterleavedBloomFilter, TBitvector> & other)
+    BinningDirectory<InterleavedBloomFilter, TConfig> & operator=(BinningDirectory<InterleavedBloomFilter, TConfig> & other)
     {
         noOfBins = other.noOfBins;
         noOfHashFunc = other.noOfHashFunc;
@@ -165,13 +168,13 @@ public:
     }
 
     //!\brief Move constrcutor
-    BinningDirectory(BinningDirectory<TValue, THash, InterleavedBloomFilter, TBitvector> && other)
+    BinningDirectory(BinningDirectory<InterleavedBloomFilter, TConfig> && other)
     {
         *this = std::move(other);
     }
 
     //!\brief Move assignment
-    BinningDirectory<TValue, THash, InterleavedBloomFilter, TBitvector> & operator=(BinningDirectory<TValue, THash, InterleavedBloomFilter, TBitvector> && other)
+    BinningDirectory<InterleavedBloomFilter, TConfig> & operator=(BinningDirectory<InterleavedBloomFilter, TConfig> && other)
     {
         noOfBins = std::move(other.noOfBins);
         noOfHashFunc = std::move(other.noOfHashFunc);
@@ -183,7 +186,7 @@ public:
     }
 
     //!\brief Destructor
-    ~BinningDirectory<TValue, THash, InterleavedBloomFilter, TBitvector>() = default;
+    ~BinningDirectory<InterleavedBloomFilter, TConfig>() = default;
     //!\}
 
     /*!
