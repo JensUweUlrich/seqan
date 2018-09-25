@@ -40,12 +40,43 @@
 // --------------------------------------------------------------------------
 namespace seqan{
 
-template<typename TValue, uint8_t chunks>
-struct BDHash<TValue, Normal, chunks>
+template<typename TValue, typename TChunks>
+struct BDHash<TValue, Normal, TChunks>
 {
 public:
+    uint8_t chunks{TChunks::VALUE};
+    std::vector<uint8_t> chunkMap{0};
     Shape<TValue, SimpleShape> kmerShape;
     uint16_t kmerSize{0};
+    uint8_t effectiveChunks{1};
+    uint8_t significantBits{0};
+    uint8_t significantPositions{0};
+    uint64_t chunkOffset{0};
+
+    inline void setChunkOffset(uint64_t chunkOffset_)
+    {
+        chunkOffset = chunkOffset_;
+    }
+
+    inline void setEffective(uint8_t effectiveChunks_)
+    {
+        effectiveChunks = effectiveChunks_;
+    }
+
+    inline void setPos(uint8_t significantPositions_)
+    {
+        significantPositions = significantPositions_;
+    }
+
+    inline void setBits(uint8_t significantBits_)
+    {
+        significantBits = significantBits_;
+    }
+
+    inline void setMap(std::vector<uint8_t> chunkMap_)
+    {
+        chunkMap = chunkMap_;
+    }
 
     inline void resize(TKmerSize newKmerSize)
     {
@@ -80,12 +111,13 @@ public:
 
         hashInit(begin(text));
         auto it = begin(text);
-        uint8_t chunkOffset = 4; //ipow(ValueSize<TValue>::VALUE, std::ceil((double)ValueSize<TValue>::VALUE / chunks));
-
+        // std::cerr << "significantBits " << (int)significantBits << '\n';
+        // std::cerr << "effectiveChunks " << (int)effectiveChunks << '\n';
+        // std::cerr << "significantPositions " << (int)significantPositions << '\n';
         for (uint32_t i = 0; i < possible; ++i)
         {
             uint64_t kmerHash = hashNext(it);
-            kmerHash = (kmerHash >> 2) + (kmerHash & 3ULL) * chunkOffset;
+            kmerHash = (kmerHash >> significantBits) + chunkMap[(kmerHash & (effectiveChunks - 1))] * chunkOffset;
             kmerHashes[i] = kmerHash;
             ++it;
         }
@@ -94,13 +126,44 @@ public:
     }
 };
 
-template<typename TValue, uint16_t o, uint8_t chunks>
-struct BDHash<TValue, Offset<o>, chunks>
+template<typename TValue, uint16_t o, typename TChunks>
+struct BDHash<TValue, Offset<o>, TChunks>
 {
 public:
+    uint8_t chunks{TChunks::VALUE};
+    std::vector<uint8_t> chunkMap{0};
     Shape<TValue, SimpleShape> kmerShape;
     uint16_t offset = o;
     uint16_t kmerSize{0};
+    uint8_t effectiveChunks{1};
+    uint8_t significantBits{0};
+    uint8_t significantPositions{0};
+    uint64_t chunkOffset{0};
+
+    inline void setChunkOffset(uint64_t chunkOffset_)
+    {
+        chunkOffset = chunkOffset_;
+    }
+
+    inline void setEffective(uint8_t effectiveChunks_)
+    {
+        effectiveChunks = effectiveChunks_;
+    }
+
+    inline void setPos(uint8_t significantPositions_)
+    {
+        significantPositions = significantPositions_;
+    }
+
+    inline void setBits(uint8_t significantBits_)
+    {
+        significantBits = significantBits_;
+    }
+
+    inline void setMap(std::vector<uint8_t> chunkMap_)
+    {
+        chunkMap = chunkMap_;
+    }
 
     inline void resize(TKmerSize newKmerSize)
     {
@@ -142,21 +205,19 @@ public:
 
         uint32_t positions = seqan::length(text) - kmerSize + 1;
 
-        uint8_t chunkOffset = 4;
-
         for (uint32_t i = 0, j = 0; i < positions; ++i)
         {
             // std::cerr << "OFFSET\n";
             uint64_t kmerHash = hashNext(it);
             if (x && i == positions - 1) // we take the last kmer that covers otherwise uncovered positions
             {
-                kmerHash = (kmerHash >> 2) + (kmerHash & 3ULL) * chunkOffset;
+                kmerHash = (kmerHash >> significantBits) + chunkMap[(kmerHash & (effectiveChunks - 1))] * chunkOffset;
                 kmerHashes[j] = kmerHash;
                 break;
             }
             if (i - j * offset == 0) // we found the j'th kmer with offset
             {
-                kmerHash = (kmerHash >> 2) + (kmerHash & 3ULL) * chunkOffset;
+                kmerHash = (kmerHash >> significantBits) + chunkMap[(kmerHash & (effectiveChunks - 1))] * chunkOffset;
                 kmerHashes[j] = kmerHash;
                 ++j;
             }
