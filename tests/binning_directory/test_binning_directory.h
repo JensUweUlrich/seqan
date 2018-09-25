@@ -77,11 +77,11 @@ typedef
     BinningDirectoriesDA;
 
 typedef
-    TagList<BDHash<Dna,   Offset<1> >,
-    TagList<BDHash<Dna,   Offset<2> >,
-    TagList<BDHash<Dna,   Offset<3> >,
-    TagList<BDHash<Dna,   Offset<4> >,
-    TagList<BDHash<Dna,   Offset<5> > > > > > >
+    TagList<BDHash<Dna,   Offset<1>, Chunks<4> >,
+    TagList<BDHash<Dna,   Offset<2>, Chunks<4> >,
+    TagList<BDHash<Dna,   Offset<3>, Chunks<4> >,
+    TagList<BDHash<Dna,   Offset<4>, Chunks<4> >,
+    TagList<BDHash<Dna,   Offset<5>, Chunks<4> > > > > > >
     Hash;
 
 template <typename TBinning_>
@@ -324,6 +324,24 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, insertKmerText)
     insertKmer(bd, DnaString{"ACG"}, 63);
     insertKmer(bd, DnaString{"ACGA"}, 0);
     insertKmer(bd, DnaString{"ACGATGCTAGCTAGCTGAC"}, 5);
+}
+
+SEQAN_TYPED_TEST(BinningDirectoryIBFTest, chunks)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+
+    TBinning bd(64, 3, 4, 32_m);
+    StringSet<DnaString> seqs;
+    std::vector<uint32_t> bins;
+    appendValue(seqs, DnaString{""});
+    appendValue(seqs, DnaString{"ACG"});
+    appendValue(seqs, DnaString{"ACGA"});
+    appendValue(seqs, DnaString{"ACGATGCTAGCTAGCTGAC"});
+    bins.push_back(1);
+    bins.push_back(63);
+    bins.push_back(0);
+    bins.push_back(5);
+    insertKmer(bd, seqs, bins);
 }
 
 SEQAN_TYPED_TEST(BinningDirectoryDATest, insertKmerText)
@@ -615,7 +633,7 @@ SEQAN_TYPED_TEST(HashTest, offset)
 {
     typedef typename TestFixture::THash      THash;
 
-    BDHash<Dna, Normal> h1;
+    BDHash<Dna, Normal, Chunks<1>> h1;
     THash h2;
     h1.resize(5);
     h2.resize(5);
@@ -636,7 +654,6 @@ SEQAN_TYPED_TEST(HashTest, offset)
 
     auto result1 = h1.getHash(seq);
     auto result2 = h2.getHash(seq);
-
     SEQAN_ASSERT_LEQ(result2.size(), result1.size());
 
     for (uint64_t i = 0, j = 0; i < result1.size() && j < result2.size(); ++i, ++j)

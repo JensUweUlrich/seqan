@@ -69,6 +69,7 @@ public:
     typedef typename TConfig::TValue                                TValue;
     typedef typename TConfig::THash                                 THash;
     typedef typename TConfig::TBitvector                            TBitvector;
+    typedef typename TConfig::TChunks                               TChunks;
     typedef String<TValue>                                          TString;
     typedef typename Value<BinningDirectory>::noOfBins              TNoOfBins;
     typedef typename Value<BinningDirectory>::noOfHashFunc          TNoOfHashFunc;
@@ -82,9 +83,16 @@ public:
     typedef typename Value<BinningDirectory>::seedValue             TSeedValue;
     typedef typename Value<BinningDirectory>::intSize               TIntSize;
     typedef typename Value<BinningDirectory>::filterMetadataSize    TFilterMetadataSize;
+    typedef typename Value<BinningDirectory>::TNoOfChunks           TNoOfChunks;
 
+    bool chunkMapSet = false;
 
-    uint16_t currentChunk{0};
+    TNoOfChunks      chunks{TChunks::VALUE};
+    std::vector<TNoOfChunks> chunkMap;
+    TNoOfChunks significantPositions;
+    TNoOfChunks significantBits;
+    TNoOfChunks effectiveChunks;
+    TNoOfChunks      currentChunk{0};
     //!\brief The number of Bins.
     TNoOfBins        noOfBins;
     //!\brief The number of hash functions.
@@ -163,6 +171,10 @@ public:
         kmerSize = other.kmerSize;
         noOfBits = other.noOfBits;
         bitvector = other.bitvector;
+        chunkMap = other.chunkMap;
+        significantPositions = other.significantPositions;
+        significantBits = other.significantBits;
+        effectiveChunks = other.effectiveChunks;
         init();
         return *this;
     }
@@ -181,6 +193,10 @@ public:
         kmerSize = std::move(other.kmerSize);
         noOfBits = std::move(other.noOfBits);
         bitvector = std::move(other.bitvector);
+        chunkMap = std::move(other.chunkMap);
+        significantPositions = std::move(other.significantPositions);
+        significantBits = std::move(other.significantBits);
+        effectiveChunks = std::move(other.effectiveChunks);
         init();
         return *this;
     }
@@ -237,8 +253,13 @@ public:
     template<typename THashCount, typename TAnyString>
     void count(std::vector<TNoOfBins> & counts, TAnyString const & text)
     {
-        BDHash<TValue, THashCount> shape;
+        BDHash<TValue, THashCount, TChunks> shape;
         shape.resize(kmerSize);
+        shape.setMap(chunkMap);
+        shape.setPos(significantPositions);
+        shape.setBits(significantBits);
+        shape.setEffective(effectiveChunks);
+        shape.setChunkOffset(noOfBits / (chunks * blockBitSize));
         std::vector<uint64_t> kmerHashes = shape.getHash(text);
 
         for (uint64_t kmerHash : kmerHashes)
@@ -351,8 +372,13 @@ public:
     template<typename THashInsert>
     inline void insertKmer(TString const & text, TNoOfBins binNo)
     {
-        BDHash<TValue, THashInsert> shape;
+        BDHash<TValue, THashInsert, TChunks> shape;
         shape.resize(kmerSize);
+        shape.setMap(chunkMap);
+        shape.setPos(significantPositions);
+        shape.setBits(significantBits);
+        shape.setEffective(effectiveChunks);
+        shape.setChunkOffset(noOfBits / (chunks * blockBitSize));
         std::vector<uint64_t> kmerHashes = shape.getHash(text);
 
         for (auto kmerHash : kmerHashes)

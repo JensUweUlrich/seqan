@@ -126,7 +126,7 @@ typedef Tag<Normal_> Normal;
 template<typename TSpec>
 struct Bitvector;
 
-template<typename TValue, typename TSpec, uint8_t = 4>
+template<typename TValue, typename TSpec, typename TChunks>
 struct BDHash;
 
 template<uint16_t>
@@ -142,12 +142,19 @@ struct is_offset<Offset<o>> : std::true_type {};
 // Class BinningDirectory
 // --------------------------------------------------------------------------
 
-template<typename TValue_ = Dna, typename THash_ = Normal, typename TBitvector_ = Uncompressed>
+template<uint8_t chunks>
+struct Chunks
+{
+    static const uint8_t VALUE = chunks;
+};
+
+template<typename TValue_ = Dna, typename THash_ = Normal, typename TBitvector_ = Uncompressed, typename TChunks_ = Chunks<4>>
 struct BDConfig
 {
     typedef TValue_      TValue;
     typedef THash_       THash;
     typedef TBitvector_  TBitvector;
+    typedef TChunks_     TChunks;
 };
 
 //!\brief The BinningDirectory class.
@@ -174,6 +181,7 @@ struct Value<BinningDirectory<TSpec, TConfig> >
     typedef uint8_t  shiftValue;
     typedef uint64_t preCalcValues;
     typedef uint64_t seedValue;
+    typedef uint8_t  TNoOfChunks;
 };
 
 typedef uint32_t TNoOfBins;
@@ -188,6 +196,7 @@ typedef uint8_t  TNoOfHashFunc;
 typedef uint8_t  TShiftValue;
 typedef uint64_t TPreCalcValues;
 typedef uint64_t TSeedValue;
+typedef uint8_t  TNoOfChunks;
 
 // --------------------------------------------------------------------------
 // Metafunction MetafunctionName
@@ -210,6 +219,8 @@ typedef uint64_t TSeedValue;
 template<typename TSpec, typename TConfig>
 inline void insertKmer(BinningDirectory<TSpec, TConfig> & me, String<typename TConfig::TValue> const & text, TNoOfBins binNo)
 {
+    if (!me.chunkMapSet)
+        configureChunkMap(me);
     typedef typename TConfig::THash THash;
     if(length(text) >= me.kmerSize)
     {
@@ -251,6 +262,8 @@ inline void clear(BinningDirectory<TSpec, TConfig> &  me, std::vector<TNoOfBins>
 template<typename TSpec, typename TConfig>
 inline void insertKmer(BinningDirectory<TSpec, TConfig> &  me, const char * fastaFile, TNoOfBins binNo)
 {
+    if (!me.chunkMapSet)
+        configureChunkMap(me);
     typedef typename TConfig::TValue TValue;
     CharString id;
     String<TValue> seq;
@@ -270,6 +283,146 @@ inline void insertKmer(BinningDirectory<TSpec, TConfig> &  me, const char * fast
         insertKmer(me, seq, binNo);
     }
     close(seqFileIn);
+}
+
+inline uint64_t nextPow4(uint64_t x)
+{
+    auto clz = sdsl::bits::hi(x);
+    if (clz & 1)
+        return 1 << (clz + 1);
+    else
+        return 1 << clz;
+}
+
+template<typename TSpec, typename TConfig>
+inline void configureChunkMap(BinningDirectory<TSpec, TConfig> & me)
+{
+    me.chunkMapSet = true;
+    typedef typename TConfig::TValue TValue;
+    TNoOfChunks chunks = TConfig::TChunks::VALUE;
+    TKmerSize kmerSize{me.kmerSize};
+    TNoOfChunks effectiveChunks = nextPow4(chunks);
+    TNoOfChunks significantBits = sdsl::bits::hi(effectiveChunks);
+    TNoOfChunks significantPositions = significantBits >> 1;
+    const double alpha = 1.1;
+    const double threshold = (1.0 / chunks) * alpha;
+    std::vector<uint8_t> chunkMap;
+    chunkMap.resize(effectiveChunks, 0);
+    std::vector<double> frequencyTable;
+    frequencyTable.resize(effectiveChunks, 1.0/effectiveChunks);
+    double f{0.0};
+    TNoOfChunks chunk{0};
+    for (uint8_t index = 0; index < effectiveChunks; ++index)
+    {
+        double freq = frequencyTable[index];
+        if (f + freq >= threshold)
+        {
+            f = freq;
+            if (chunk != chunks -1)
+                ++chunk;
+            chunkMap[index] = chunk;
+        }
+        else
+        {
+            f += freq;
+            chunkMap[index] = chunk;
+        }
+    }
+    me.chunkMap = chunkMap;
+    me.effectiveChunks = effectiveChunks;
+    me.significantBits = significantBits;
+    me.significantPositions = significantPositions;
+}
+
+template<typename TSpec, typename TConfig>
+inline void insertKmer(BinningDirectory<TSpec, TConfig> & me, StringSet<String<typename TConfig::TValue>> & text, std::vector<TNoOfBins> & bins)
+{
+    // std::cerr << "===========INIT===========\n";
+    assert(length(text) == bins.size());
+    if (!me.chunkMapSet)
+    {
+        me.chunkMapSet = true;
+        typedef typename TConfig::TValue TValue;
+        TNoOfChunks chunks = TConfig::TChunks::VALUE;
+        TKmerSize kmerSize{me.kmerSize};
+        TNoOfChunks effectiveChunks = nextPow4(chunks);
+        TNoOfChunks significantBits = sdsl::bits::hi(effectiveChunks);
+        TNoOfChunks significantPositions = significantBits >> 1;
+        const double alpha = 1.25;
+        const double threshold = (1.0 / chunks) * alpha;
+
+        Shape<TValue, SimpleShape> kmerShape;
+
+        std::vector<uint8_t> chunkMap;
+
+        chunkMap.resize(effectiveChunks, 0);
+        std::vector<uint64_t> countTable;
+        countTable.resize(effectiveChunks, 0);
+        Shape<TValue, SimpleShape> freqShape;
+        resize(freqShape, significantPositions);
+        uint64_t totalCount{0};
+
+        for (auto & t : text)
+        {
+            if ( length(t) >= kmerSize)
+            {
+                // String<TValue> reconstructedText{};
+                // std::cerr << "Text = " << t << '\n';
+                auto it = begin(t) + (kmerSize - significantPositions);
+                if (significantPositions > 1)
+                    hashInit(freqShape, it);
+                while (it != end(t) - significantPositions + 1)
+                {
+                    countTable[hashNext(freqShape, it)]++;
+                    ++totalCount;
+                    // appendValue(reconstructedText, *it);
+                    ++it;
+                }
+                // std::cerr << "RecT = " << reconstructedText << '\n';
+                // std::cerr << "new text\n";
+            }
+        }
+        // std::cerr << "counting done\n";
+        std::vector<double> frequencyTable;
+        frequencyTable.resize(effectiveChunks, 0.0);
+        std::transform(countTable.begin(), countTable.end(), frequencyTable.begin(),
+                       [&](auto & count) { return (double) count / totalCount;});
+        // std::cerr << "transform done\n";
+        double f{0.0};
+        TNoOfChunks chunk{0};
+        for (uint8_t index = 0; index < effectiveChunks; ++index)
+        {
+            double freq = frequencyTable[index];
+            if (f + freq >= threshold)
+            {
+                f = freq;
+                if (chunk != chunks -1)
+                    ++chunk;
+                chunkMap[index] = chunk;
+            }
+            else
+            {
+                f += freq;
+                chunkMap[index] = chunk;
+            }
+        }
+        // std::cerr << "==================================\nchunks = " << (int)chunks << "\teffectiveChunks = " << (int)effectiveChunks << "\nalpha = " << alpha << "\t threshold = " << threshold << "\nsigPos = " << (int) significantPositions << "\tkmerSize = " << kmerSize << "\nCount Table\n";
+        // for (uint8_t index = 0; index < effectiveChunks; ++index)
+        //     std::cerr << (int)index << '\t' << countTable[index] << '\n';
+        // std::cerr << "Total Count = " << totalCount << "\nfrequencyTable\n";
+        // for (uint8_t index = 0; index < effectiveChunks; ++index)
+        //     std::cerr << (int)index << '\t' << frequencyTable[index] << '\n';
+        // std::cerr << "Resulting mapping\n";
+        // for (uint8_t index = 0; index < effectiveChunks; ++index)
+        //     std::cerr << (int)index << '\t' << (int)chunkMap[index] << '\n';
+
+        me.chunkMap = chunkMap;
+        me.effectiveChunks = effectiveChunks;
+        me.significantBits = significantBits;
+        me.significantPositions = significantPositions;
+    }
+    for (uint32_t i = 0; i < length(text); ++i)
+        insertKmer(me, text[i], bins[i]);
 }
 
 /*!
