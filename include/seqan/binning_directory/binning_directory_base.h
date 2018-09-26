@@ -46,6 +46,25 @@
 
 namespace seqan {
 
+/*!
+ * \brief Calculates the power of integer x to integer y.
+ * \param base Base (integer).
+ * \param exp Exponent (integer).
+ * \returns uint64_t base^exp
+ */
+inline uint64_t ipow(uint64_t base, uint64_t exp)
+{
+    uint64_t result = 1;
+    while (exp)
+    {
+        if (exp & 1)
+            result *= base;
+        exp >>= 1;
+        base *= base;
+    }
+    return result;
+}
+
 // ==========================================================================
 // Forwards
 // ==========================================================================
@@ -196,7 +215,7 @@ typedef uint8_t  TNoOfHashFunc;
 typedef uint8_t  TShiftValue;
 typedef uint64_t TPreCalcValues;
 typedef uint64_t TSeedValue;
-typedef uint8_t  TNoOfChunks;
+typedef uint8_t TNoOfChunks;
 
 // --------------------------------------------------------------------------
 // Metafunction MetafunctionName
@@ -294,14 +313,14 @@ inline uint64_t nextPow4(uint64_t x)
         return 1 << clz;
 }
 
-template<typename TSpec, typename TConfig>
+template<typename TSpec, typename TConfig, std::enable_if_t<std::is_same<typename TConfig::TValue, Dna>::value, int> = 0>
 inline void configureChunkMap(BinningDirectory<TSpec, TConfig> & me)
 {
     me.chunkMapSet = true;
     typedef typename TConfig::TValue TValue;
     TNoOfChunks chunks = TConfig::TChunks::VALUE;
     TKmerSize kmerSize{me.kmerSize};
-    TNoOfChunks effectiveChunks = nextPow4(chunks);
+    uint16_t effectiveChunks = nextPow4(chunks);
     TNoOfChunks significantBits = sdsl::bits::hi(effectiveChunks);
     TNoOfChunks significantPositions = significantBits >> 1;
     const double alpha = 1.1;
@@ -312,7 +331,7 @@ inline void configureChunkMap(BinningDirectory<TSpec, TConfig> & me)
     frequencyTable.resize(effectiveChunks, 1.0/effectiveChunks);
     double f{0.0};
     TNoOfChunks chunk{0};
-    for (uint8_t index = 0; index < effectiveChunks; ++index)
+    for (uint16_t index = 0; index < effectiveChunks; ++index)
     {
         double freq = frequencyTable[index];
         if (f + freq >= threshold)
@@ -331,6 +350,46 @@ inline void configureChunkMap(BinningDirectory<TSpec, TConfig> & me)
     me.chunkMap = chunkMap;
     me.effectiveChunks = effectiveChunks;
     me.significantBits = significantBits;
+    me.significantPositions = significantPositions;
+}
+
+template<typename TSpec, typename TConfig, std::enable_if_t<!std::is_same<typename TConfig::TValue, Dna>::value, int> = 0>
+inline void configureChunkMap(BinningDirectory<TSpec, TConfig> & me)
+{
+    me.chunkMapSet = true;
+    typedef typename TConfig::TValue TValue;
+    TNoOfChunks chunks = TConfig::TChunks::VALUE;
+    uint64_t sigma{ValueSize<TValue>::VALUE};
+    TNoOfChunks significantPositions = std::ceil((double) sigma / chunks);
+    uint16_t effectiveChunks = ipow(sigma, significantPositions);
+    const double alpha = 1.1;
+    const double threshold = (1.0 / chunks) * alpha;
+    std::vector<uint8_t> chunkMap;
+    chunkMap.resize(effectiveChunks, 0);
+    std::vector<double> frequencyTable;
+    frequencyTable.resize(effectiveChunks, 1.0/effectiveChunks);
+    double f{0.0};
+    TNoOfChunks chunk{0};
+    // TODO this works, but doesn't make much sense for, e.g. Dna5, where we would but NA,NC,NG,NT,NN in one chunk
+    // Fine for chunks = 4 though
+    for (uint16_t index = 0; index < effectiveChunks; ++index)
+    {
+        double freq = frequencyTable[index];
+        if (f + freq >= threshold)
+        {
+            f = freq;
+            if (chunk != chunks -1)
+                ++chunk;
+            chunkMap[index] = chunk;
+        }
+        else
+        {
+            f += freq;
+            chunkMap[index] = chunk;
+        }
+    }
+    me.chunkMap = chunkMap;
+    me.effectiveChunks = effectiveChunks;
     me.significantPositions = significantPositions;
 }
 

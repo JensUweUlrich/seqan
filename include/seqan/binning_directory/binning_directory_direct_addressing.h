@@ -84,11 +84,12 @@ public:
     bool chunkMapSet = false;
 
     TNoOfChunks      chunks{TChunks::VALUE};
-    std::vector<TNoOfChunks> chunkMap;
-    TNoOfChunks significantPositions;
-    TNoOfChunks significantBits;
-    TNoOfChunks effectiveChunks;
-    TNoOfChunks currentChunk{0};
+    std::vector<TNoOfChunks> chunkMap{0};
+    TNoOfChunks      significantPositions{0};
+    TNoOfChunks      significantBits{0};
+    TNoOfChunks      effectiveChunks{1};
+    uint64_t            chunkOffset{0};
+    TNoOfChunks      currentChunk{0};
     //!\brief The number of Bins.
     TNoOfBins        noOfBins;
     //!\brief The k-mer size.
@@ -155,6 +156,7 @@ public:
         significantPositions = other.significantPositions;
         significantBits = other.significantBits;
         effectiveChunks = other.effectiveChunks;
+        chunkMapSet = other.chunkMapSet;
         return *this;
     }
 
@@ -179,6 +181,7 @@ public:
         significantPositions = std::move(other.significantPositions);
         significantBits = std::move(other.significantBits);
         effectiveChunks = std::move(other.effectiveChunks);
+        chunkMapSet = std::move(other.chunkMapSet);
         return *this;
     }
 
@@ -186,25 +189,6 @@ public:
     // ~BinningDirectory<TValue, DirectAddressing, TBitvector>() = default;
     ~BinningDirectory<DirectAddressing, TConfig>() = default;
     //!\}
-
-    /*!
-     * \brief Calculates the power of integer x to integer y.
-     * \param base Base (integer).
-     * \param exp Exponent (integer).
-     * \returns uint64_t base^exp
-     */
-    uint64_t ipow(uint64_t base, uint64_t exp)
-    {
-        uint64_t result = 1;
-        while (exp)
-        {
-            if (exp & 1)
-                result *= base;
-            exp >>= 1;
-            base *= base;
-        }
-        return result;
-    }
 
     /*!
      * \brief Resets the bloom filter to 0 for all given bins.
@@ -336,7 +320,7 @@ public:
         shape.setPos(significantPositions);
         shape.setBits(significantBits);
         shape.setEffective(effectiveChunks);
-        shape.setChunkOffset(noOfBits / (chunks * blockBitSize));
+        shape.setChunkOffset(chunkOffset);
         std::vector<uint64_t> kmerHashes = shape.getHash(text);
         for (auto kmerHash : kmerHashes)
         {
@@ -348,6 +332,11 @@ public:
     //! \brief Initialises internal variables.
     inline void init()
     {
+        chunkMap = std::vector<uint8_t>{0};
+        // effectiveChunks = 1;
+        // significantBits = 0;
+        // significantPositions = 0;
+        // chunkOffset = 0;
         // How many blocks of 64 bit do we need to represent our noOfBins
         binWidth = std::ceil((double)noOfBins / intSize);
         // How big is then a block (multiple of 64 bit)
@@ -357,6 +346,7 @@ public:
         // Size of the bit vector
         noOfBits = noOfBlocks * blockBitSize;
         // bitvector = Bitvector<TBitvector>(noOfBins, noOfBits);
+        chunkOffset = noOfBits / (chunks * blockBitSize);
     }
 
     /*!

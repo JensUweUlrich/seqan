@@ -88,10 +88,11 @@ public:
     bool chunkMapSet = false;
 
     TNoOfChunks      chunks{TChunks::VALUE};
-    std::vector<TNoOfChunks> chunkMap;
-    TNoOfChunks significantPositions;
-    TNoOfChunks significantBits;
-    TNoOfChunks effectiveChunks;
+    std::vector<TNoOfChunks> chunkMap{0};
+    TNoOfChunks      significantPositions{0};
+    TNoOfChunks      significantBits{0};
+    TNoOfChunks      effectiveChunks{1};
+    uint64_t            chunkOffset{0};
     TNoOfChunks      currentChunk{0};
     //!\brief The number of Bins.
     TNoOfBins        noOfBins;
@@ -175,6 +176,8 @@ public:
         significantPositions = other.significantPositions;
         significantBits = other.significantBits;
         effectiveChunks = other.effectiveChunks;
+        chunkOffset = other.chunkOffset;
+        chunkMapSet = other.chunkMapSet;
         init();
         return *this;
     }
@@ -197,6 +200,8 @@ public:
         significantPositions = std::move(other.significantPositions);
         significantBits = std::move(other.significantBits);
         effectiveChunks = std::move(other.effectiveChunks);
+        chunkOffset = std::move(other.chunkOffset);
+        chunkMapSet = std::move(other.chunkMapSet);
         init();
         return *this;
     }
@@ -259,7 +264,7 @@ public:
         shape.setPos(significantPositions);
         shape.setBits(significantBits);
         shape.setEffective(effectiveChunks);
-        shape.setChunkOffset(noOfBits / (chunks * blockBitSize));
+        shape.setChunkOffset(chunkOffset);
         std::vector<uint64_t> kmerHashes = shape.getHash(text);
 
         for (uint64_t kmerHash : kmerHashes)
@@ -378,7 +383,7 @@ public:
         shape.setPos(significantPositions);
         shape.setBits(significantBits);
         shape.setEffective(effectiveChunks);
-        shape.setChunkOffset(noOfBits / (chunks * blockBitSize));
+        shape.setChunkOffset(chunkOffset);
         std::vector<uint64_t> kmerHashes = shape.getHash(text);
 
         for (auto kmerHash : kmerHashes)
@@ -396,6 +401,11 @@ public:
     //! \brief Initialises internal variables.
     inline void init()
     {
+        chunkMap = std::vector<uint8_t>{0};
+        // effectiveChunks = 1;
+        // significantBits = 0;
+        // significantPositions = 0;
+        // chunkOffset = 0;
         // How many blocks of 64 bit do we need to represent our noOfBins
         binWidth = std::ceil((double)noOfBins / intSize);
         // How big is then a block (multiple of 64 bit)
@@ -406,6 +416,7 @@ public:
         preCalcValues.resize(noOfHashFunc);
         for(TNoOfHashFunc i = 0; i < noOfHashFunc ; i++)
             preCalcValues[i] = i ^  (kmerSize * seedValue);
+        chunkOffset = noOfBits / (chunks * blockBitSize);
     }
 
     /*!
