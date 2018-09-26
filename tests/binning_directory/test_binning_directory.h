@@ -66,8 +66,9 @@ using namespace seqan;
 // A test for strings.
 typedef
     TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Normal,     Uncompressed> >,
+    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna5,   Normal,     Uncompressed> >,
     TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Offset<1>,  Uncompressed> >,
-    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Normal,     Compressed> > > > >
+    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Normal,     Compressed> > > > > >
     BinningDirectoriesIBF;
 
 typedef
@@ -317,26 +318,28 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, move_assignment)
 SEQAN_TYPED_TEST(BinningDirectoryIBFTest, insertKmerText)
 {
     typedef typename TestFixture::TBinning      TBinning;
+    typedef typename TBinning::TValue  TValue;
 
     TBinning bd(64, 3, 4, 32_m);
 
-    insertKmer(bd, DnaString{""}, 1);
-    insertKmer(bd, DnaString{"ACG"}, 63);
-    insertKmer(bd, DnaString{"ACGA"}, 0);
-    insertKmer(bd, DnaString{"ACGATGCTAGCTAGCTGAC"}, 5);
+    insertKmer(bd, String<TValue>{""}, 1);
+    insertKmer(bd, String<TValue>{"ACG"}, 63);
+    insertKmer(bd, String<TValue>{"ACGA"}, 0);
+    insertKmer(bd, String<TValue>{"ACGATGCTAGCTAGCTGAC"}, 5);
 }
 
 SEQAN_TYPED_TEST(BinningDirectoryIBFTest, chunks)
 {
     typedef typename TestFixture::TBinning      TBinning;
+    typedef typename TBinning::TValue  TValue;
 
     TBinning bd(64, 3, 4, 32_m);
-    StringSet<DnaString> seqs;
+    StringSet<String<TValue>> seqs;
     std::vector<uint32_t> bins;
-    appendValue(seqs, DnaString{""});
-    appendValue(seqs, DnaString{"ACG"});
-    appendValue(seqs, DnaString{"ACGA"});
-    appendValue(seqs, DnaString{"ACGATGCTAGCTAGCTGAC"});
+    appendValue(seqs, String<TValue>{""});
+    appendValue(seqs, String<TValue>{"ACG"});
+    appendValue(seqs, String<TValue>{"ACGA"});
+    appendValue(seqs, String<TValue>{"ACGATGCTAGCTAGCTGAC"});
     bins.push_back(1);
     bins.push_back(63);
     bins.push_back(0);
@@ -347,13 +350,14 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, chunks)
 SEQAN_TYPED_TEST(BinningDirectoryDATest, insertKmerText)
 {
     typedef typename TestFixture::TBinning      TBinning;
+    typedef typename TBinning::TValue  TValue;
 
     TBinning bd(64, 4);
 
-    insertKmer(bd, DnaString{""}, 1);
-    insertKmer(bd, DnaString{"A"}, 63);
-    insertKmer(bd, DnaString{"ACGA"}, 0);
-    insertKmer(bd, DnaString{"ACGATGCTAGCTAGCTGAC"}, 5);
+    insertKmer(bd, String<TValue>{""}, 1);
+    insertKmer(bd, String<TValue>{"A"}, 63);
+    insertKmer(bd, String<TValue>{"ACGA"}, 0);
+    insertKmer(bd, String<TValue>{"ACGATGCTAGCTAGCTGAC"}, 5);
 }
 
 // insertKmer from file
@@ -379,15 +383,16 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, insertKmerFile)
 SEQAN_TYPED_TEST(BinningDirectoryIBFTest, count)
 {
     typedef typename TestFixture::TBinning      TBinning;
+    typedef typename TBinning::TValue  TValue;
 
     TBinning bd(64, 3, 12, 32_m);
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
 
-    auto result2 = count<Normal>(bd, DnaString{"TAACTTTTTTAT"});
-    auto result3 = count<Offset<1>>(bd, DnaString{"TAACTTTTTTAT"});
-    auto result4 = count<Offset<3>>(bd, DnaString{"TAACTTTTTTAT"});
+    auto result2 = count<Normal>(bd, String<TValue>{"TAACTTTTTTAT"});
+    auto result3 = count<Offset<1>>(bd, String<TValue>{"TAACTTTTTTAT"});
+    auto result4 = count<Offset<3>>(bd, String<TValue>{"TAACTTTTTTAT"});
 
-    auto result = count(bd, DnaString{"TAACTTTTTTAT"});
+    auto result = count(bd, String<TValue>{"TAACTTTTTTAT"});
 
     SEQAN_ASSERT_NEQ(result[0], 0u);
 
@@ -400,11 +405,12 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, count)
 SEQAN_TYPED_TEST(BinningDirectoryDATest, count)
 {
     typedef typename TestFixture::TBinning      TBinning;
+    typedef typename TBinning::TValue  TValue;
 
     TBinning bd(64, 4);
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
 
-    auto result = count(bd, DnaString{"TAAC"});
+    auto result = count(bd, String<TValue>{"TAAC"});
 
     SEQAN_ASSERT_NEQ(result[0], 0u);
 
@@ -418,6 +424,7 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, count)
 SEQAN_TYPED_TEST(BinningDirectoryIBFTest, clear)
 {
     typedef typename TestFixture::TBinning      TBinning;
+    typedef typename TBinning::TValue  TValue;
 
     TBinning bd(64, 3, 4, 32_m);
 
@@ -429,7 +436,7 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, clear)
 
     clear(bd, bins, 2);
 
-    auto result = count(bd, DnaString{"TAAC"});
+    auto result = count(bd, String<TValue>{"TAAC"});
     SEQAN_ASSERT_NEQ(result[0], 0u);
     SEQAN_ASSERT_EQ(result[1], 0u);
     SEQAN_ASSERT_NEQ(result[2], 0u);
@@ -443,6 +450,7 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, clear)
 SEQAN_TYPED_TEST(BinningDirectoryDATest, clear)
 {
     typedef typename TestFixture::TBinning      TBinning;
+    typedef typename TBinning::TValue  TValue;
 
     TBinning bd(64, 4);
 
@@ -454,7 +462,7 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, clear)
 
     clear(bd, bins, 2);
 
-    auto result = count(bd, DnaString{"TAAC"});
+    auto result = count(bd, String<TValue>{"TAAC"});
     SEQAN_ASSERT_NEQ(result[0], 0u);
     SEQAN_ASSERT_EQ(result[1], 0u);
     SEQAN_ASSERT_NEQ(result[2], 0u);
@@ -665,5 +673,7 @@ SEQAN_TYPED_TEST(HashTest, offset)
         SEQAN_ASSERT_EQ(result1[i], result2[j]);
     }
 }
+
+// TODO Add a test that inserts all k-mers and asserts that the all hashvalues are used. 
 
 #endif  // TESTS_BINNING_DIRECTORY_TEST_BINNING_DIRECTORY_H_

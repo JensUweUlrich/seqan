@@ -48,7 +48,7 @@ public:
     std::vector<uint8_t> chunkMap{0};
     Shape<TValue, SimpleShape> kmerShape;
     uint16_t kmerSize{0};
-    uint8_t effectiveChunks{1};
+    uint16_t effectiveChunks{1};
     uint8_t significantBits{0};
     uint8_t significantPositions{0};
     uint64_t chunkOffset{0};
@@ -58,7 +58,7 @@ public:
         chunkOffset = chunkOffset_;
     }
 
-    inline void setEffective(uint8_t effectiveChunks_)
+    inline void setEffective(uint16_t effectiveChunks_)
     {
         effectiveChunks = effectiveChunks_;
     }
@@ -113,9 +113,11 @@ public:
         // std::cerr << "significantBits " << (int)significantBits << '\n';
         // std::cerr << "effectiveChunks " << (int)effectiveChunks << '\n';
         // std::cerr << "significantPositions " << (int)significantPositions << '\n';
+        // std::cerr << "chunkOffset " << chunkOffset << '\n';
         for (uint32_t i = 0; i < possible; ++i)
         {
             uint64_t kmerHash = hashNext(it);
+            // std::cerr << "chunkinternal " << (int) chunkMap[(kmerHash & (effectiveChunks - 1))] << '\n';
             kmerHash = (kmerHash >> significantBits) + chunkMap[(kmerHash & (effectiveChunks - 1))] * chunkOffset;
             kmerHashes[i] = kmerHash;
             ++it;
@@ -131,28 +133,25 @@ public:
 
         std::vector<uint64_t> kmerHashes(possible, 0);
 
-        uint8_t significantPos = std::ceil((double) ValueSize<TValue>::VALUE / chunks);
-
         Shape<TValue, SimpleShape> chunkShape;
-        seqan::resize(chunkShape, significantPos);
+        seqan::resize(chunkShape, significantPositions);
         uint16_t cacheKmerSize = kmerSize;
-        resize(kmerSize - significantPos);
-        auto it = begin(text) + significantPos;
+        resize(kmerSize - significantPositions);
+        auto it = begin(text) + significantPositions;
         hashInit(it);
         auto itChunk = begin(text);
         seqan::hashInit(chunkShape, itChunk);
 
         for (uint32_t i = 0; i < possible; ++i)
         {
-            uint8_t chunkIdentifier = seqan::hashNext(chunkShape, itChunk);
+            uint16_t chunkIdentifier = seqan::hashNext(chunkShape, itChunk);
 
             uint8_t chunkId = std::ceil((double) chunkIdentifier / chunks);
 
             uint8_t chunk = std::max(0, chunkId - 1);
 
-            uint64_t chunkOffset = ipow(ValueSize<TValue>::VALUE, kmerSize - chunk) * chunk;
-            uint64_t temp = hashNext(it);
-            kmerHashes[i] = chunkOffset + temp; // hashNext(it);
+            // uint64_t chunkOffset = ipow(ValueSize<TValue>::VALUE, kmerSize - chunk) * chunk;
+            kmerHashes[i] = hashNext(it) + chunkMap[chunk] * chunkOffset;
             ++it;
             ++itChunk;
         }
@@ -170,7 +169,7 @@ public:
     Shape<TValue, SimpleShape> kmerShape;
     uint16_t offset = o;
     uint16_t kmerSize{0};
-    uint8_t effectiveChunks{1};
+    uint16_t effectiveChunks{1};
     uint8_t significantBits{0};
     uint8_t significantPositions{0};
     uint64_t chunkOffset{0};
@@ -180,7 +179,7 @@ public:
         chunkOffset = chunkOffset_;
     }
 
-    inline void setEffective(uint8_t effectiveChunks_)
+    inline void setEffective(uint16_t effectiveChunks_)
     {
         effectiveChunks = effectiveChunks_;
     }
@@ -275,13 +274,11 @@ public:
 
         std::vector<uint64_t> kmerHashes(possible, 0);
 
-        uint8_t significantPos = std::ceil((double) ValueSize<TValue>::VALUE / chunks);
-
         Shape<TValue, SimpleShape> chunkShape;
-        seqan::resize(chunkShape, significantPos);
+        seqan::resize(chunkShape, significantPositions);
         uint16_t cacheKmerSize = kmerSize;
-        resize(kmerSize - significantPos);
-        auto it = begin(text) + significantPos;
+        resize(kmerSize - significantPositions);
+        auto it = begin(text) + significantPositions;
         hashInit(it);
         auto itChunk = begin(text);
         seqan::hashInit(chunkShape, itChunk);
@@ -290,16 +287,16 @@ public:
         {
             // std::cerr << "OFFSET\n";
             uint64_t kmerHash = hashNext(it);
-            uint8_t  chunkIdentifier = seqan::hashNext(chunkShape, itChunk);
+            uint16_t  chunkIdentifier = seqan::hashNext(chunkShape, itChunk);
             if (x && i == positions - 1) // we take the last kmer that covers otherwise uncovered positions
             {
                 uint8_t chunkId = std::ceil((double) chunkIdentifier / chunks);
 
                 uint8_t chunk = std::max(0, chunkId - 1);
 
-                uint64_t chunkOffset = ipow(ValueSize<TValue>::VALUE, kmerSize - chunk) * chunk;
+                // uint64_t chunkOffset = ipow(ValueSize<TValue>::VALUE, kmerSize - chunk) * chunk;
 
-                kmerHashes[j] = chunkOffset + kmerHash;
+                kmerHashes[j] = kmerHash + chunkMap[chunk] * chunkOffset;
                 break;
             }
             if (i - j * offset == 0) // we found the j'th kmer with offset
@@ -308,9 +305,9 @@ public:
 
                 uint8_t chunk = std::max(0, chunkId - 1);
 
-                uint64_t chunkOffset = ipow(ValueSize<TValue>::VALUE, kmerSize - chunk) * chunk;
+                // uint64_t chunkOffset = ipow(ValueSize<TValue>::VALUE, kmerSize - chunk) * chunk;
 
-                kmerHashes[j] = chunkOffset + kmerHash;
+                kmerHashes[j] =  kmerHash + chunkMap[chunk] * chunkOffset;
                 ++j;
             }
             ++it;
