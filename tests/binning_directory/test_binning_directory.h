@@ -66,7 +66,7 @@ using namespace seqan;
 // A test for strings.
 typedef
     TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Normal,     Uncompressed> >,
-    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna5,   Normal,     Uncompressed> >,
+    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna5,   Normal,     Uncompressed, Chunks<5>> >,
     TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Offset<1>,  Uncompressed> >,
     TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Normal,     Compressed> > > > > >
     BinningDirectoriesIBF;
@@ -109,7 +109,7 @@ public:
 SEQAN_TYPED_TEST_CASE(BinningDirectoryIBFTest, BinningDirectoriesIBF);
 SEQAN_TYPED_TEST_CASE(BinningDirectoryDATest, BinningDirectoriesDA);
 SEQAN_TYPED_TEST_CASE(HashTest, Hash);
-
+/*
 SEQAN_TEST(BinningDirectoryIBFTest, literals)
 {
     SEQAN_ASSERT_EQ(0_m,    0ULL);
@@ -673,7 +673,110 @@ SEQAN_TYPED_TEST(HashTest, offset)
         SEQAN_ASSERT_EQ(result1[i], result2[j]);
     }
 }
+*/
+template<typename TValue>
+auto getKmers(auto k, auto rank)
+{
+    StringSet<String<TValue>> kmers;
+    auto sigma = ValueSize<TValue>::VALUE;
+    auto size = ipow(sigma, k);
+    reserve(kmers, size);
+    std::vector<decltype(rank)> currentRanks(k - 1, 0);
 
-// TODO Add a test that inserts all k-mers and asserts that the all hashvalues are used. 
+    for (;;)
+    {
+        String<TValue> kmer;
+        resize(kmer, k);
+        for (auto i = 0; i < k - 1; ++i)
+        {
+            kmer[i] = (TValue) currentRanks[i];
+        }
+        kmer[k-1] = (TValue) rank;
+        appendValue(kmers, kmer);
+
+        for (auto i = k-2;; --i)
+        {
+            if (i < 0)
+                return kmers;
+
+            ++currentRanks[i];
+
+            if (currentRanks[i] == sigma)
+                currentRanks[i] = 0;
+            else
+                break;
+        }
+    }
+}
+
+SEQAN_TYPED_TEST(BinningDirectoryIBFTest, chunkConfinement)
+{
+    typedef typename TestFixture::TBinning TBinning;
+    typedef typename TBinning::TValue      TValue;
+    auto k         = 8;
+    auto sigma     = ValueSize<TValue>::VALUE;
+    auto size      = ipow(sigma, k) * 64;
+    auto chunkSize = size / TBinning::TChunks::VALUE;
+    std::vector<uint32_t> bins;
+    bins.resize(ipow(sigma, k-1), 0);
+
+    for (auto rank = 0; rank < sigma; ++rank)
+    {
+        std::cerr << "RANK " << rank << '\n';
+        TBinning bd(64, 3, k, size);
+        StringSet<String<TValue>> kmers = getKmers<TValue>(k, rank);
+        configureChunkMap(bd);
+        insertKmer(bd, kmers, bins);
+
+        for (auto i = 0                   ; i < rank * chunkSize    ; i += 64)    // All before should be 0
+            SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i), 0);
+        for (auto i = rank * chunkSize    ; i < (rank+1) * chunkSize; i += 64)    // All current should be 1
+        {
+            // SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i), 1);    // cannot guarantee uniform distribution....
+            for (auto j = i + 1; j < i + 64; ++j)
+                SEQAN_ASSERT_EQ(bd.bitvector.get_pos(j), 0);
+        }
+        for (auto i = (rank+1) * chunkSize; i < size                ; i += 64)    // All after should be 0
+        {
+            if (bd.bitvector.get_pos(i) != 0)
+                std::cerr << i << '\t' << (rank+1) * chunkSize << '\n';
+            SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i), 0);
+        }
+
+    }
+}
+
+SEQAN_TYPED_TEST(BinningDirectoryDATest, chunkConfinement)
+{
+    typedef typename TestFixture::TBinning TBinning;
+    typedef typename TBinning::TValue      TValue;
+    auto k         = 8;
+    auto sigma     = ValueSize<TValue>::VALUE;
+    auto size      = ipow(sigma, k) * 64;
+    auto chunkSize = size / TBinning::TChunks::VALUE;
+    std::vector<uint32_t> bins;
+    bins.resize(ipow(sigma, k-1), 0);
+
+    for (auto rank = 0; rank < sigma; ++rank)
+    {
+        TBinning bd(64, k);
+        StringSet<String<TValue>> kmers = getKmers<TValue>(k, rank);
+        configureChunkMap(bd);
+        insertKmer(bd, kmers, bins);
+
+        for (auto i = 0                   ; i < rank * chunkSize    ; i += 64)    // All before should be 0
+            SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i), 0);
+        for (auto i = rank * chunkSize    ; i < (rank+1) * chunkSize; i += 64)    // All current should be 1 for bin 0
+        {
+            SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i), 1);
+            for (auto j = i + 1; j < i + 64; ++j)
+                SEQAN_ASSERT_EQ(bd.bitvector.get_pos(j), 0);
+        }
+        for (auto i = (rank+1) * chunkSize; i < size                ; i += 64)    // All after should be 0
+            SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i), 0);
+    }
+}
+
+// TODO Add a test that inserts all k-mers and asserts that the all hashvalues are used.
 
 #endif  // TESTS_BINNING_DIRECTORY_TEST_BINNING_DIRECTORY_H_
