@@ -110,16 +110,14 @@ public:
 
         hashInit(begin(text));
         auto it = begin(text);
-        // std::cerr << "significantBits " << (int)significantBits << '\n';
-        // std::cerr << "effectiveChunks " << (int)effectiveChunks << '\n';
-        // std::cerr << "significantPositions " << (int)significantPositions << '\n';
-        // std::cerr << "chunkOffset " << chunkOffset << '\n';
+
         for (uint32_t i = 0; i < possible; ++i)
         {
             uint64_t kmerHash = hashNext(it);
-            // std::cerr << "chunkinternal " << (int) chunkMap[(kmerHash & (effectiveChunks - 1))] << '\n';
+
             kmerHash = (kmerHash >> significantBits) + chunkMap[(kmerHash & (effectiveChunks - 1))] * chunkOffset;
             kmerHashes[i] = kmerHash;
+
             ++it;
         }
 
@@ -137,21 +135,16 @@ public:
         seqan::resize(chunkShape, significantPositions);
         uint16_t cacheKmerSize = kmerSize;
         resize(kmerSize - significantPositions);
-        auto it = begin(text) + significantPositions;
+        auto it = begin(text);
         hashInit(it);
-        auto itChunk = begin(text);
-        seqan::hashInit(chunkShape, itChunk);
+        auto itChunk = begin(text) + kmerSize;
+        if (significantPositions > 1)
+            seqan::hashInit(chunkShape, itChunk);
 
         for (uint32_t i = 0; i < possible; ++i)
         {
-            uint16_t chunkIdentifier = seqan::hashNext(chunkShape, itChunk);
-
-            uint8_t chunkId = std::ceil((double) chunkIdentifier / chunks);
-
-            uint8_t chunk = std::max(0, chunkId - 1);
-
-            // uint64_t chunkOffset = ipow(ValueSize<TValue>::VALUE, kmerSize - chunk) * chunk;
-            kmerHashes[i] = hashNext(it) + chunkMap[chunk] * chunkOffset;
+            // TODO I actually need the chunk since I cant recompute it........
+            kmerHashes[i] = hashNext(it) + chunkMap[seqan::hashNext(chunkShape, itChunk)] * chunkOffset;
             ++it;
             ++itChunk;
         }
@@ -278,10 +271,11 @@ public:
         seqan::resize(chunkShape, significantPositions);
         uint16_t cacheKmerSize = kmerSize;
         resize(kmerSize - significantPositions);
-        auto it = begin(text) + significantPositions;
+        auto it = begin(text);
         hashInit(it);
-        auto itChunk = begin(text);
-        seqan::hashInit(chunkShape, itChunk);
+        auto itChunk = begin(text) + kmerSize;
+        if (significantPositions > 1)
+            seqan::hashInit(chunkShape, itChunk);
 
         for (uint32_t i = 0, j = 0; i < positions; ++i)
         {
@@ -290,24 +284,12 @@ public:
             uint16_t  chunkIdentifier = seqan::hashNext(chunkShape, itChunk);
             if (x && i == positions - 1) // we take the last kmer that covers otherwise uncovered positions
             {
-                uint8_t chunkId = std::ceil((double) chunkIdentifier / chunks);
-
-                uint8_t chunk = std::max(0, chunkId - 1);
-
-                // uint64_t chunkOffset = ipow(ValueSize<TValue>::VALUE, kmerSize - chunk) * chunk;
-
-                kmerHashes[j] = kmerHash + chunkMap[chunk] * chunkOffset;
+                kmerHashes[j] = kmerHash + chunkMap[chunkIdentifier] * chunkOffset;
                 break;
             }
             if (i - j * offset == 0) // we found the j'th kmer with offset
             {
-                uint8_t chunkId = std::ceil((double) chunkIdentifier / chunks);
-
-                uint8_t chunk = std::max(0, chunkId - 1);
-
-                // uint64_t chunkOffset = ipow(ValueSize<TValue>::VALUE, kmerSize - chunk) * chunk;
-
-                kmerHashes[j] =  kmerHash + chunkMap[chunk] * chunkOffset;
+                kmerHashes[j] = kmerHash + chunkMap[chunkIdentifier] * chunkOffset;
                 ++j;
             }
             ++it;

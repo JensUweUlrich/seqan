@@ -346,15 +346,24 @@ public:
      * \brief Calculates the first index of a block that corresponds to a hash value.
      * \param hash hash value
      */
-    inline void hashToIndex(uint64_t & hash) const
+    inline void hashToIndex(uint64_t & hash, uint8_t hashChunk) const
     {
         // We do something
         hash ^= hash >> shiftValue;
         // Bring it back into our vector range (noOfBlocks = possible hash values)
         hash %= noOfBlocks;
-        // hash &= (noOfBlocks - 1);
+        uint8_t hashChunk = hash/chunkOffset;
+        hash %= chunkOffset;
+        hash += (chunkOffset * hashChunk);
         // Since each block needs blockBitSize bits, we multiply to get the correct location
         hash *= blockBitSize;
+        if (hash == 1048640)
+        {
+            std::cerr << "noOfBlock " << noOfBlocks << '\n';
+            std::cerr << "hashChunk " << (int)hashChunk << '\n';
+            std::cerr << "chunkOffset " << chunkOffset << '\n';
+            std::cerr << "blockBitSize " << blockBitSize << '\n';
+        }
     }
 
     /*!
@@ -390,6 +399,7 @@ public:
         {
             for(TNoOfHashFunc i = 0; i < noOfHashFunc ; ++i)
             {
+                // std::cerr << "HASH " << kmerHash << '\n';
                 uint64_t vecIndex = preCalcValues[i] * kmerHash;
                 hashToIndex(vecIndex);
                 vecIndex += binNo;
@@ -416,7 +426,7 @@ public:
         preCalcValues.resize(noOfHashFunc);
         for(TNoOfHashFunc i = 0; i < noOfHashFunc ; i++)
             preCalcValues[i] = i ^  (kmerSize * seedValue);
-        chunkOffset = noOfBits / (chunks * blockBitSize);
+        chunkOffset = noOfBlocks / chunks;
     }
 
     /*!
