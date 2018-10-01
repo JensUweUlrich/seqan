@@ -48,33 +48,17 @@
 namespace seqan {
 
 template<>
-struct FilterVector<CompressedArray>
+struct Bitvector<CompressedDisk> : BitvectorBase
 {
-    static const uint16_t FILTER_METADATA_SIZE{256};
-    static const uint8_t INT_SIZE{0x40};
-    static const uint64_t MAX_VEC = 1ULL<<32; //512 MB, 36 -> 8GB, 39 -> 64
-
-    uint32_t noOfBins;
-    uint64_t noOfBits;
-    uint16_t binWidth;
-    uint32_t blockBitSize;
-    uint64_t noOfBlocks;
-    uint8_t  noOfChunks;
-    uint64_t chunkSize;
-
-    std::string random_string()
-    {
-         std::string str("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
-
-         std::random_device rd;
-         std::mt19937 generator(rd());
-
-         std::shuffle(str.begin(), str.end(), generator);
-
-         return str.substr(0, 32);
-    }
+    // static const uint64_t MAX_VEC = 1ULL<<32; //512 MB, 36 -> 8GB, 39 -> 64
 
     CharString PREFIX{random_string()};
+    TNoOfBins noOfBins;
+    TNoOfBits noOfBits;
+    TBinWidth binWidth;
+    TBlockBitSize blockBitSize;
+    TNoOfBlocks noOfBlocks;
+    uint8_t noOfChunks;
 
     std::vector<std::tuple<bool,std::unique_ptr<sdsl::bit_vector>, std::unique_ptr<sdsl::sd_vector<> > > > filterVector;
 
@@ -108,11 +92,12 @@ struct FilterVector<CompressedArray>
         }
     }
 
-    FilterVector() {}
+    Bitvector() {}
 
-    FilterVector(uint32_t bins, uint64_t bits):
+    Bitvector(uint32_t bins, uint64_t bits, uint8_t chunks):
         noOfBins(bins),
-        noOfBits(bits)
+        noOfBits(bits),
+        noOfChunks(chunks)
     {
         // How many blocks of 64 bit do we need to represent our noOfBins
         binWidth = std::ceil((float)noOfBins / INT_SIZE);
@@ -122,23 +107,21 @@ struct FilterVector<CompressedArray>
         noOfBlocks = noOfBits / blockBitSize;
 
         // If we split, we need to split at the end of a block.
-        chunkSize = std::min((double)noOfBlocks * blockBitSize, std::ceil((double)MAX_VEC/blockBitSize) * blockBitSize);
-        // This is how many chunks we need.
-        noOfChunks = std::ceil((double)noOfBits/chunkSize);
-        if (chunkSize * noOfChunks < noOfBits + FILTER_METADATA_SIZE)
-            ++noOfChunks;
-        uint64_t size = noOfBits + FILTER_METADATA_SIZE;
+        chunkSize = (noOfBlocks / noOfChunks) * blockBitSize;
         for (uint64_t i = 0; i < noOfChunks; ++i)
         {
+            if (i == noOfChunks -1)
+            {
+                chunkSize += FILTER_METADATA_SIZE;
+            }
             filterVector.emplace_back(std::make_tuple(false,
-                                                   std::make_unique<sdsl::bit_vector>(std::min(chunkSize, size), 0),
+                                                   std::make_unique<sdsl::bit_vector>(chunkSize, 0),
                                                    std::make_unique<sdsl::sd_vector<> >()));
             compress(i);
-            size -= chunkSize;
         }
     }
 
-    FilterVector<CompressedArray> & operator=(FilterVector<CompressedArray> & other)
+    Bitvector<CompressedDisk> & operator=(Bitvector<CompressedDisk> & other)
     {
         for (const auto& element : other.filterVector)
             filterVector.emplace_back(std::make_tuple(std::get<0>(element), std::make_unique<sdsl::bit_vector>(*std::get<1>(element)), std::make_unique<sdsl::sd_vector<> >(*std::get<2>(element))));
@@ -158,7 +141,7 @@ struct FilterVector<CompressedArray>
         return *this;
     }
 
-    FilterVector<CompressedArray> & operator=(FilterVector<CompressedArray> && other)
+    Bitvector<CompressedDisk> & operator=(Bitvector<CompressedDisk> && other)
     {
         filterVector = std::move(other.filterVector);
         noOfBins = std::move(other.noOfBins);
@@ -173,7 +156,7 @@ struct FilterVector<CompressedArray>
         return *this;
     }
 
-    ~FilterVector()
+    ~Bitvector()
     {
         for (uint8_t chunk = 0; chunk < noOfChunks; ++chunk)
         {
@@ -181,7 +164,7 @@ struct FilterVector<CompressedArray>
         }
     }
 
-    FilterVector(CharString fileName)
+    Bitvector(CharString fileName)
     {
         uint8_t chunk = 0;
         while (true)
@@ -275,7 +258,7 @@ struct FilterVector<CompressedArray>
 
     void retrieve(CharString fileName)
     {
-        *this = FilterVector(fileName);
+        *this = Bitvector(fileName);
     }
 };
 

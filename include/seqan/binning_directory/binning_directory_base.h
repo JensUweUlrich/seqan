@@ -135,9 +135,9 @@ typedef Tag<Uncompressed_> Uncompressed;
 struct Compressed_;
 typedef Tag<Compressed_> Compressed;
 
-//!\brief A tag for the compressed array Bitvector.
-struct CompressedArray_;
-typedef Tag<CompressedArray_> CompressedArray;
+//!\brief A tag for the compressed disk Bitvector.
+struct CompressedDisk_;
+typedef Tag<CompressedDisk_> CompressedDisk;
 
 struct Normal_;
 typedef Tag<Normal_> Normal;
