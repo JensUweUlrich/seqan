@@ -106,7 +106,7 @@ public:
     {
         uint32_t possible = seqan::length(text) - kmerSize + 1;
 
-        std::vector<uint64_t> kmerHashes(possible, 0);
+        std::vector<uint64_t> kmerHashes(possible);
 
         hashInit(begin(text));
         auto it = begin(text);
@@ -124,12 +124,34 @@ public:
         return kmerHashes;
     }
 
+    template<typename TString, std::enable_if_t<std::is_same<TString, String<Dna>>::value, int> = 0>
+    inline std::vector<std::tuple<uint64_t, uint8_t>> getIBFHash(TString const & text)
+    {
+        uint32_t possible = seqan::length(text) - kmerSize + 1;
+
+        std::vector<std::tuple<uint64_t, uint8_t>> kmerHashes(possible);
+
+        hashInit(begin(text));
+        auto it = begin(text);
+
+        for (uint32_t i = 0; i < possible; ++i)
+        {
+            uint64_t kmerHash = hashNext(it);
+
+            kmerHashes[i] = std::make_tuple(kmerHash >> significantBits, chunkMap[(kmerHash & (effectiveChunks - 1))]);
+
+            ++it;
+        }
+
+        return kmerHashes;
+    }
+
     template<typename TString, std::enable_if_t<!std::is_same<TString, String<Dna>>::value, int> = 0>
     inline std::vector<uint64_t> getHash(TString const & text)
     {
         uint32_t possible = seqan::length(text) - kmerSize + 1;
 
-        std::vector<uint64_t> kmerHashes(possible, 0);
+        std::vector<uint64_t> kmerHashes(possible);
 
         Shape<TValue, SimpleShape> chunkShape;
         seqan::resize(chunkShape, significantPositions);
@@ -145,6 +167,34 @@ public:
         {
             // TODO I actually need the chunk since I cant recompute it........
             kmerHashes[i] = hashNext(it) + chunkMap[seqan::hashNext(chunkShape, itChunk)] * chunkOffset;
+            ++it;
+            ++itChunk;
+        }
+        resize(cacheKmerSize);
+        return kmerHashes;
+    }
+
+    template<typename TString, std::enable_if_t<!std::is_same<TString, String<Dna>>::value, int> = 0>
+    inline std::vector<std::tuple<uint64_t, uint8_t>> getIBFHash(TString const & text)
+    {
+        uint32_t possible = seqan::length(text) - kmerSize + 1;
+
+        std::vector<std::tuple<uint64_t, uint8_t>> kmerHashes(possible);
+
+        Shape<TValue, SimpleShape> chunkShape;
+        seqan::resize(chunkShape, significantPositions);
+        uint16_t cacheKmerSize = kmerSize;
+        resize(kmerSize - significantPositions);
+        auto it = begin(text);
+        hashInit(it);
+        auto itChunk = begin(text) + kmerSize;
+        if (significantPositions > 1)
+            seqan::hashInit(chunkShape, itChunk);
+
+        for (uint32_t i = 0; i < possible; ++i)
+        {
+            // TODO I actually need the chunk since I cant recompute it........
+            kmerHashes[i] = std::make_tuple(hashNext(it), chunkMap[seqan::hashNext(chunkShape, itChunk)]);
             ++it;
             ++itChunk;
         }
@@ -225,7 +275,7 @@ public:
         // if something is left, we add a kmer that covers these positions
         uint32_t possible = bool(x) + (seqan::length(text) - kmerSize + offset - x) / offset;
 
-        std::vector<uint64_t> kmerHashes(possible, 0);
+        std::vector<uint64_t> kmerHashes(possible);
 
         hashInit(begin(text));
         auto it = begin(text);
@@ -254,6 +304,43 @@ public:
         return kmerHashes;
     }
 
+    template<typename TString, std::enable_if_t<std::is_same<TString, String<Dna>>::value, int> = 0>
+    inline std::vector<std::tuple<uint64_t, uint8_t>> getIBFHash(TString const & text)
+    {
+        // how many test positions are left if we take every offset'th kmer
+        uint16_t x = (seqan::length(text) - kmerSize) % offset;
+        // how many kmers are there when we take every offset'th kmer
+        // possible = something left (1/0) + how many fit in the text
+        // if something is left, we add a kmer that covers these positions
+        uint32_t possible = bool(x) + (seqan::length(text) - kmerSize + offset - x) / offset;
+
+        std::vector<std::tuple<uint64_t, uint8_t>> kmerHashes(possible);
+
+        hashInit(begin(text));
+        auto it = begin(text);
+
+        uint32_t positions = seqan::length(text) - kmerSize + 1;
+
+        for (uint32_t i = 0, j = 0; i < positions; ++i)
+        {
+            // std::cerr << "OFFSET\n";
+            uint64_t kmerHash = hashNext(it);
+            if (x && i == positions - 1) // we take the last kmer that covers otherwise uncovered positions
+            {
+                kmerHashes[j] = std::make_tuple(kmerHash >> significantBits, chunkMap[(kmerHash & (effectiveChunks - 1))]);
+                break;
+            }
+            if (i - j * offset == 0) // we found the j'th kmer with offset
+            {
+                kmerHashes[j] = std::make_tuple(kmerHash >> significantBits, chunkMap[(kmerHash & (effectiveChunks - 1))]);
+                ++j;
+            }
+            ++it;
+        }
+
+        return kmerHashes;
+    }
+
     template<typename TString, std::enable_if_t<!std::is_same<TString, String<Dna>>::value, int> = 0>
     inline std::vector<uint64_t> getHash(TString const & text)
     {
@@ -265,7 +352,7 @@ public:
         uint32_t possible = bool(x) + (seqan::length(text) - kmerSize + offset - x) / offset;
         uint32_t positions = seqan::length(text) - kmerSize + 1;
 
-        std::vector<uint64_t> kmerHashes(possible, 0);
+        std::vector<uint64_t> kmerHashes(possible);
 
         Shape<TValue, SimpleShape> chunkShape;
         seqan::resize(chunkShape, significantPositions);
@@ -290,6 +377,51 @@ public:
             if (i - j * offset == 0) // we found the j'th kmer with offset
             {
                 kmerHashes[j] = kmerHash + chunkMap[chunkIdentifier] * chunkOffset;
+                ++j;
+            }
+            ++it;
+            ++itChunk;
+        }
+
+        return kmerHashes;
+    }
+
+    template<typename TString, std::enable_if_t<!std::is_same<TString, String<Dna>>::value, int> = 0>
+    inline std::vector<std::tuple<uint64_t, uint8_t>> getIBFHash(TString const & text)
+    {
+        // how many test positions are left if we take every offset'th kmer
+        uint16_t x = (seqan::length(text) - kmerSize) % offset;
+        // how many kmers are there when we take every offset'th kmer
+        // possible = something left (1/0) + how many fit in the text
+        // if something is left, we add a kmer that covers these positions
+        uint32_t possible = bool(x) + (seqan::length(text) - kmerSize + offset - x) / offset;
+        uint32_t positions = seqan::length(text) - kmerSize + 1;
+
+        std::vector<std::tuple<uint64_t, uint8_t>> kmerHashes(possible);
+
+        Shape<TValue, SimpleShape> chunkShape;
+        seqan::resize(chunkShape, significantPositions);
+        uint16_t cacheKmerSize = kmerSize;
+        resize(kmerSize - significantPositions);
+        auto it = begin(text);
+        hashInit(it);
+        auto itChunk = begin(text) + kmerSize;
+        if (significantPositions > 1)
+            seqan::hashInit(chunkShape, itChunk);
+
+        for (uint32_t i = 0, j = 0; i < positions; ++i)
+        {
+            // std::cerr << "OFFSET\n";
+            uint64_t kmerHash = hashNext(it);
+            uint16_t  chunkIdentifier = seqan::hashNext(chunkShape, itChunk);
+            if (x && i == positions - 1) // we take the last kmer that covers otherwise uncovered positions
+            {
+                kmerHashes[j] = std::make_tuple(kmerHash, chunkMap[chunkIdentifier]);
+                break;
+            }
+            if (i - j * offset == 0) // we found the j'th kmer with offset
+            {
+                kmerHashes[j] = std::make_tuple(kmerHash, chunkMap[chunkIdentifier]);
                 ++j;
             }
             ++it;

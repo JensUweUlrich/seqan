@@ -265,15 +265,15 @@ public:
         shape.setBits(significantBits);
         shape.setEffective(effectiveChunks);
         shape.setChunkOffset(chunkOffset);
-        std::vector<uint64_t> kmerHashes = shape.getHash(text);
+        std::vector<std::tuple<uint64_t, uint8_t>> kmerHashes = shape.getIBFHash(text);
 
-        for (uint64_t kmerHash : kmerHashes)
+        for (auto & kmerHash : kmerHashes)
         {
             std::vector<uint64_t> vecIndices = preCalcValues;
             for(TNoOfHashFunc i = 0; i < noOfHashFunc ; ++i)
             {
-                vecIndices[i] *= kmerHash;
-                hashToIndex(vecIndices[i]);
+                vecIndices[i] *= std::get<0>(kmerHash);
+                hashToIndex(vecIndices[i], std::get<1>(kmerHash));
             }
 
             TNoOfBins binNo = 0;
@@ -351,19 +351,11 @@ public:
         // We do something
         hash ^= hash >> shiftValue;
         // Bring it back into our vector range (noOfBlocks = possible hash values)
-        hash %= noOfBlocks;
-        uint8_t hashChunk = hash/chunkOffset;
+        // hash %= noOfBlocks;
         hash %= chunkOffset;
         hash += (chunkOffset * hashChunk);
         // Since each block needs blockBitSize bits, we multiply to get the correct location
         hash *= blockBitSize;
-        if (hash == 1048640)
-        {
-            std::cerr << "noOfBlock " << noOfBlocks << '\n';
-            std::cerr << "hashChunk " << (int)hashChunk << '\n';
-            std::cerr << "chunkOffset " << chunkOffset << '\n';
-            std::cerr << "blockBitSize " << blockBitSize << '\n';
-        }
     }
 
     /*!
@@ -393,15 +385,15 @@ public:
         shape.setBits(significantBits);
         shape.setEffective(effectiveChunks);
         shape.setChunkOffset(chunkOffset);
-        std::vector<uint64_t> kmerHashes = shape.getHash(text);
+        std::vector<std::tuple<uint64_t, uint8_t>> kmerHashes = shape.getIBFHash(text);
 
-        for (auto kmerHash : kmerHashes)
+        for (auto & kmerHash : kmerHashes)
         {
             for(TNoOfHashFunc i = 0; i < noOfHashFunc ; ++i)
             {
                 // std::cerr << "HASH " << kmerHash << '\n';
-                uint64_t vecIndex = preCalcValues[i] * kmerHash;
-                hashToIndex(vecIndex);
+                uint64_t vecIndex = preCalcValues[i] * std::get<0>(kmerHash);
+                hashToIndex(vecIndex, std::get<1>(kmerHash));
                 vecIndex += binNo;
                 bitvector.set_pos(vecIndex);
             }
