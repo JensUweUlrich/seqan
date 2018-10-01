@@ -42,28 +42,6 @@
 
 using namespace seqan;
 
-// // A test for strings.
-// SEQAN_DEFINE_TEST(test_binning_directory_strings_example1)
-// {
-//     using namespace seqan;
-//
-//     // Define some constant test data for comparison...
-//     CharString const STRING1 = "test 1";
-//     CharString const STRING2 = "test 2";
-//
-//     // Append to a string and make equality assertion on the result.
-//     CharString myStr = "test ";
-//     append(myStr, "1");
-//     SEQAN_ASSERT_EQ(STRING1, myStr);
-//
-//     // Demonstration of other assertions.
-//     SEQAN_ASSERT_GT(STRING2, myStr);
-//     SEQAN_ASSERT_GEQ(STRING2, myStr);
-//     SEQAN_ASSERT_LT(myStr, STRING2);
-//     SEQAN_ASSERT_LEQ(STRING2, STRING2);
-// }
-
-// A test for strings.
 typedef
     TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Normal,     Uncompressed> >,
     TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna5,   Normal,     Uncompressed, Chunks<5>> >,
@@ -109,7 +87,7 @@ public:
 SEQAN_TYPED_TEST_CASE(BinningDirectoryIBFTest, BinningDirectoriesIBF);
 SEQAN_TYPED_TEST_CASE(BinningDirectoryDATest, BinningDirectoriesDA);
 SEQAN_TYPED_TEST_CASE(HashTest, Hash);
-/*
+
 SEQAN_TEST(BinningDirectoryIBFTest, literals)
 {
     SEQAN_ASSERT_EQ(0_m,    0ULL);
@@ -567,7 +545,7 @@ SEQAN_TEST(BinningDirectoryIBFTest, resize)
 {
     typedef BinningDirectory<InterleavedBloomFilter, BDConfig<Dna, Normal, Uncompressed> > TBinning;
 
-    TBinning bd(64, 3, 4, 32_m);
+    TBinning bd(64, 3, 4, 4096);
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
 
     TBinning bd2 = bd;
@@ -673,7 +651,7 @@ SEQAN_TYPED_TEST(HashTest, offset)
         SEQAN_ASSERT_EQ(result1[i], result2[j]);
     }
 }
-*/
+
 template<typename TValue>
 auto getKmers(auto k, auto rank)
 {
@@ -722,7 +700,6 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, chunkConfinement)
 
     for (auto rank = 0; rank < sigma; ++rank)
     {
-        std::cerr << "RANK " << rank << '\n';
         TBinning bd(64, 3, k, size);
         StringSet<String<TValue>> kmers = getKmers<TValue>(k, rank);
         configureChunkMap(bd);
@@ -776,7 +753,5 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, chunkConfinement)
             SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i), 0);
     }
 }
-
-// TODO Add a test that inserts all k-mers and asserts that the all hashvalues are used.
 
 #endif  // TESTS_BINNING_DIRECTORY_TEST_BINNING_DIRECTORY_H_
