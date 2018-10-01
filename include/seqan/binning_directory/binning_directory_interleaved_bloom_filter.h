@@ -265,7 +265,7 @@ public:
         shape.setBits(significantBits);
         shape.setEffective(effectiveChunks);
         shape.setChunkOffset(chunkOffset);
-        std::vector<std::tuple<uint64_t, uint8_t>> kmerHashes = shape.getIBFHash(text);
+        std::vector<std::tuple<uint64_t, uint8_t>> kmerHashes = shape.getRawHash(text);
 
         for (auto & kmerHash : kmerHashes)
         {
@@ -385,7 +385,7 @@ public:
         shape.setBits(significantBits);
         shape.setEffective(effectiveChunks);
         shape.setChunkOffset(chunkOffset);
-        std::vector<std::tuple<uint64_t, uint8_t>> kmerHashes = shape.getIBFHash(text);
+        std::vector<std::tuple<uint64_t, uint8_t>> kmerHashes = shape.getRawHash(text);
 
         for (auto & kmerHash : kmerHashes)
         {
