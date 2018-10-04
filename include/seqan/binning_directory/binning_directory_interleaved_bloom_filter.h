@@ -153,7 +153,7 @@ public:
         noOfHashFunc(n_hash_func),
         kmerSize(kmer_size),
         noOfBits(vec_size),
-        bitvector(noOfBins, noOfBits)
+        bitvector(noOfBins, noOfBits, chunks)
     {
         init();
     }
@@ -220,10 +220,14 @@ public:
     {
         std::vector<std::future<void>> tasks;
         // We have so many blocks that we want to distribute to so many threads
+        if (std::is_same<TBitvector, CompressedDisk>::value)
+        {
+            threads = 1;
+        }
         uint64_t batchSize = noOfBlocks / threads;
         if(batchSize * threads < noOfBlocks) ++batchSize;
 
-        for (uint8_t taskNo = 0; taskNo < threads; ++taskNo) // TODO Rather divide by chunks?
+        for (uint8_t taskNo = 0; taskNo < threads; ++taskNo)
         {
             // hashBlock is the number of the block the thread will work on. Each block contains binNo bits that
             // represent the individual bins. Each thread has to work on batchSize blocks. We can get the position in
@@ -239,7 +243,7 @@ public:
                     uint64_t vecPos = hashBlock * bitvector.blockBitSize;
                     for(uint32_t binNo : bins)
                     {
-                        bitvector.unset_pos(vecPos + binNo);
+                        bitvector.unset_pos(vecPos + binNo, vecPos/(chunkOffset * blockBitSize));
                     }
                 }
             }));
@@ -255,8 +259,8 @@ public:
      * \param counts Vector to be filled with counts.
      * \param text Text to count occurences for.
      */
-    template<typename THashCount, typename TAnyString>
-    void count(std::vector<TNoOfBins> & counts, TAnyString const & text)
+    template<typename THashCount, typename TAnyString, typename TChunkNo>
+    void count(std::vector<uint64_t> & counts, TAnyString const & text, TChunkNo && chunk = 0)
     {
         BDHash<TValue, THashCount, TChunks> shape;
         shape.resize(kmerSize);
@@ -282,14 +286,13 @@ public:
                 binNo = batchNo * intSize;
                 // get_int(idx, len) returns the integer value of the binary string of length len starting
                 // at position idx, i.e. len+idx-1|_______|idx, Vector is right to left.
-                uint64_t tmp = bitvector.get_int(vecIndices[0], intSize);
+                uint64_t tmp = bitvector.get_int(vecIndices[0], chunk);
 
                 // A k-mer is in a bin of the IBF iff all hash functions return 1 for the bin.
                 for(TNoOfHashFunc i = 1; i < noOfHashFunc;  ++i)
                 {
-                    tmp &= bitvector.get_int(vecIndices[i], intSize);
+                    tmp &= bitvector.get_int(vecIndices[i], chunk);
                 }
-
                 // Behaviour for a bit shift with >= maximal size is undefined, i.e. shifting a 64 bit integer by 64
                 // positions is not defined and hence we need a special case for this.
                 if (tmp ^ (1ULL<<(intSize-1)))
@@ -363,20 +366,8 @@ public:
      * \param text Text to process.
      * \param binNo bin ID to insertKmer k-mers in.
      */
-    template<typename TChunk>
-    inline void insertKmer(TString const & text, TNoOfBins binNo, TChunk && chunkNo)
-    {
-        currentChunk = chunkNo;
-        insertKmer(text, binNo);
-    }
-
-    /*!
-     * \brief Adds all k-mers from a text to the IBF.
-     * \param text Text to process.
-     * \param binNo bin ID to insertKmer k-mers in.
-     */
-    template<typename THashInsert>
-    inline void insertKmer(TString const & text, TNoOfBins binNo)
+    template<typename THashInsert, typename TChunkNo>
+    inline void insertKmer(TString const & text, TNoOfBins binNo, TChunkNo && chunk = 0)
     {
         BDHash<TValue, THashInsert, TChunks> shape;
         shape.resize(kmerSize);
@@ -395,7 +386,7 @@ public:
                 uint64_t vecIndex = preCalcValues[i] * std::get<0>(kmerHash);
                 hashToIndex(vecIndex, std::get<1>(kmerHash));
                 vecIndex += binNo;
-                bitvector.set_pos(vecIndex);
+                bitvector.set_pos(vecIndex, chunk);
             }
         }
     }

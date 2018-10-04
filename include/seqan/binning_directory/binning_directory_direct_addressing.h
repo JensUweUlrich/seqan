@@ -130,7 +130,7 @@ public:
     BinningDirectory(TNoOfBins n_bins, TKmerSize kmer_size):
         noOfBins(n_bins),
         kmerSize(kmer_size),
-        bitvector(n_bins, ipow(ValueSize<TValue>::VALUE, kmerSize) * std::ceil((double)noOfBins / intSize) * intSize)
+        bitvector(n_bins, ipow(ValueSize<TValue>::VALUE, kmerSize) * std::ceil((double)noOfBins / intSize) * intSize, chunks)
     {
         init();
     }
@@ -199,11 +199,15 @@ public:
     void clear(std::vector<TNoOfBins> const & bins, TInt&& threads)
     {
         std::vector<std::future<void>> tasks;
+        if (std::is_same<TBitvector, CompressedDisk>::value)
+        {
+            threads = 1;
+        }
         // We have so many blocks that we want to distribute to so many threads
         uint64_t batchSize = noOfBlocks / threads;
         if(batchSize * threads < noOfBlocks) ++batchSize;
 
-        for (uint8_t taskNo = 0; taskNo < threads; ++taskNo) // TODO Rather divide by chunks?
+        for (uint8_t taskNo = 0; taskNo < threads; ++taskNo)
         {
             // hashBlock is the number of the block the thread will work on. Each block contains binNo bits that
             // represent the individual bins. Each thread has to work on batchSize blocks. We can get the position in
@@ -219,7 +223,7 @@ public:
                     uint64_t vecPos = hashBlock * bitvector.blockBitSize;
                     for(uint32_t binNo : bins)
                     {
-                        bitvector.unset_pos(vecPos + binNo);
+                        bitvector.unset_pos(vecPos + binNo, vecPos/(chunkOffset * blockBitSize));
                     }
                 }
             }));
@@ -235,8 +239,8 @@ public:
      * \param counts Vector to be filled with counts.
      * \param text Text to count occurences for.
      */
-    template<typename THashCount, typename TAnyString>
-    void count(std::vector<TNoOfBins> & counts, TAnyString const & text)
+    template<typename THashCount, typename TAnyString, typename TChunkNo>
+    void count(std::vector<uint64_t> & counts, TAnyString const & text, TChunkNo && chunk = 0)
     {
         BDHash<TValue, THashCount, TChunks> shape;
         shape.resize(kmerSize);
@@ -258,7 +262,7 @@ public:
                 binNo = batchNo * intSize;
                 // get_int(idx, len) returns the integer value of the binary string of length len starting
                 // at position idx, i.e. len+idx-1|_______|idx, Vector is right to left.
-                uint64_t tmp = bitvector.get_int(kmerHash, intSize);
+                uint64_t tmp = bitvector.get_int(kmerHash, chunk);
 
                 // Behaviour for a bit shift with >= maximal size is undefined, i.e. shifting a 64 bit integer by 64
                 // positions is not defined and hence we need a special case for this.
@@ -293,26 +297,13 @@ public:
         }
     }
 
-
     /*!
      * \brief Adds all k-mers from a text to the IBF.
      * \param text Text to process.
      * \param binNo bin ID to insertKmer k-mers in.
      */
-    template<typename TChunk>
-    inline void insertKmer(TString const & text, TNoOfBins binNo, TChunk && chunkNo)
-    {
-        currentChunk = chunkNo;
-        insertKmer(text, binNo);
-    }
-
-    /*!
-     * \brief Adds all k-mers from a text to the IBF.
-     * \param text Text to process.
-     * \param binNo bin ID to insertKmer k-mers in.
-     */
-    template<typename THashInsert>
-    inline void insertKmer(TString const & text, TNoOfBins binNo)
+    template<typename THashInsert, typename TChunkNo>
+    inline void insertKmer(TString const & text, TNoOfBins binNo, TChunkNo && chunk = 0)
     {
         BDHash<TValue, THashInsert, TChunks> shape;
         shape.resize(kmerSize);
@@ -325,7 +316,7 @@ public:
         for (auto kmerHash : kmerHashes)
         {
             uint64_t vecIndex = kmerHash * blockBitSize + binNo;
-            bitvector.set_pos(vecIndex);
+            bitvector.set_pos(vecIndex, chunk);
         }
     }
 

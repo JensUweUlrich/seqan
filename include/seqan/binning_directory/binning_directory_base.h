@@ -238,6 +238,12 @@ typedef uint8_t TNoOfChunks;
 template<typename TSpec, typename TConfig>
 inline void insertKmer(BinningDirectory<TSpec, TConfig> & me, String<typename TConfig::TValue> const & text, TNoOfBins binNo)
 {
+    insertKmer(me, text, binNo, 0);
+}
+
+template<typename TSpec, typename TConfig, typename TChunkNo>
+inline void insertKmer(BinningDirectory<TSpec, TConfig> & me, String<typename TConfig::TValue> const & text, TNoOfBins binNo, TChunkNo && chunk = 0)
+{
     if (!me.chunkMapSet)
         configureChunkMap(me);
     typedef typename TConfig::THash THash;
@@ -245,11 +251,11 @@ inline void insertKmer(BinningDirectory<TSpec, TConfig> & me, String<typename TC
     {
         if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
         {
-            me.template insertKmer<Normal>(text, binNo);
+            me.template insertKmer<Normal>(text, binNo, chunk);
         }
         else
         {
-            me.template insertKmer<THash>(text, binNo);
+            me.template insertKmer<THash>(text, binNo, chunk);
         }
     }
 }
@@ -284,24 +290,29 @@ inline void insertKmer(BinningDirectory<TSpec, TConfig> &  me, const char * fast
     if (!me.chunkMapSet)
         configureChunkMap(me);
     typedef typename TConfig::TValue TValue;
+    uint8_t chunks = TConfig::TChunks::VALUE;
     CharString id;
     String<TValue> seq;
     SeqFileIn seqFileIn;
-    if (!open(seqFileIn, fastaFile))
+
+    for (uint8_t chunk = 0; chunk < (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value ? chunks : 1); ++chunk)
     {
-        CharString msg = "Unable to open contigs file: ";
-        append(msg, CharString(fastaFile));
-        std::cerr << msg << std::endl;
-        throw toCString(msg);
+        if (!open(seqFileIn, fastaFile))
+        {
+            CharString msg = "Unable to open contigs file: ";
+            append(msg, CharString(fastaFile));
+            std::cerr << msg << std::endl;
+            throw toCString(msg);
+        }
+        while(!atEnd(seqFileIn))
+        {
+            readRecord(id, seq, seqFileIn);
+            if(length(seq) < me.kmerSize)
+                continue;
+            insertKmer(me, seq, binNo, chunk);
+        }
+        close(seqFileIn);
     }
-    while(!atEnd(seqFileIn))
-    {
-        readRecord(id, seq, seqFileIn);
-        if(length(seq) < me.kmerSize)
-            continue;
-        insertKmer(me, seq, binNo);
-    }
-    close(seqFileIn);
 }
 
 inline uint64_t nextPow4(uint64_t x)
@@ -538,25 +549,25 @@ inline void insertKmer(BinningDirectory<TSpec, TConfig> & me, StringSet<String<t
  * \param counts Vector of length binNo to save counts to.
  * \param text A single text to count all contained k-mers for.
  */
-template<typename THashCount, typename TSpec, typename TConfig>
-inline void count(BinningDirectory<TSpec, TConfig> &  me, std::vector<TNoOfBins> & counts, String<typename TConfig::TValue> const & text)
+template<typename THashCount, typename TSpec, typename TConfig, typename TChunkNo>
+inline void count(BinningDirectory<TSpec, TConfig> &  me, std::vector<uint64_t> & counts, String<typename TConfig::TValue> const & text, TChunkNo && chunk = 0)
 {
     typedef typename TConfig::THash THash;
     if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
     {
-        me.template count<THashCount>(counts, text);
+        me.template count<THashCount>(counts, text, chunk);
     }
     else
     {
-        me.template count<THash>(counts, text);
+        me.template count<THash>(counts, text, chunk);
     }
 }
 
-template<typename TSpec, typename TConfig>
-inline void count(BinningDirectory<TSpec, TConfig> &  me, std::vector<TNoOfBins> & counts, String<typename TConfig::TValue> const & text)
+template<typename TSpec, typename TConfig, typename TChunkNo>
+inline void count(BinningDirectory<TSpec, TConfig> &  me, std::vector<uint64_t> & counts, String<typename TConfig::TValue> const & text, TChunkNo && chunk = 0)
 {
     typedef typename TConfig::THash THash;
-    me.template count<THash>(counts, text);
+    me.template count<THash>(counts, text, chunk);
 }
 
 /*!
@@ -565,29 +576,41 @@ inline void count(BinningDirectory<TSpec, TConfig> &  me, std::vector<TNoOfBins>
  * \param text A single text to count all contained k-mers for.
  * \returns std::vector<uint64_t> of size binNo containing counts.
  */
-template<typename THashCount, typename TSpec, typename TConfig>
-inline std::vector<TNoOfBins> count(BinningDirectory<TSpec, TConfig> &  me, String<typename TConfig::TValue> const & text)
+ template<typename THashCount, typename TSpec, typename TConfig>
+ inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> &  me, String<typename TConfig::TValue> const & text)
+ {
+    return count(me, text, 0);
+ }
+
+template<typename THashCount, typename TSpec, typename TConfig, typename TChunkNo>
+inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> &  me, String<typename TConfig::TValue> const & text, TChunkNo && chunk = 0)
 {
     typedef typename TConfig::THash THash;
-    std::vector<TNoOfBins> counts(me.noOfBins, 0);
+    std::vector<uint64_t> counts(me.noOfBins, 0);
 
     if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
     {
-        count<THashCount>(me, counts, text);
+        count<THashCount>(me, counts, text, chunk);
     }
     else
     {
-        count<THash>(me, counts, text);
+        count<THash>(me, counts, text, chunk);
     }
 
     return counts;
 }
 
 template<typename TSpec, typename TConfig>
-inline std::vector<TNoOfBins> count(BinningDirectory<TSpec, TConfig> &  me, String<typename TConfig::TValue> const & text)
+inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> &  me, String<typename TConfig::TValue> const & text)
 {
-    std::vector<TNoOfBins> counts(me.noOfBins, 0);
-    count(me, counts, text);
+    return count(me, text, 0);
+}
+
+template<typename TSpec, typename TConfig, typename TChunkNo>
+inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> &  me, String<typename TConfig::TValue> const & text, TChunkNo && chunk = 0)
+{
+    std::vector<uint64_t> counts(me.noOfBins, 0);
+    count(me, counts, text, chunk);
     return counts;
 }
 
@@ -624,11 +647,12 @@ inline void getMetadata(BinningDirectory<TSpec, TConfig> &  me)
     //| kmer_size | n_hash_func | n_bins |              bf              |
     //-------------------------------------------------------------------
     me.noOfBits = me.bitvector.noOfBits;
+    uint8_t chunks = TConfig::TChunks::VALUE;
 
     TNoOfBits metadataStart = me.bitvector.noOfBits;
-    me.noOfBins = me.bitvector.get_int(metadataStart);
-    me.noOfHashFunc = me.bitvector.get_int(metadataStart+64);
-    me.kmerSize = me.bitvector.get_int(metadataStart+128);
+    me.noOfBins = me.bitvector.get_int(metadataStart, chunks);
+    me.noOfHashFunc = me.bitvector.get_int(metadataStart+64, chunks);
+    me.kmerSize = me.bitvector.get_int(metadataStart+128, chunks);
 }
 
 /*!
@@ -643,10 +667,11 @@ inline void setMetadata(BinningDirectory<TSpec, TConfig> &  me)
     //-------------------------------------------------------------------
 
     TNoOfBits metadataStart = me.noOfBits;
+    uint8_t chunks = TConfig::TChunks::VALUE;
 
-    me.bitvector.set_int(metadataStart, me.noOfBins);
-    me.bitvector.set_int(metadataStart + 64, me.noOfHashFunc);
-    me.bitvector.set_int(metadataStart+128, me.kmerSize);
+    me.bitvector.set_int(metadataStart, me.noOfBins, chunks);
+    me.bitvector.set_int(metadataStart + 64, me.noOfHashFunc, chunks);
+    me.bitvector.set_int(metadataStart+128, me.kmerSize, chunks);
 }
 
 /*!
