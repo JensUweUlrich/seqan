@@ -55,12 +55,7 @@ struct Bitvector<Compressed> : BitvectorBase
         return sdsl::size_in_mega_bytes(*compressed_vector);
     }
 
-    inline void decompress(uint8_t)
-    {
-        decompress();
-    }
-
-    inline void decompress()
+    inline void decompress(uint8_t = 0)
     {
         if (compressed)
         {
@@ -69,12 +64,7 @@ struct Bitvector<Compressed> : BitvectorBase
         }
     }
 
-    inline void compress(uint8_t)
-    {
-        compress();
-    }
-
-    inline void compress()
+    inline void compress(uint8_t = 0)
     {
         if (!compressed)
         {
@@ -87,7 +77,7 @@ struct Bitvector<Compressed> : BitvectorBase
 
     Bitvector() {}
 
-    Bitvector(uint32_t bins, uint64_t bits):
+    Bitvector(uint32_t bins, uint64_t bits, uint8_t = 0):
         noOfBins(bins),
         noOfBits(bits)
     {
@@ -150,31 +140,31 @@ struct Bitvector<Compressed> : BitvectorBase
         noOfBlocks = noOfBits / blockBitSize;
     }
 
-    inline uint64_t get_int(uint64_t idx, uint64_t len = 1ULL<<6)
+    inline uint64_t get_int(uint64_t idx, /*uint64_t len = 1ULL<<6,*/ uint8_t = 0)
     {
         compress();
-        return compressed_vector->get_int(idx, len);
+        return compressed_vector->get_int(idx);
     }
 
-    inline uint64_t get_pos(uint64_t vecIndex)
+    inline uint64_t get_pos(uint64_t vecIndex, uint8_t = 0)
     {
         compress();
         return (*compressed_vector)[vecIndex];
     }
 
-    void set_int(uint64_t idx, uint64_t val)
+    void set_int(uint64_t idx, uint64_t val, uint8_t = 0)
     {
         decompress();
         uncompressed_vector->set_int(idx, val);
     }
 
-    void set_pos(uint64_t idx)
+    void set_pos(uint64_t idx, uint8_t = 0)
     {
         decompress();
         (*uncompressed_vector)[idx] = true;
     }
 
-    void unset_pos(uint64_t idx)
+    void unset_pos(uint64_t idx, uint8_t = 0)
     {
         decompress();
         (*uncompressed_vector)[idx] = false;

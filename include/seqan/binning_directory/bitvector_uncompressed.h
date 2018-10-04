@@ -59,7 +59,7 @@ struct Bitvector<Uncompressed> : BitvectorBase
 
     Bitvector() {}
 
-    Bitvector(uint32_t bins, uint64_t bits):
+    Bitvector(uint32_t bins, uint64_t bits, uint8_t = 0):
         noOfBins(bins),
         noOfBits(bits)
     {
@@ -116,27 +116,27 @@ struct Bitvector<Uncompressed> : BitvectorBase
         noOfBlocks = noOfBits / blockBitSize;
     }
 
-    uint64_t get_int(uint64_t idx, uint64_t len = 1ULL<<6)
+    uint64_t get_int(uint64_t idx, uint64_t len = 1ULL<<6, uint8_t = 0)
     {
         return uncompressed_vector->get_int(idx, len);
     }
 
-    uint64_t get_pos(uint64_t vecIndex)
+    uint64_t get_pos(uint64_t vecIndex, uint8_t = 0)
     {
         return (*uncompressed_vector)[vecIndex];
     }
 
-    void set_int(uint64_t idx, uint64_t val)
+    void set_int(uint64_t idx, uint64_t val, uint8_t = 0)
     {
         uncompressed_vector->set_int(idx, val);
     }
 
-    inline void set_pos(uint64_t idx)
+    inline void set_pos(uint64_t idx, uint8_t = 0)
     {
         (*uncompressed_vector)[idx] = true;
     }
 
-    void unset_pos(uint64_t idx)
+    void unset_pos(uint64_t idx, uint8_t = 0)
     {
         (*uncompressed_vector)[idx] = false;
     }
