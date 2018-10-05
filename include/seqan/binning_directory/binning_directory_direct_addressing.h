@@ -177,7 +177,7 @@ public:
      * \param exp Exponent (integer).
      * \returns uint64_t base^exp
      */
-    uint64_t ipow(uint64_t base, uint64_t exp)
+    uint64_t ipow(uint64_t base, uint64_t exp) const
     {
         uint64_t result = 1;
         while (exp)
@@ -236,7 +236,7 @@ public:
      * \param text Text to count occurences for.
      */
     template<typename THashCount, typename TAnyString>
-    void count(std::vector<TNoOfBins> & counts, TAnyString const & text)
+    void count(std::vector<uint64_t> & counts, TAnyString const & text)
     {
         BDHash<TValue, THashCount> shape;
         shape.resize(kmerSize);

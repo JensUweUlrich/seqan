@@ -235,7 +235,7 @@ public:
      * \param text Text to count occurences for.
      */
     template<typename THashCount, typename TAnyString>
-    void count(std::vector<TNoOfBins> & counts, TAnyString const & text)
+    void count(std::vector<uint64_t> & counts, TAnyString const & text)
     {
         BDHash<TValue, THashCount> shape;
         shape.resize(kmerSize);
@@ -295,24 +295,6 @@ public:
                     vecIndices[i] += intSize;
                 }
             }
-        }
-    }
-
-    /*!
-     * \brief Tests for occurence in each bin given a text and count threshold.
-     * \param selected Vector to be filled with booleans signalling occurence.
-     * \param text Text to count occurences for.
-     * \param threshold Minimal count (>=) of containing k-mers to report bin as containing text.
-     */
-    template<typename TAnyString, typename TInt>
-    inline void select(std::vector<bool> & selected, TAnyString const & text, TInt && threshold)
-    {
-        std::vector<TNoOfBins> counts(noOfBins, 0);
-        count(counts, text);
-        for(TNoOfBins binNo=0; binNo < noOfBins; ++binNo)
-        {
-            if(counts[binNo] >= threshold)
-                selected[binNo] = true;
         }
     }
 
