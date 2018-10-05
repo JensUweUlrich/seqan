@@ -328,24 +328,6 @@ public:
     }
 
     /*!
-     * \brief Tests for occurence in each bin given a text and count threshold.
-     * \param selected Vector to be filled with booleans signalling occurence.
-     * \param text Text to count occurences for.
-     * \param threshold Minimal count (>=) of containing k-mers to report bin as containing text.
-     */
-    template<typename TAnyString, typename TInt>
-    inline void select(std::vector<bool> & selected, TAnyString const & text, TInt && threshold)
-    {
-        std::vector<TNoOfBins> counts(noOfBins, 0);
-        count(counts, text);
-        for(TNoOfBins binNo=0; binNo < noOfBins; ++binNo)
-        {
-            if(counts[binNo] >= threshold)
-                selected[binNo] = true;
-        }
-    }
-
-    /*!
      * \brief Calculates the first index of a block that corresponds to a hash value.
      * \param hash hash value
      */
