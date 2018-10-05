@@ -43,16 +43,16 @@
 using namespace seqan;
 
 typedef
-    // TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Normal,     Uncompressed> >,
-    // TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna5,   Normal,     Uncompressed, Chunks<5>> >,
-    // TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Offset<1>,  Uncompressed> >,
-    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Normal,     CompressedDisk> > >// > > >
+    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Normal,     Uncompressed> >,
+    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna5,   Normal,     Compressed, Chunks<5>> >,
+    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Offset<1>,  Uncompressed> >,
+    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Normal,     CompressedDisk> > > > > >
     BinningDirectoriesIBF;
 
 typedef
-    // TagList<BinningDirectory<DirectAddressing,          BDConfig<Dna,   Normal,     Uncompressed> >,
-    // TagList<BinningDirectory<DirectAddressing,          BDConfig<Dna,   Offset<1>,  Uncompressed> >,
-    TagList<BinningDirectory<DirectAddressing,          BDConfig<Dna,   Normal,     CompressedDisk> > > //> >
+    TagList<BinningDirectory<DirectAddressing,          BDConfig<Dna,   Normal,     Uncompressed> >,
+    TagList<BinningDirectory<DirectAddressing,          BDConfig<Dna,   Offset<1>,  Compressed> >,
+    TagList<BinningDirectory<DirectAddressing,          BDConfig<Dna,   Normal,     CompressedDisk> > > > >
     BinningDirectoriesDA;
 
 typedef
@@ -364,6 +364,8 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, count)
 
     TBinning bd(64, 3, 12, 32_m);
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
+    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
+    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
 
     auto result = count(bd, String<TValue>{"TAACTTTTTTAT"}, 3);
     auto result2 = count<Normal>(bd, String<TValue>{"TAACTTTTTTAT"});
@@ -371,8 +373,10 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, count)
     auto result4 = count<Offset<3>>(bd, String<TValue>{"TAACTTTTTTAT"});
 
     SEQAN_ASSERT_NEQ(result[0], 0u);
+    SEQAN_ASSERT_NEQ(result[1], 0u);
+    SEQAN_ASSERT_NEQ(result[2], 0u);
 
-    for (uint16_t i = 1; i < 64; ++i)
+    for (uint16_t i = 3; i < 64; ++i)
     {
         SEQAN_ASSERT_EQ(result[i], 0u);
     }
@@ -385,12 +389,16 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, count)
 
     TBinning bd(64, 4);
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
+    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
+    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
 
     auto result = count(bd, String<TValue>{"TAAC"}, 1);
 
     SEQAN_ASSERT_NEQ(result[0], 0u);
+    SEQAN_ASSERT_NEQ(result[1], 0u);
+    SEQAN_ASSERT_NEQ(result[2], 0u);
 
-    for (uint16_t i = 1; i < 64; ++i)
+    for (uint16_t i = 3; i < 64; ++i)
     {
         SEQAN_ASSERT_EQ(result[i], 0u);
     }
@@ -684,7 +692,7 @@ auto getKmers(auto k, auto rank)
         }
     }
 }
-/*
+
 SEQAN_TYPED_TEST(BinningDirectoryIBFTest, chunkConfinement)
 {
     typedef typename TestFixture::TBinning TBinning;
@@ -704,20 +712,19 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, chunkConfinement)
         insertKmer(bd, kmers, bins);
 
         for (auto i = 0                   ; i < rank * chunkSize    ; i += 64)    // All before should be 0
-            SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i), 0);
+            SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i, i/chunkSize), 0);
         for (auto i = rank * chunkSize    ; i < (rank+1) * chunkSize; i += 64)    // All current should be 1
         {
             // SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i), 1);    // cannot guarantee uniform distribution....
             for (auto j = i + 1; j < i + 64; ++j)
-                SEQAN_ASSERT_EQ(bd.bitvector.get_pos(j), 0);
+                SEQAN_ASSERT_EQ(bd.bitvector.get_pos(j, i/chunkSize), 0);
         }
         for (auto i = (rank+1) * chunkSize; i < size                ; i += 64)    // All after should be 0
         {
-            if (bd.bitvector.get_pos(i) != 0)
+            if (bd.bitvector.get_pos(i, i/chunkSize) != 0)
                 std::cerr << i << '\t' << (rank+1) * chunkSize << '\n';
-            SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i), 0);
+            SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i, i/chunkSize), 0);
         }
-
     }
 }
 
@@ -738,18 +745,17 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, chunkConfinement)
         StringSet<String<TValue>> kmers = getKmers<TValue>(k, rank);
         configureChunkMap(bd);
         insertKmer(bd, kmers, bins);
-
         for (auto i = 0                   ; i < rank * chunkSize    ; i += 64)    // All before should be 0
-            SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i), 0);
+            SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i, i/chunkSize), 0);
         for (auto i = rank * chunkSize    ; i < (rank+1) * chunkSize; i += 64)    // All current should be 1 for bin 0
         {
-            SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i), 1);
+            SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i, i/chunkSize), 1);
             for (auto j = i + 1; j < i + 64; ++j)
-                SEQAN_ASSERT_EQ(bd.bitvector.get_pos(j), 0);
+                SEQAN_ASSERT_EQ(bd.bitvector.get_pos(j, i/chunkSize), 0);
         }
         for (auto i = (rank+1) * chunkSize; i < size                ; i += 64)    // All after should be 0
-            SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i), 0);
+            SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i, i/chunkSize), 0);
     }
 }
-*/
+
 #endif  // TESTS_BINNING_DIRECTORY_TEST_BINNING_DIRECTORY_H_

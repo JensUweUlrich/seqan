@@ -116,9 +116,9 @@ struct Bitvector<Uncompressed> : BitvectorBase
         noOfBlocks = noOfBits / blockBitSize;
     }
 
-    uint64_t get_int(uint64_t idx, uint64_t len = 1ULL<<6, uint8_t = 0)
+    uint64_t get_int(uint64_t idx, /*uint64_t len = 1ULL<<6,*/ uint8_t = 0)
     {
-        return uncompressed_vector->get_int(idx, len);
+        return uncompressed_vector->get_int(idx);
     }
 
     uint64_t get_pos(uint64_t vecIndex, uint8_t = 0)
