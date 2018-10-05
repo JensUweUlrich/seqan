@@ -409,11 +409,11 @@ inline void insertKmer(BinningDirectory<TSpec, TConfig> & me, StringSet<String<t
 {
     // std::cerr << "===========INIT===========\n";
     assert(length(text) == bins.size());
+    TNoOfChunks chunks = TConfig::TChunks::VALUE;
     if (!me.chunkMapSet)
     {
         me.chunkMapSet = true;
         typedef typename TConfig::TValue TValue;
-        TNoOfChunks chunks = TConfig::TChunks::VALUE;
         TKmerSize kmerSize{me.kmerSize};
         TNoOfChunks effectiveChunks = nextPow4(chunks);
         TNoOfChunks significantBits = sdsl::bits::hi(effectiveChunks);
@@ -491,8 +491,11 @@ inline void insertKmer(BinningDirectory<TSpec, TConfig> & me, StringSet<String<t
         me.significantBits = significantBits;
         me.significantPositions = significantPositions;
     }
-    for (uint32_t i = 0; i < length(text); ++i)
-        insertKmer(me, text[i], bins[i]);
+    for (uint8_t chunk = 0; chunk < (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value ? chunks : 1); ++chunk)
+    {
+        for (uint32_t i = 0; i < length(text); ++i)
+            insertKmer(me, text[i], bins[i], chunk);
+    }
 }
 
 /*!
