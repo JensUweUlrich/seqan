@@ -122,6 +122,13 @@ public:
         kmerSize(0)
         {}
 
+    BinningDirectory(CharString fileName):
+        bitvector(fileName)
+    {
+        getMetadata(*this);
+        init();
+    }
+
     /*!
      * \brief Constructs direct addressing directory given parameters.
      * \param n_bins Number of bins. Preferably a multiple of 64.
@@ -240,7 +247,7 @@ public:
      * \param text Text to count occurences for.
      */
     template<typename THashCount, typename TAnyString, typename TChunkNo>
-    void count(std::vector<uint64_t> & counts, TAnyString const & text, TChunkNo && chunk = 0)
+    void count(std::vector<uint64_t> & counts, TAnyString const & text, TChunkNo && chunk = 0) const
     {
         BDHash<TValue, THashCount, TChunks> shape;
         shape.resize(kmerSize);

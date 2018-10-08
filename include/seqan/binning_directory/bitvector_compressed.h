@@ -50,7 +50,7 @@ struct Bitvector<Compressed> : BitvectorBase
     std::unique_ptr<sdsl::bit_vector> uncompressed_vector;
     std::unique_ptr<sdsl::sd_vector<> > compressed_vector;
 
-    double size_in_mega_bytes()
+    double size_in_mega_bytes() const
     {
         return sdsl::size_in_mega_bytes(*compressed_vector);
     }
@@ -140,16 +140,20 @@ struct Bitvector<Compressed> : BitvectorBase
         noOfBlocks = noOfBits / blockBitSize;
     }
 
-    inline uint64_t get_int(uint64_t idx, /*uint64_t len = 1ULL<<6,*/ uint8_t = 0)
+    inline uint64_t get_int(uint64_t idx, /*uint64_t len = 1ULL<<6,*/ uint8_t = 0) const
     {
-        compress();
-        return compressed_vector->get_int(idx);
+        if (compressed)
+            return compressed_vector->get_int(idx);
+        else
+            return uncompressed_vector->get_int(idx);
     }
 
-    inline uint64_t get_pos(uint64_t vecIndex, uint8_t = 0)
+    inline uint64_t get_pos(uint64_t vecIndex, uint8_t = 0) const
     {
-        compress();
-        return (*compressed_vector)[vecIndex];
+        if (compressed)
+            return (*compressed_vector)[vecIndex];
+        else
+            return (*uncompressed_vector)[vecIndex];
     }
 
     void set_int(uint64_t idx, uint64_t val, uint8_t = 0)
