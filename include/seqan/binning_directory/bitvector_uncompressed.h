@@ -47,12 +47,12 @@ struct Bitvector<Uncompressed> : BitvectorBase
     TBlockBitSize blockBitSize;
     TNoOfBlocks noOfBlocks;
 
-    double size_in_mega_bytes()
+    double size_in_mega_bytes() const
     {
         return sdsl::size_in_mega_bytes(*uncompressed_vector);
     }
 
-    uint64_t size()
+    uint64_t size() const
     {
         return uncompressed_vector->size();
     }
@@ -116,12 +116,12 @@ struct Bitvector<Uncompressed> : BitvectorBase
         noOfBlocks = noOfBits / blockBitSize;
     }
 
-    uint64_t get_int(uint64_t idx, uint64_t len = 1ULL<<6)
+    uint64_t get_int(uint64_t idx, uint64_t len = 1ULL<<6) const
     {
         return uncompressed_vector->get_int(idx, len);
     }
 
-    uint64_t get_pos(uint64_t vecIndex)
+    uint64_t get_pos(uint64_t vecIndex) const
     {
         return (*uncompressed_vector)[vecIndex];
     }
@@ -141,7 +141,7 @@ struct Bitvector<Uncompressed> : BitvectorBase
         (*uncompressed_vector)[idx] = false;
     }
 
-    bool store(CharString fileName)
+    bool store(CharString fileName) const
     {
         return sdsl::store_to_file(*uncompressed_vector, toCString(fileName));
     }

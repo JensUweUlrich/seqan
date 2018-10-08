@@ -662,6 +662,68 @@ SEQAN_TEST(BinningDirectoryDATest, resize)
     }
 }
 
+SEQAN_TYPED_TEST(BinningDirectoryDATest, constness)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+    typedef typename TBinning::TValue  TValue;
+
+    TBinning tbd(64, 3);
+    insertKmer(tbd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
+    auto tmp = CharString(SEQAN_TEMP_FILENAME());
+    store(tbd, tmp);
+
+    TBinning const bd(tmp);
+
+    auto countRes = count(bd, String<TValue>{"TAACTTTTTTAT"});
+
+    SEQAN_ASSERT_NEQ(countRes[0], 0u);
+
+    for (uint16_t i = 1; i < 64; ++i)
+    {
+        SEQAN_ASSERT_EQ(countRes[i], 0u);
+    }
+
+    auto selectRes = select(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
+
+    SEQAN_ASSERT_EQ(selectRes[0], true);
+
+    for (uint16_t i = 3; i < 64; ++i)
+    {
+        SEQAN_ASSERT_EQ(selectRes[i], false);
+    }
+}
+
+SEQAN_TYPED_TEST(BinningDirectoryIBFTest, constness)
+{
+    typedef typename TestFixture::TBinning      TBinning;
+    typedef typename TBinning::TValue  TValue;
+
+    TBinning tbd(64, 3, 12, 32_m);
+    insertKmer(tbd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
+    auto tmp = CharString(SEQAN_TEMP_FILENAME());
+    store(tbd, tmp);
+
+    TBinning const bd(tmp);
+
+    auto countRes = count(bd, String<TValue>{"TAACTTTTTTAT"});
+
+    SEQAN_ASSERT_NEQ(countRes[0], 0u);
+
+    for (uint16_t i = 1; i < 64; ++i)
+    {
+        SEQAN_ASSERT_EQ(countRes[i], 0u);
+    }
+
+    auto selectRes = select(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
+
+    SEQAN_ASSERT_EQ(selectRes[0], true);
+
+    for (uint16_t i = 3; i < 64; ++i)
+    {
+        SEQAN_ASSERT_EQ(selectRes[i], false);
+    }
+}
+
 SEQAN_TYPED_TEST(HashTest, offset)
 {
     typedef typename TestFixture::THash      THash;
