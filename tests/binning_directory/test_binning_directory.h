@@ -361,15 +361,18 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, insertKmerFile)
 SEQAN_TYPED_TEST(BinningDirectoryIBFTest, count)
 {
     typedef typename TestFixture::TBinning      TBinning;
+    typedef typename TBinning::TValue  TValue;
 
     TBinning bd(64, 3, 12, 32_m);
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
 
-    auto result2 = count<Normal>(bd, DnaString{"TAACTTTTTTAT"});
-    auto result3 = count<Offset<1>>(bd, DnaString{"TAACTTTTTTAT"});
-    auto result4 = count<Offset<3>>(bd, DnaString{"TAACTTTTTTAT"});
+    auto result2 = count<Normal>(bd, String<TValue>{"TAACTTTTTTATATATATAAA"});
+    auto result3 = count<Normal>(bd, String<TValue>{"TAA"});
+    auto result4 = count<Normal>(bd, String<TValue>{""});
+    auto result5 = count<Offset<1>>(bd, String<TValue>{"TAACTTTTTTAT"});
+    auto result6 = count<Offset<3>>(bd, String<TValue>{"TAACTTTTTTAT"});
 
-    auto result = count(bd, DnaString{"TAACTTTTTTAT"});
+    auto result = count(bd, String<TValue>{"TAACTTTTTTAT"});
 
     SEQAN_ASSERT_NEQ(result[0], 0u);
 
@@ -382,11 +385,18 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, count)
 SEQAN_TYPED_TEST(BinningDirectoryDATest, count)
 {
     typedef typename TestFixture::TBinning      TBinning;
+    typedef typename TBinning::TValue  TValue;
 
     TBinning bd(64, 4);
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
 
-    auto result = count(bd, DnaString{"TAAC"});
+    auto result2 = count<Normal>(bd, String<TValue>{"TAACTTTTTTATATATATA"});
+    auto result3 = count<Normal>(bd, String<TValue>{"TAA"});
+    auto result4 = count<Normal>(bd, String<TValue>{""});
+    auto result5 = count<Offset<1>>(bd, String<TValue>{"TAACTTTTTTAT"});
+    auto result6 = count<Offset<3>>(bd, String<TValue>{"TAACTTTTTTAT"});
+
+    auto result = count(bd, String<TValue>{"TAAC"});
 
     SEQAN_ASSERT_NEQ(result[0], 0u);
 
@@ -408,9 +418,11 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, select)
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
 
     auto result = select(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
-    auto result2 = select<Normal>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
-    auto result3 = select<Offset<1>>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
-    auto result4 = select<Offset<3>>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
+    auto result2 = select(bd, String<TValue>{"TAA"}, 1);
+    auto result3 = select(bd, String<TValue>{""}, 1);
+    auto result4 = select<Normal>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
+    auto result5 = select<Offset<1>>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
+    auto result6 = select<Offset<3>>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
 
     SEQAN_ASSERT_EQ(result[0], true);
     SEQAN_ASSERT_EQ(result[1], true);
@@ -433,9 +445,11 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, select)
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
 
     auto result = select(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
-    auto result2 = select<Normal>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
-    auto result3 = select<Offset<1>>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
-    auto result4 = select<Offset<3>>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
+    auto result2 = select(bd, String<TValue>{"TAA"}, 1);
+    auto result3 = select(bd, String<TValue>{""}, 1);
+    auto result4 = select<Normal>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
+    auto result5 = select<Offset<1>>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
+    auto result6 = select<Offset<3>>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
 
     SEQAN_ASSERT_EQ(result[0], true);
     SEQAN_ASSERT_EQ(result[1], true);
