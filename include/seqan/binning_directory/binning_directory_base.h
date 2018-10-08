@@ -628,15 +628,11 @@ inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<boo
 {
     std::vector<uint64_t> counts(me.noOfBins, 0);
     count(me, counts, text, chunk);
-    std::cerr << "me.noOfBins " << me.noOfBins << '\n';
-    std::cerr << "count size " << counts.size() << '\n';
-    std::cerr << "sel size before " << selected.size() << '\n';
     for(TNoOfBins binNo=0; binNo < me.noOfBins; ++binNo)
     {
         if(counts[binNo] >= threshold)
             selected[binNo] = true;
     }
-    std::cerr << "sel size after " << selected.size() << '\n';
 }
 
 template<typename TSpec, typename TConfig, typename TAnyString, typename TInt>
@@ -649,16 +645,14 @@ template<typename TSpec, typename TConfig, typename TAnyString, typename TInt, t
 inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && threshold, TChunkNo && chunk = 0)
 {
     std::vector<bool> selected(me.noOfBins, false);
-    std::cerr << "sel size before caller " << selected.size() << '\n';
     select(me, selected, text, threshold, chunk);
-    std::cerr << "sel size after caller " << selected.size() << '\n';
     return selected;
 }
 
 template<typename TSpec, typename TConfig, typename TAnyString, typename TInt>
 inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && threshold)
 {
-    select(me, text, threshold, 0);
+    return select(me, text, threshold, 0);
 }
 
 template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt>
@@ -670,7 +664,6 @@ inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TA
 template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt, typename TChunkNo>
 inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && threshold, TChunkNo && chunk = 0)
 {
-   std::cerr << "THIS\n";
    typedef typename TConfig::THash THash;
    std::vector<uint64_t> counts(me.noOfBins, 0);
 
