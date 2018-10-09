@@ -140,12 +140,12 @@ struct Bitvector<Compressed> : BitvectorBase
         noOfBlocks = noOfBits / blockBitSize;
     }
 
-    inline uint64_t get_int(uint64_t idx, /*uint64_t len = 1ULL<<6,*/ uint8_t = 0) const
+    inline uint64_t get_int(uint64_t idx, uint8_t = 0, uint8_t len = 64) const
     {
         if (compressed)
-            return compressed_vector->get_int(idx);
+            return compressed_vector->get_int(idx, len);
         else
-            return uncompressed_vector->get_int(idx);
+            return uncompressed_vector->get_int(idx, len);
     }
 
     inline uint64_t get_pos(uint64_t vecIndex, uint8_t = 0) const
@@ -156,10 +156,10 @@ struct Bitvector<Compressed> : BitvectorBase
             return (*uncompressed_vector)[vecIndex];
     }
 
-    void set_int(uint64_t idx, uint64_t val, uint8_t = 0)
+    void set_int(uint64_t idx, uint64_t val, uint8_t = 0, uint8_t len = 64)
     {
         decompress();
-        uncompressed_vector->set_int(idx, val);
+        uncompressed_vector->set_int(idx, val, len);
     }
 
     void set_pos(uint64_t idx, uint8_t = 0)
