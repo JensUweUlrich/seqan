@@ -84,6 +84,19 @@ public:
     typedef THash_ THash;
 };
 
+template <typename T1, typename T2>
+inline bool compareVector(T1 && v1, T2 && v2)
+{
+    if (v1.size() != v2.size())
+        return false;
+    for (uint64_t i = 0; i < v1.size(); ++i)
+    {
+        if (v1[i] != v2[i])
+            return false;
+    }
+    return true;
+}
+
 SEQAN_TYPED_TEST_CASE(BinningDirectoryIBFTest, BinningDirectoriesIBF);
 SEQAN_TYPED_TEST_CASE(BinningDirectoryDATest, BinningDirectoriesDA);
 SEQAN_TYPED_TEST_CASE(HashTest, Hash);
@@ -153,6 +166,10 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, empty_constructor)
     SEQAN_ASSERT_EQ(bd.noOfBins, 0u);
     SEQAN_ASSERT_EQ(bd.noOfHashFunc, 0u);
     SEQAN_ASSERT_EQ(bd.noOfBits, 0u);
+    SEQAN_ASSERT_EQ(bd.effectiveChunks, 1u);
+    SEQAN_ASSERT_EQ(bd.significantPositions, 0u);
+    SEQAN_ASSERT_EQ(bd.significantBits, 0u);
+    SEQAN_ASSERT(compareVector(bd.chunkMap, std::vector<uint8_t>{0}));
 }
 
 SEQAN_TYPED_TEST(BinningDirectoryDATest, empty_constructor)
@@ -163,6 +180,10 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, empty_constructor)
 
     SEQAN_ASSERT_EQ(bd.kmerSize, 0u);
     SEQAN_ASSERT_EQ(bd.noOfBins, 0u);
+    SEQAN_ASSERT_EQ(bd.effectiveChunks, 1u);
+    SEQAN_ASSERT_EQ(bd.significantPositions, 0u);
+    SEQAN_ASSERT_EQ(bd.significantBits, 0u);
+    SEQAN_ASSERT(compareVector(bd.chunkMap, std::vector<uint8_t>{0}));
 }
 
 // Default constructor
@@ -176,6 +197,10 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, default_constructor)
     SEQAN_ASSERT_EQ(bd.noOfBins, 64u);
     SEQAN_ASSERT_EQ(bd.noOfHashFunc, 3u);
     SEQAN_ASSERT_EQ(bd.noOfBits, 32_m);
+    SEQAN_ASSERT_EQ(bd.effectiveChunks, 1u);
+    SEQAN_ASSERT_EQ(bd.significantPositions, 0u);
+    SEQAN_ASSERT_EQ(bd.significantBits, 0u);
+    SEQAN_ASSERT(compareVector(bd.chunkMap, std::vector<uint8_t>{0}));
 }
 
 SEQAN_TYPED_TEST(BinningDirectoryDATest, default_constructor)
@@ -186,6 +211,10 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, default_constructor)
 
     SEQAN_ASSERT_EQ(bd.kmerSize, 4u);
     SEQAN_ASSERT_EQ(bd.noOfBins, 64u);
+    SEQAN_ASSERT_EQ(bd.effectiveChunks, 1u);
+    SEQAN_ASSERT_EQ(bd.significantPositions, 0u);
+    SEQAN_ASSERT_EQ(bd.significantBits, 0u);
+    SEQAN_ASSERT(compareVector(bd.chunkMap, std::vector<uint8_t>{0}));
 }
 
 // Copy constructor
@@ -194,12 +223,17 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, copy_constructor)
     typedef typename TestFixture::TBinning      TBinning;
 
     TBinning bd(64, 3, 12, 32_m);
+    configureChunkMap(bd);
     TBinning bd2(bd);
 
-    SEQAN_ASSERT_EQ(bd2.kmerSize, 12u);
-    SEQAN_ASSERT_EQ(bd2.noOfBins, 64u);
-    SEQAN_ASSERT_EQ(bd2.noOfHashFunc, 3u);
-    SEQAN_ASSERT_EQ(bd2.noOfBits, 32_m);
+    SEQAN_ASSERT_EQ(bd.kmerSize, bd2.kmerSize);
+    SEQAN_ASSERT_EQ(bd.noOfBins, bd2.noOfBins);
+    SEQAN_ASSERT_EQ(bd.noOfHashFunc, bd2.noOfHashFunc);
+    SEQAN_ASSERT_EQ(bd.noOfBits, bd2.noOfBits);
+    SEQAN_ASSERT_EQ(bd.effectiveChunks, bd2.effectiveChunks);
+    SEQAN_ASSERT_EQ(bd.significantPositions, bd2.significantPositions);
+    SEQAN_ASSERT_EQ(bd.significantBits, bd2.significantBits);
+    SEQAN_ASSERT(compareVector(bd.chunkMap, bd2.chunkMap));
 }
 
 SEQAN_TYPED_TEST(BinningDirectoryDATest, copy_constructor)
@@ -207,10 +241,15 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, copy_constructor)
     typedef typename TestFixture::TBinning      TBinning;
 
     TBinning bd(64, 4);
+    configureChunkMap(bd);
     TBinning bd2(bd);
 
-    SEQAN_ASSERT_EQ(bd2.kmerSize, 4u);
-    SEQAN_ASSERT_EQ(bd2.noOfBins, 64u);
+    SEQAN_ASSERT_EQ(bd.kmerSize, bd2.kmerSize);
+    SEQAN_ASSERT_EQ(bd.noOfBins, bd2.noOfBins);
+    SEQAN_ASSERT_EQ(bd.effectiveChunks, bd2.effectiveChunks);
+    SEQAN_ASSERT_EQ(bd.significantPositions, bd2.significantPositions);
+    SEQAN_ASSERT_EQ(bd.significantBits, bd2.significantBits);
+    SEQAN_ASSERT(compareVector(bd.chunkMap, bd2.chunkMap));
 }
 
 // Copy assignment
@@ -219,13 +258,18 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, copy_assignment)
     typedef typename TestFixture::TBinning      TBinning;
 
     TBinning bd(64, 3, 12, 32_m);
+    configureChunkMap(bd);
     TBinning bd2;
     bd2 = bd;
 
-    SEQAN_ASSERT_EQ(bd2.kmerSize, 12u);
-    SEQAN_ASSERT_EQ(bd2.noOfBins, 64u);
-    SEQAN_ASSERT_EQ(bd2.noOfHashFunc, 3u);
-    SEQAN_ASSERT_EQ(bd2.noOfBits, 32_m);
+    SEQAN_ASSERT_EQ(bd.kmerSize, bd2.kmerSize);
+    SEQAN_ASSERT_EQ(bd.noOfBins, bd2.noOfBins);
+    SEQAN_ASSERT_EQ(bd.noOfHashFunc, bd2.noOfHashFunc);
+    SEQAN_ASSERT_EQ(bd.noOfBits, bd2.noOfBits);
+    SEQAN_ASSERT_EQ(bd.effectiveChunks, bd2.effectiveChunks);
+    SEQAN_ASSERT_EQ(bd.significantPositions, bd2.significantPositions);
+    SEQAN_ASSERT_EQ(bd.significantBits, bd2.significantBits);
+    SEQAN_ASSERT(compareVector(bd.chunkMap, bd2.chunkMap));
 }
 
 SEQAN_TYPED_TEST(BinningDirectoryDATest, copy_assignment)
@@ -233,11 +277,16 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, copy_assignment)
     typedef typename TestFixture::TBinning      TBinning;
 
     TBinning bd(64, 4);
+    configureChunkMap(bd);
     TBinning bd2;
     bd2 = bd;
 
-    SEQAN_ASSERT_EQ(bd2.kmerSize, 4u);
-    SEQAN_ASSERT_EQ(bd2.noOfBins, 64u);
+    SEQAN_ASSERT_EQ(bd.kmerSize, bd2.kmerSize);
+    SEQAN_ASSERT_EQ(bd.noOfBins, bd2.noOfBins);
+    SEQAN_ASSERT_EQ(bd.effectiveChunks, bd2.effectiveChunks);
+    SEQAN_ASSERT_EQ(bd.significantPositions, bd2.significantPositions);
+    SEQAN_ASSERT_EQ(bd.significantBits, bd2.significantBits);
+    SEQAN_ASSERT(compareVector(bd.chunkMap, bd2.chunkMap));
 }
 
 // Move constructor
@@ -246,12 +295,18 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, move_constructor)
     typedef typename TestFixture::TBinning      TBinning;
 
     TBinning bd(64, 3, 12, 32_m);
+    configureChunkMap(bd);
+    TBinning bdc = bd;
     TBinning bd2(std::move(bd));
 
-    SEQAN_ASSERT_EQ(bd2.kmerSize, 12u);
-    SEQAN_ASSERT_EQ(bd2.noOfBins, 64u);
-    SEQAN_ASSERT_EQ(bd2.noOfHashFunc, 3u);
-    SEQAN_ASSERT_EQ(bd2.noOfBits, 32_m);
+    SEQAN_ASSERT_EQ(bdc.kmerSize, bd2.kmerSize);
+    SEQAN_ASSERT_EQ(bdc.noOfBins, bd2.noOfBins);
+    SEQAN_ASSERT_EQ(bdc.noOfHashFunc, bd2.noOfHashFunc);
+    SEQAN_ASSERT_EQ(bdc.noOfBits, bd2.noOfBits);
+    SEQAN_ASSERT_EQ(bdc.effectiveChunks, bd2.effectiveChunks);
+    SEQAN_ASSERT_EQ(bdc.significantPositions, bd2.significantPositions);
+    SEQAN_ASSERT_EQ(bdc.significantBits, bd2.significantBits);
+    SEQAN_ASSERT(compareVector(bdc.chunkMap, bd2.chunkMap));
 }
 
 SEQAN_TYPED_TEST(BinningDirectoryDATest, move_constructor)
@@ -259,10 +314,16 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, move_constructor)
     typedef typename TestFixture::TBinning      TBinning;
 
     TBinning bd(64, 4);
+    configureChunkMap(bd);
+    TBinning bdc = bd;
     TBinning bd2(std::move(bd));
 
-    SEQAN_ASSERT_EQ(bd2.kmerSize, 4u);
-    SEQAN_ASSERT_EQ(bd2.noOfBins, 64u);
+    SEQAN_ASSERT_EQ(bdc.kmerSize, bd2.kmerSize);
+    SEQAN_ASSERT_EQ(bdc.noOfBins, bd2.noOfBins);
+    SEQAN_ASSERT_EQ(bdc.effectiveChunks, bd2.effectiveChunks);
+    SEQAN_ASSERT_EQ(bdc.significantPositions, bd2.significantPositions);
+    SEQAN_ASSERT_EQ(bdc.significantBits, bd2.significantBits);
+    SEQAN_ASSERT(compareVector(bdc.chunkMap, bd2.chunkMap));
 }
 
 // Move assignment
@@ -271,13 +332,19 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, move_assignment)
     typedef typename TestFixture::TBinning      TBinning;
 
     TBinning bd(64, 3, 12, 32_m);
+    configureChunkMap(bd);
+    TBinning bdc = bd;
     TBinning bd2;
     bd2 = std::move(bd);
 
-    SEQAN_ASSERT_EQ(bd2.kmerSize, 12u);
-    SEQAN_ASSERT_EQ(bd2.noOfBins, 64u);
-    SEQAN_ASSERT_EQ(bd2.noOfHashFunc, 3u);
-    SEQAN_ASSERT_EQ(bd2.noOfBits, 32_m);
+    SEQAN_ASSERT_EQ(bdc.kmerSize, bd2.kmerSize);
+    SEQAN_ASSERT_EQ(bdc.noOfBins, bd2.noOfBins);
+    SEQAN_ASSERT_EQ(bdc.noOfHashFunc, bd2.noOfHashFunc);
+    SEQAN_ASSERT_EQ(bdc.noOfBits, bd2.noOfBits);
+    SEQAN_ASSERT_EQ(bdc.effectiveChunks, bd2.effectiveChunks);
+    SEQAN_ASSERT_EQ(bdc.significantPositions, bd2.significantPositions);
+    SEQAN_ASSERT_EQ(bdc.significantBits, bd2.significantBits);
+    SEQAN_ASSERT(compareVector(bdc.chunkMap, bd2.chunkMap));
 }
 
 SEQAN_TYPED_TEST(BinningDirectoryDATest, move_assignment)
@@ -285,11 +352,17 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, move_assignment)
     typedef typename TestFixture::TBinning      TBinning;
 
     TBinning bd(64, 4);
+    configureChunkMap(bd);
+    TBinning bdc = bd;
     TBinning bd2;
     bd2 = std::move(bd);
 
-    SEQAN_ASSERT_EQ(bd2.kmerSize, 4u);
-    SEQAN_ASSERT_EQ(bd2.noOfBins, 64u);
+    SEQAN_ASSERT_EQ(bdc.kmerSize, bd2.kmerSize);
+    SEQAN_ASSERT_EQ(bdc.noOfBins, bd2.noOfBins);
+    SEQAN_ASSERT_EQ(bdc.effectiveChunks, bd2.effectiveChunks);
+    SEQAN_ASSERT_EQ(bdc.significantPositions, bd2.significantPositions);
+    SEQAN_ASSERT_EQ(bdc.significantBits, bd2.significantBits);
+    SEQAN_ASSERT(compareVector(bdc.chunkMap, bd2.chunkMap));
 }
 
 // insertKmer from text
