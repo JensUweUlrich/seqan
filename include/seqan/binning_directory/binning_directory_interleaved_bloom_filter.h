@@ -138,6 +138,9 @@ public:
         bitvector(fileName)
     {
         getMetadata(*this);
+        CharString chunkFile{fileName};
+        append(chunkFile, ".chunkMap");
+        load_chunkMap(*this, chunkFile);
         init();
     }
 
@@ -364,7 +367,6 @@ public:
         {
             for(TNoOfHashFunc i = 0; i < noOfHashFunc ; ++i)
             {
-                // std::cerr << "HASH " << kmerHash << '\n';
                 uint64_t vecIndex = preCalcValues[i] * std::get<0>(kmerHash);
                 hashToIndex(vecIndex, std::get<1>(kmerHash));
                 vecIndex += binNo;
@@ -376,7 +378,6 @@ public:
     //! \brief Initialises internal variables.
     inline void init()
     {
-        chunkMap = std::vector<uint8_t>{0};
         // effectiveChunks = 1;
         // significantBits = 0;
         // significantPositions = 0;

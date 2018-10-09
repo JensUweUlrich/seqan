@@ -751,6 +751,9 @@ inline void getMetadata(BinningDirectory<TSpec, TConfig> &  me)
     me.noOfBins = me.bitvector.get_int(metadataStart, chunks);
     me.noOfHashFunc = me.bitvector.get_int(metadataStart+64, chunks);
     me.kmerSize = me.bitvector.get_int(metadataStart+128, chunks);
+    me.effectiveChunks = me.bitvector.get_int(metadataStart+192, chunks, 8);
+    me.significantPositions = me.bitvector.get_int(metadataStart + 200, chunks, 8);
+    me.significantBits = me.bitvector.get_int(metadataStart+208, chunks, 8);
 }
 
 /*!
@@ -766,10 +769,12 @@ inline void setMetadata(BinningDirectory<TSpec, TConfig> &  me)
 
     TNoOfBits metadataStart = me.noOfBits;
     uint8_t chunks = TConfig::TChunks::VALUE;
-
     me.bitvector.set_int(metadataStart, me.noOfBins, chunks);
     me.bitvector.set_int(metadataStart + 64, me.noOfHashFunc, chunks);
     me.bitvector.set_int(metadataStart+128, me.kmerSize, chunks);
+    me.bitvector.set_int(metadataStart+192, me.effectiveChunks, chunks, 8);
+    me.bitvector.set_int(metadataStart + 200, me.significantPositions, chunks, 8);
+    me.bitvector.set_int(metadataStart+208, me.significantBits, chunks, 8);
 }
 
 /*!
@@ -790,10 +795,52 @@ inline double size(BinningDirectory<TSpec, TConfig> &  me)
  * \returns bool Indicates if the operation was successful.
  */
 template<typename TSpec, typename TConfig>
-inline bool store(BinningDirectory<TSpec, TConfig> &  me, CharString fileName)
+inline bool store(BinningDirectory<TSpec, TConfig> &  me, CharString & fileName)
 {
     setMetadata(me);
+    CharString chunkFile{fileName};
+    append(chunkFile, ".chunkMap");
+    store_chunkMap(me, chunkFile);
     return me.bitvector.store(fileName);
+
+}
+
+template<typename TSpec, typename TConfig>
+inline bool store(BinningDirectory<TSpec, TConfig> &  me, CharString && fileName)
+{
+    return store(me, fileName);
+}
+
+template<typename TSpec, typename TConfig>
+inline bool load_chunkMap(BinningDirectory<TSpec, TConfig> &  me, CharString & fileName)
+{
+    std::ifstream in(toCString(fileName), std::ios::in|std::ios::binary);
+    if (!in.is_open())
+    {
+        CharString msg = "Unable to open chunkMap file: ";
+        append(msg, CharString(fileName));
+        std::cerr << msg << std::endl;
+        throw toCString(msg);
+    }
+    sdsl::load(me.chunkMap, in);
+    in.close();
+    return true;
+}
+
+template<typename TSpec, typename TConfig>
+inline bool store_chunkMap(BinningDirectory<TSpec, TConfig> &  me, CharString & fileName)
+{
+    std::ofstream out(toCString(fileName), std::ios::out|std::ios::binary);
+    if (!out.is_open())
+    {
+        CharString msg = "Unable to open chunkMap file: ";
+        append(msg, CharString(fileName));
+        std::cerr << msg << std::endl;
+        throw toCString(msg);
+    }
+    sdsl::serialize(me.chunkMap, out);
+    out.close();
+    return true;
 }
 
 /*!
@@ -803,12 +850,21 @@ inline bool store(BinningDirectory<TSpec, TConfig> &  me, CharString fileName)
  * \returns bool Indicates if the operation was successful.
  */
 template<typename TSpec, typename TConfig>
-inline bool retrieve(BinningDirectory<TSpec, TConfig> &  me, CharString fileName)
+inline bool retrieve(BinningDirectory<TSpec, TConfig> &  me, CharString & fileName)
 {
     me.bitvector.retrieve(fileName);
     getMetadata(me);
+    CharString chunkFile{fileName};
+    append(chunkFile,".chunkMap");
+    load_chunkMap(me, chunkFile);
     me.init();
     return true;
+}
+
+template<typename TSpec, typename TConfig>
+inline bool retrieve(BinningDirectory<TSpec, TConfig> &  me, CharString && fileName)
+{
+    return retrieve(me, fileName);
 }
 
 constexpr unsigned long long int operator""_g ( unsigned long long int g )

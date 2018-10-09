@@ -126,6 +126,9 @@ public:
         bitvector(fileName)
     {
         getMetadata(*this);
+        CharString chunkFile{fileName};
+        append(chunkFile, ".chunkMap");
+        load_chunkMap(*this, chunkFile);
         init();
     }
 
@@ -330,7 +333,6 @@ public:
     //! \brief Initialises internal variables.
     inline void init()
     {
-        chunkMap = std::vector<uint8_t>{0};
         // effectiveChunks = 1;
         // significantBits = 0;
         // significantPositions = 0;
