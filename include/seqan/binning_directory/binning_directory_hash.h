@@ -551,7 +551,6 @@ public:
                 windowValues.push_back(std::make_tuple(hash(revcHash), distance, distance + this->kmerSize - 1));
             }
             ++it;
-            ++it;
             ++rcit;
 
             auto max = *std::min_element(std::begin(windowValues), std::end(windowValues), windowCompare);
@@ -592,63 +591,49 @@ public:
         coverageBegin.push_back(minBegin[0]);
         coverage.push_back(1);
         bool skipped{false};
-        bool s{false};
 
         while ((bIndex < minBegin.size() ) || (eIndex < minEnd.size()))
         {
             if (skipped)
             {
                 skipped = false;
-                s=true;
                 coverageEnd.push_back(minEnd[eIndex]);
-                ++eIndex;
+                ++coverage.back();
                 continue;
             }
             // Overlapping kmers
             if (bIndex < minBegin.size() && minBegin[bIndex] < minEnd[eIndex])
             {
-
                 std::cerr << "Case 1\n";
 
-                if (!s)
-                {
-                    coverageEnd.push_back(minBegin[bIndex]-1);
-                    coverageBegin.push_back(minBegin[bIndex]);
-                    s =false;
-                }
+                coverageEnd.push_back(minBegin[bIndex]-1);
+                coverageBegin.push_back(minBegin[bIndex]);
                 coverage.push_back(coverage.back()+1);
                 ++bIndex;
                 continue;
             }
             // kmer ends
-            else
+            if ((eIndex < minEnd.size() && minBegin[bIndex] > minEnd[eIndex]) || (bIndex >= minBegin.size()))
             {
-                if ((eIndex < minEnd.size() && minBegin[bIndex] > minEnd[eIndex]) || (bIndex >= minBegin.size()))
-                {
-                    std::cerr << "Case 2\n";
-                    coverageBegin.push_back(minEnd[eIndex]);
-                    coverageEnd.push_back(minEnd[eIndex]);
-                    coverage.push_back(coverage.back()-1);
-                    ++eIndex;
-                    continue;
-                }
-                else
-                {
-                    // Another kmer on current position
-                    std::cerr << "Case 3\n";
-                    if (!skipped)
-                    {
-                        coverageEnd.push_back(minEnd[eIndex]-1);
-                        coverageBegin.push_back(minEnd[eIndex]);
-                    }
-
-                    ++eIndex;
-                    if (bIndex < minBegin.size() - 1)
-                        ++bIndex;
-                    skipped = true;
-                    continue;
-                }
+                std::cerr << "Case 2\n";
+                coverageBegin.push_back(minEnd[eIndex]);
+                coverageEnd.push_back(minEnd[eIndex]);
+                coverage.push_back(coverage.back()-1);
+                ++eIndex;
+                continue;
             }
+            // Another kmer on current position
+            std::cerr << "Case 3\n";
+            coverageEnd.push_back(minEnd[eIndex]-1);
+            coverageBegin.push_back(minEnd[eIndex]);
+            coverage.push_back(coverage.back());
+            while (minBegin[bIndex] == minEnd[eIndex])
+            {
+                ++eIndex;
+                ++bIndex;
+            }
+            skipped = true;
+            continue;
         }
     }
 };
