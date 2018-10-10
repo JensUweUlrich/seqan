@@ -38,6 +38,7 @@
 
 #include <sdsl/bit_vectors.hpp>
 #include <seqan/seq_io.h>
+#include <seqan/modifier.h>
 #include <valarray>
 #include <algorithm>
 #include <future>
@@ -150,6 +151,9 @@ struct BDHash;
 
 template<uint16_t>
 struct Offset;
+
+template<uint16_t, uint32_t>
+struct Minimizer;
 
 template<typename>
 struct is_offset : std::false_type {};
