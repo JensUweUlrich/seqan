@@ -50,7 +50,7 @@ typedef
     BinningDirectoriesIBF;
 
 typedef
-    TagList<BinningDirectory<DirectAddressing,          BDConfig<Dna,   Minimizer<3,5>,     Uncompressed> > >
+    TagList<BinningDirectory<DirectAddressing,          BDConfig<Dna,   Minimizer<6,8>,     Uncompressed> > >
     // TagList<BinningDirectory<DirectAddressing,          BDConfig<Dna,   Offset<1>,  Compressed> >,
     // TagList<BinningDirectory<DirectAddressing,          BDConfig<Dna,   Normal,     CompressedDisk> > > > >
     BinningDirectoriesDA;
@@ -462,9 +462,9 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, count)
     typedef typename TestFixture::TBinning      TBinning;
     typedef typename TBinning::TValue  TValue;
 
-    TBinning bd(64, 3);
+    TBinning bd(64, 6);
     // insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
-    insertKmer(bd, String<TValue>{"AAAAAAAA"}, 0);
+    insertKmer(bd, String<TValue>{"AAAAAAAAAAAAAAAAAAAAAAAA"}, 0);
     // insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
     // insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
 
