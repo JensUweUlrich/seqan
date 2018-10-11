@@ -445,17 +445,12 @@ struct BDHash<TValue, Offset<o>, TChunks> : BDHashBase<TValue, TChunks>
     }
 };
 
-inline bool windowCompare(std::tuple<uint64_t, uint64_t, uint64_t> const & a,
-                          std::tuple<uint64_t, uint64_t, uint64_t> const & b)
-{
-    return (std::get<0>(a) < std::get<0>(b));
-}
-
 template<uint16_t k, uint32_t w, typename TChunks>
 struct BDHash<Dna, Minimizer<k, w>, TChunks> :BDHashBase<Dna, TChunks>
 {
 public:
 
+    // All positions are inclusive, i.e. kmer starts at b and ends in e => [b,e]
     std::vector<uint64_t> minBegin;
     std::vector<uint64_t> minEnd;
     std::vector<uint32_t> coverage;
@@ -530,7 +525,7 @@ public:
             ++rcit;
         }
 
-        auto max = *std::min_element(std::begin(windowValues), std::end(windowValues), windowCompare);
+        auto max = *std::min_element(std::begin(windowValues), std::end(windowValues));
         kmerHashes.push_back(std::get<0>(max));
         minBegin.push_back(std::get<1>(max));
         minEnd.push_back(std::get<2>(max));
@@ -553,18 +548,92 @@ public:
             ++it;
             ++rcit;
 
-            auto max = *std::min_element(std::begin(windowValues), std::end(windowValues), windowCompare);
+            auto max = *std::min_element(std::begin(windowValues), std::end(windowValues));
             kmerHashes.push_back(std::get<0>(max));
             minBegin.push_back(std::get<1>(max));
             minEnd.push_back(std::get<2>(max));
         }
+        std::cerr << maxCoverage();
+        return kmerHashes;
+    }
+
+    template<typename TString>
+    inline std::vector<std::tuple<uint64_t, uint8_t>> getRawHash(TString & text)
+    {
+        if (this->kmerSize > seqan::length(text))
+            return std::vector<std::tuple<uint64_t, uint8_t>> {};
+
+        typedef ModifiedString<ModifiedString<TString, ModComplementDna>, ModReverse> TRC;
+        TRC revComp(text);
+        uint32_t possible = seqan::length(text) - windowSize + 1;
+        uint32_t windowKmers = windowSize - this->kmerSize + 1;
+
+        std::vector<std::tuple<uint64_t, uint8_t>> kmerHashes;
+        kmerHashes.reserve(possible);
+        minBegin.reserve(possible);
+        minEnd.reserve(possible);
+
+        this->hashInit(begin(text));
+        revHashInit(begin(revComp));
+        auto it = begin(text);
+        auto rcit = begin(revComp);
+        std::vector<std::tuple<uint64_t, uint64_t, uint64_t>> windowValues;
+        windowValues.reserve(windowKmers);
+
+        for (uint32_t i = 0; i < windowKmers; ++i)
+        {
+            uint64_t kmerHash = this->hashNext(it);
+            uint64_t revcHash = revHashNext(rcit);
+            if (kmerHash <= revcHash)
+            {
+                uint64_t distance = std::distance(begin(text), it);
+                windowValues.push_back(std::make_tuple(kmerHash >> this->significantBits, distance, distance + this->kmerSize - 1));
+            }
+            else
+            {
+                uint64_t distance = std::distance(begin(revComp), rcit);
+                windowValues.push_back(std::make_tuple(revcHash >> this->significantBits, distance, distance + this->kmerSize - 1));
+            }
+            ++it;
+            ++rcit;
+        }
+
+        auto max = *std::min_element(std::begin(windowValues), std::end(windowValues));
+        kmerHashes.push_back(std::make_tuple(std::get<0>(max) >> this->significantBits, this->chunkMap[(std::get<0>(max) & (this->effectiveChunks - 1))]));
+        minBegin.push_back(std::get<1>(max));
+        minEnd.push_back(std::get<2>(max));
+
+        for (uint32_t i = 1; i < possible; ++i)
+        {
+            windowValues.erase(std::begin(windowValues));
+            uint64_t kmerHash = this->hashNext(it);
+            uint64_t revcHash = revHashNext(rcit);
+            if (kmerHash <= revcHash)
+            {
+                uint64_t distance = std::distance(begin(text), it);
+                windowValues.push_back(std::make_tuple(kmerHash >> this->significantBits, distance, distance + this->kmerSize - 1));
+            }
+            else
+            {
+                uint64_t distance = std::distance(begin(revComp), rcit);
+                windowValues.push_back(std::make_tuple(revcHash >> this->significantBits, distance, distance + this->kmerSize - 1));
+            }
+            ++it;
+            ++rcit;
+
+            auto max = *std::min_element(std::begin(windowValues), std::end(windowValues));
+            kmerHashes.push_back(std::make_tuple(std::get<0>(max) >> this->significantBits, this->chunkMap[(std::get<0>(max) & (this->effectiveChunks - 1))]));
+            minBegin.push_back(std::get<1>(max));
+            minEnd.push_back(std::get<2>(max));
+        }
+        std::cerr << maxCoverage();
         return kmerHashes;
     }
 
     inline uint32_t maxCoverage()
     {
         get_coverage();
-        return std::max_element(coverage.begin(), coverage.end());
+        return *std::max_element(coverage.begin(), coverage.end());
     }
 
     inline void get_coverage()
@@ -577,6 +646,11 @@ public:
         uMinBegin.erase(unique(uMinBegin.begin(), uMinBegin.end()), uMinBegin.end());
         coverageBegin.push_back(uMinBegin[0]);
         coverage.push_back(1);
+        std::cerr << "Positions\n";
+        for (uint64_t i = 0; i<uMinBegin.size(); ++i)
+        {
+            std::cerr << uMinBegin[i] << '\t' << uMinEnd[i] << '\n';
+        }
 
         while ((bIndex < uMinBegin.size() ) || (eIndex < uMinEnd.size()))
         {
@@ -607,13 +681,17 @@ public:
             if (end < begin)
             {
                 coverageEnd.push_back(end);
-                if (coverage.back() > 1)
-                {
-                    coverageBegin.push_back(end+1);
-                    coverage.push_back(coverage.back()-1);
-                }
+                coverageBegin.push_back(end+1);
+                coverage.push_back(coverage.back()-1);
                 ++eIndex;
             }
+        }
+        coverageBegin.pop_back();
+        coverage.pop_back();
+        std::cerr << "Coverages\n";
+        for (uint64_t i = 0; i<coverageBegin.size(); ++i)
+        {
+            std::cerr << coverageBegin[i] << '\t' << coverageEnd[i] << '\t' << coverage[i] << '\n';
         }
     }
 };
