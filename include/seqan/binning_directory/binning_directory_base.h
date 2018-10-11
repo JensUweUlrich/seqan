@@ -140,26 +140,49 @@ typedef Tag<Compressed_> Compressed;
 struct CompressedDisk_;
 typedef Tag<CompressedDisk_> CompressedDisk;
 
-struct Normal_;
-typedef Tag<Normal_> Normal;
-
 template<typename TSpec>
 struct Bitvector;
 
 template<typename TValue, typename TSpec, typename TChunks>
 struct BDHash;
 
-template<uint16_t>
-struct Offset;
+template<uint16_t k>
+struct Normal
+{
+    static const uint16_t VALUE = k;
+};
 
-template<uint16_t, uint32_t>
-struct Minimizer;
+template<uint16_t k, uint16_t o>
+struct Offset
+{
+    static const uint16_t VALUE = k;
+    static const uint16_t OFFSET = o;
+};
+
+template<uint16_t k, uint32_t w>
+struct Minimizer
+{
+    static const uint16_t VALUE = k;
+    static const uint32_t WINDOW = w;
+};
 
 template<typename>
 struct is_offset : std::false_type {};
 
-template<uint16_t o>
-struct is_offset<Offset<o>> : std::true_type {};
+template<uint16_t k, uint16_t o>
+struct is_offset<Offset<k, o>> : std::true_type {};
+
+template<typename>
+struct is_normal : std::false_type {};
+
+template<uint16_t k>
+struct is_normal<Normal<k>> : std::true_type {};
+
+template<typename>
+struct is_minimizer : std::false_type {};
+
+template<uint16_t k, uint32_t w>
+struct is_minimizer<Minimizer<k, w>> : std::true_type {};
 
 // --------------------------------------------------------------------------
 // Class BinningDirectory
@@ -171,7 +194,7 @@ struct Chunks
     static const uint8_t VALUE = chunks;
 };
 
-template<typename TValue_ = Dna, typename THash_ = Normal, typename TBitvector_ = Uncompressed, typename TChunks_ = Chunks<4>>
+template<typename TValue_ = Dna, typename THash_ = Normal<4>, typename TBitvector_ = Uncompressed, typename TChunks_ = Chunks<4>>
 struct BDConfig
 {
     typedef TValue_      TValue;
@@ -253,9 +276,9 @@ inline void insertKmer(BinningDirectory<TSpec, TConfig> & me, String<typename TC
     typedef typename TConfig::THash THash;
     if(length(text) >= me.kmerSize)
     {
-        if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
+        if (is_normal<THash>::value || is_offset<THash>::value)
         {
-            me.template insertKmer<Normal>(text, binNo, chunk);
+            me.template insertKmer<Normal<THash::VALUE>>(text, binNo, chunk);
         }
         else
         {
@@ -560,7 +583,7 @@ template<typename THashCount, typename TSpec, typename TConfig, typename TAnyStr
 inline void count(BinningDirectory<TSpec, TConfig> const &  me, std::vector<uint64_t> & counts, TAnyString const & text, TChunkNo && chunk = 0)
 {
     typedef typename TConfig::THash THash;
-    if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
+    if (is_normal<THash>::value || is_offset<THash>::value)
     {
         me.template count<THashCount>(counts, text, chunk);
     }
@@ -595,7 +618,7 @@ inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> const &  me,
     typedef typename TConfig::THash THash;
     std::vector<uint64_t> counts(me.noOfBins, 0);
 
-    if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
+    if (is_normal<THash>::value || is_offset<THash>::value)
     {
         count<THashCount>(me, counts, text, chunk);
     }
@@ -671,7 +694,7 @@ inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TA
    typedef typename TConfig::THash THash;
    std::vector<uint64_t> counts(me.noOfBins, 0);
 
-   if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
+   if (is_normal<THash>::value || is_offset<THash>::value)
    {
        count<THashCount>(me, counts, text, chunk);
    }
@@ -701,7 +724,7 @@ inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<boo
    typedef typename TConfig::THash THash;
    std::vector<uint64_t> counts(me.noOfBins, 0);
 
-   if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
+   if (is_normal<THash>::value || is_offset<THash>::value)
    {
        count<THashCount>(me, counts, text, chunk);
    }

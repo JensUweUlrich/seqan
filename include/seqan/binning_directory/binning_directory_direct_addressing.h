@@ -93,7 +93,7 @@ public:
     //!\brief The number of Bins.
     TNoOfBins        noOfBins;
     //!\brief The k-mer size.
-    TKmerSize        kmerSize;
+    TKmerSize        kmerSize{THash::VALUE};
     //!\brief The size of the bit vector.
     TNoOfBits        noOfBits;
     //!\brief The number of possible hash values that can fit into a single block.
