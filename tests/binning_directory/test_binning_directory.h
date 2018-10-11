@@ -464,7 +464,8 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, count)
 
     TBinning bd(64, 6);
     // insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
-    insertKmer(bd, String<TValue>{"AGCTACTAGCTAGCTAGCTGACTACTGACTGATCTATATCGACGCAT"}, 0);
+    insertKmer(bd, String<TValue>{"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"}, 0);
+    // insertKmer(bd, String<TValue>{"AGCTACTAGCTAGCTAGCTGACTACTGACTGATCTATATCGACGCAT"}, 0);
     // insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
     // insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
 

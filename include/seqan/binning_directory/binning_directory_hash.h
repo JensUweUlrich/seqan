@@ -558,20 +558,6 @@ public:
             minBegin.push_back(std::get<1>(max));
             minEnd.push_back(std::get<2>(max));
         }
-        // DEBUG
-        // std::cerr << "inserted:\n";
-        // std::cerr << "Hashes: " << kmerHashes.size() << '\n';
-        // std::cerr << "Begin\tEnd\n";
-        // for (uint64_t i = 0; i < kmerHashes.size(); ++i)
-        // {
-        //     std::cerr << minBegin[i] << '\t' << minEnd[i] << '\n';
-        // }
-        get_coverage();
-        std::cerr << "Begin\tEnd\tCoverage\n";
-        for (uint64_t i = 0; i < coverageBegin.size(); ++i)
-        {
-            std::cerr << coverageBegin[i] << '\t' << coverageEnd[i] << '\t' << coverage[i] << '\n';
-        }
         return kmerHashes;
     }
 
@@ -583,69 +569,51 @@ public:
 
     inline void get_coverage()
     {
-        // Index of minBegin
         uint64_t bIndex{1};
-        // Index of minEnd
         uint64_t eIndex{0};
         auto uMinEnd = minEnd;
-        uMinEnd.erase( unique( uMinEnd.begin(), uMinEnd.end() ), uMinEnd.end() );
+        uMinEnd.erase(unique(uMinEnd.begin(), uMinEnd.end()), uMinEnd.end());
         auto uMinBegin = minBegin;
-        uMinBegin.erase( unique( uMinBegin.begin(), uMinBegin.end() ), uMinBegin.end() );
-        for (uint64_t i = 0; i < uMinBegin.size(); ++i)
-        {
-            std::cerr << uMinBegin[i] << '\t' << uMinEnd[i] << '\n';
-        }
+        uMinBegin.erase(unique(uMinBegin.begin(), uMinBegin.end()), uMinBegin.end());
         coverageBegin.push_back(uMinBegin[0]);
         coverage.push_back(1);
-        bool skipped{false};
 
         while ((bIndex < uMinBegin.size() ) || (eIndex < uMinEnd.size()))
         {
-            if (skipped)
+            uint64_t begin = bIndex < uMinBegin.size() ? uMinBegin[bIndex] : 0xFFFFFFFFFFFFFFFFULL;
+            uint64_t end   = uMinEnd[eIndex];
+            // Overlap
+            if (begin < end)
             {
-                skipped = false;
-                // std::cerr << "skip pushes " << uMinEnd[eIndex] << '\n';
-                // coverageEnd.push_back(uMinEnd[eIndex]);
-                ++eIndex;
-                ++coverage.back();
-                continue;
-            }
-            // Overlapping kmers
-            if (bIndex < uMinBegin.size() && uMinBegin[bIndex] < uMinEnd[eIndex])
-            {
-                std::cerr << "Case 1\n";
-
-                std::cerr << "1 pushes " << uMinBegin[bIndex] << '\n';
-                coverageEnd.push_back(uMinBegin[bIndex]);
-                coverageBegin.push_back(uMinBegin[bIndex]);
+                coverageEnd.push_back(begin-1);
+                coverageBegin.push_back(begin);
                 coverage.push_back(coverage.back()+1);
                 ++bIndex;
-                continue;
             }
-            // kmer ends
-            if ((eIndex < uMinEnd.size() && uMinBegin[bIndex] > uMinEnd[eIndex]) || (bIndex >= uMinBegin.size()))
+            // Flatten consecutive positions, where one kmer ends and other one starts
+            if (begin == end)
             {
-                std::cerr << "Case 2\n";
-                coverageBegin.push_back(uMinEnd[eIndex]);
-                std::cerr << "2 pushes " << uMinEnd[eIndex] << '\n';
-                coverageEnd.push_back(uMinEnd[eIndex]);
-                coverage.push_back(coverage.back()-1);
-                ++eIndex;
-                continue;
+                coverageEnd.push_back(begin-1);
+                coverageBegin.push_back(begin);
+                coverage.push_back(coverage.back()+1);
+                while (uMinBegin[bIndex] == uMinEnd[eIndex])
+                {
+                    ++bIndex;
+                    ++eIndex;
+                }
+                --eIndex;
             }
-            // Another kmer on current position
-            std::cerr << "Case 3\n";
-            std::cerr << "3 pushes " << uMinEnd[eIndex] << '\n';
-            coverageEnd.push_back(uMinEnd[eIndex]);
-            coverageBegin.push_back(uMinEnd[eIndex]);
-            coverage.push_back(coverage.back());
-            while (uMinBegin[bIndex] == uMinEnd[eIndex])
+            // Kmer ends
+            if (end < begin)
             {
+                coverageEnd.push_back(end);
+                if (coverage.back() > 1)
+                {
+                    coverageBegin.push_back(end+1);
+                    coverage.push_back(coverage.back()-1);
+                }
                 ++eIndex;
-                ++bIndex;
             }
-            skipped = true;
-            continue;
         }
     }
 };
