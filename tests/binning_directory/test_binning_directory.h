@@ -43,10 +43,10 @@
 using namespace seqan;
 
 typedef
-    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Normal,     Uncompressed> >,
-    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna5,   Normal,     Compressed, Chunks<5> > >,
-    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Offset<1>,  Uncompressed> >,
-    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Normal,     CompressedDisk> > > > > >
+    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Minimizer<6,8>,     Uncompressed> > >
+    // TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna5,   Normal,     Compressed, Chunks<5> > >,
+    // TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Offset<1>,  Uncompressed> >,
+    // TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Normal,     CompressedDisk> > > > > >
     BinningDirectoriesIBF;
 
 typedef
@@ -428,35 +428,38 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, insertKmerFile)
 
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 5);
 }
-
+*/
 // count
 SEQAN_TYPED_TEST(BinningDirectoryIBFTest, count)
 {
     typedef typename TestFixture::TBinning      TBinning;
     typedef typename TBinning::TValue  TValue;
 
-    TBinning bd(64, 3, 12, 32_m);
-    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
-    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
-    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
-
-    auto result = count(bd, String<TValue>{"TAACTTTTTTAT"}, 3);
-    auto result2 = count<Normal>(bd, String<TValue>{"TAACTTTTTTATATATATAAA"});
-    auto result3 = count<Normal>(bd, String<TValue>{"TAA"});
-    auto result4 = count<Normal>(bd, String<TValue>{""});
-    auto result5 = count<Offset<1>>(bd, String<TValue>{"TAACTTTTTTAT"});
-    auto result6 = count<Offset<3>>(bd, String<TValue>{"TAACTTTTTTAT"});
-
-    SEQAN_ASSERT_NEQ(result[0], 0u);
-    SEQAN_ASSERT_NEQ(result[1], 0u);
-    SEQAN_ASSERT_NEQ(result[2], 0u);
-
-    for (uint16_t i = 3; i < 64; ++i)
-    {
-        SEQAN_ASSERT_EQ(result[i], 0u);
-    }
+    // TBinning bd(64, 3, 12, 32_m);
+    TBinning bd(64, 3, 6, 1_m);
+    // insertKmer(bd, String<TValue>{"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"}, 0);
+    insertKmer(bd, String<TValue>{"AGCTACTAGCTAGCTAGCTGACTACTGACTGATCTATATCGACGCAT"}, 0);
+    // insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
+    // insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
+    // insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
+    //
+    // auto result = count(bd, String<TValue>{"TAACTTTTTTAT"}, 3);
+    // auto result2 = count<Normal>(bd, String<TValue>{"TAACTTTTTTATATATATAAA"});
+    // auto result3 = count<Normal>(bd, String<TValue>{"TAA"});
+    // auto result4 = count<Normal>(bd, String<TValue>{""});
+    // auto result5 = count<Offset<1>>(bd, String<TValue>{"TAACTTTTTTAT"});
+    // auto result6 = count<Offset<3>>(bd, String<TValue>{"TAACTTTTTTAT"});
+    //
+    // SEQAN_ASSERT_NEQ(result[0], 0u);
+    // SEQAN_ASSERT_NEQ(result[1], 0u);
+    // SEQAN_ASSERT_NEQ(result[2], 0u);
+    //
+    // for (uint16_t i = 3; i < 64; ++i)
+    // {
+    //     SEQAN_ASSERT_EQ(result[i], 0u);
+    // }
 }
-*/
+
 SEQAN_TYPED_TEST(BinningDirectoryDATest, count)
 {
     typedef typename TestFixture::TBinning      TBinning;
@@ -464,8 +467,8 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, count)
 
     TBinning bd(64, 6);
     // insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
-    insertKmer(bd, String<TValue>{"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"}, 0);
-    // insertKmer(bd, String<TValue>{"AGCTACTAGCTAGCTAGCTGACTACTGACTGATCTATATCGACGCAT"}, 0);
+    // insertKmer(bd, String<TValue>{"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"}, 0);
+    insertKmer(bd, String<TValue>{"AGCTACTAGCTAGCTAGCTGACTACTGACTGATCTATATCGACGCAT"}, 0);
     // insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
     // insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
 
