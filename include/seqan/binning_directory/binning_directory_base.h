@@ -894,14 +894,19 @@ inline bool retrieve(BinningDirectory<TSpec, TConfig> &  me, CharString && fileN
     return retrieve(me, fileName);
 }
 
-constexpr unsigned long long int operator""_g ( unsigned long long int g )
+constexpr unsigned long long int operator""_g ( unsigned long long int GiB )
 {
-    return g*8*1024*1024*1024;
+    return GiB*8*1024*1024*1024;
 }
 
-constexpr unsigned long long int operator""_m ( unsigned long long int m )
+constexpr unsigned long long int operator""_m ( unsigned long long int MiB )
 {
-    return m*8*1024*1024;
+    return MiB*8*1024*1024;
+}
+
+constexpr unsigned long long int operator""_k ( unsigned long long int KiB )
+{
+    return KiB*8*1024;
 }
 
 }  // namespace seqan
