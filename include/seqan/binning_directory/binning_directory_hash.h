@@ -508,8 +508,7 @@ public:
         revHashInit(begin(revComp));
         auto it = begin(text);
         auto rcit = begin(revComp);
-        std::vector<std::tuple<uint64_t, uint64_t, uint64_t>> windowValues;
-        windowValues.reserve(windowKmers);
+        std::deque<std::tuple<uint64_t, uint64_t, uint64_t>> windowValues;
 
         for (uint32_t i = 0; i < windowKmers; ++i)
         {
@@ -536,7 +535,7 @@ public:
 
         for (uint32_t i = 1; i < possible; ++i)
         {
-            windowValues.erase(std::begin(windowValues));
+            windowValues.pop_front();
             uint64_t kmerHash = this->hashNext(it);
             uint64_t revcHash = revHashNext(rcit);
             if (kmerHash <= revcHash)
@@ -579,8 +578,7 @@ public:
         revHashInit(begin(revComp));
         auto it = begin(text);
         auto rcit = begin(revComp);
-        std::vector<std::tuple<uint64_t, uint64_t, uint64_t>> windowValues;
-        windowValues.reserve(windowKmers);
+        std::deque<std::tuple<uint64_t, uint64_t, uint64_t>> windowValues;
 
         for (uint32_t i = 0; i < windowKmers; ++i)
         {
@@ -607,7 +605,7 @@ public:
 
         for (uint32_t i = 1; i < possible; ++i)
         {
-            windowValues.erase(std::begin(windowValues));
+            windowValues.pop_front();
             uint64_t kmerHash = this->hashNext(it);
             uint64_t revcHash = revHashNext(rcit);
             if (kmerHash <= revcHash)
@@ -764,8 +762,7 @@ public:
             seqan::hashInit(chunkShape, itChunk);
         if (this->significantPositions > 1)
             seqan::hashInit(revChunkShape, itRevChunk);
-        std::vector<std::tuple<std::tuple<uint64_t, uint8_t>, uint64_t, uint64_t>> windowValues;
-        windowValues.reserve(windowKmers);
+        std::deque<std::tuple<std::tuple<uint64_t, uint8_t>, uint64_t, uint64_t>> windowValues;
 
         for (uint32_t i = 0; i < windowKmers; ++i)
         {
@@ -796,7 +793,7 @@ public:
 
         for (uint32_t i = 1; i < possible; ++i)
         {
-            windowValues.erase(std::begin(windowValues));
+            windowValues.pop_front();
             uint64_t kmerHash = this->hashNext(it);
             uint64_t revcHash = revHashNext(rcit);
             if (kmerHash <= revcHash)
@@ -858,8 +855,7 @@ public:
             seqan::hashInit(chunkShape, itChunk);
         if (this->significantPositions > 1)
             seqan::hashInit(revChunkShape, itRevChunk);
-        std::vector<std::tuple<std::tuple<uint64_t, uint8_t>, uint64_t, uint64_t>> windowValues;
-        windowValues.reserve(windowKmers);
+        std::deque<std::tuple<std::tuple<uint64_t, uint8_t>, uint64_t, uint64_t>> windowValues;
 
         for (uint32_t i = 0; i < windowKmers; ++i)
         {
@@ -890,7 +886,7 @@ public:
 
         for (uint32_t i = 1; i < possible; ++i)
         {
-            windowValues.erase(std::begin(windowValues));
+            windowValues.pop_front();
             uint64_t kmerHash = this->hashNext(it);
             uint64_t revcHash = revHashNext(rcit);
             if (kmerHash <= revcHash)
@@ -976,43 +972,5 @@ public:
 };
 
 }   // namespace seqan
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #endif  // INCLUDE_SEQAN_BINNING_DIRECTORY_BINNING_DIRECTORY_HASH_H_
