@@ -44,7 +44,7 @@ using namespace seqan;
 
 typedef
     TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Normal<6>,     Uncompressed> >,
-    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Minimizer<6,8>,     Uncompressed> >,
+    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna5,   Minimizer<6,8>,     Uncompressed> >,
     TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna5,   Normal<6>,     Compressed, Chunks<5> > >,
     TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Offset<6,1>,  Uncompressed> >,
     TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Normal<6>,     CompressedDisk> > > > > > >
