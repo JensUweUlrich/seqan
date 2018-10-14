@@ -687,6 +687,294 @@ public:
     }
 };
 
+template<typename TValue, uint16_t k, uint32_t w, typename TChunks>
+struct BDHash<TValue, Minimizer<k, w>, TChunks> :BDHashBase<TValue, TChunks>
+{
+public:
+
+    // All positions are inclusive, i.e. kmer starts at b and ends in e => [b,e]
+    std::vector<uint64_t> minBegin;
+    std::vector<uint64_t> minEnd;
+    std::vector<uint32_t> coverage;
+    std::vector<uint64_t> coverageBegin;
+    std::vector<uint64_t> coverageEnd;
+    uint32_t windowSize;
+    decltype(BDHash::kmerShape) revCompShape{BDHash::kmerShape};
+
+    inline void resize(TKmerSize newKmerSize = k, uint32_t newWindowSize = w)
+    {
+        this->kmerSize = newKmerSize;
+        windowSize = newWindowSize;
+        seqan::resize(this->kmerShape, this->kmerSize);
+        seqan::resize(revCompShape, this->kmerSize);
+    }
+
+    template<typename TIt>
+    inline void revHashInit(TIt it)
+    {
+        seqan::hashInit(revCompShape, it);
+    }
+
+    template<typename TIt>
+    inline auto revHashNext(TIt it)
+    {
+        return seqan::hashNext(revCompShape, it);
+    }
+
+    inline uint64_t hash(std::tuple<uint64_t, uint8_t> & h)
+    {
+        return (std::get<0>(h) + this->chunkMap[std::get<1>(h)] * this->chunkOffset);
+    }
+
+    inline std::tuple<uint64_t, uint8_t> rawHash(std::tuple<uint64_t, uint8_t> & h)
+    {
+        return std::make_tuple(std::get<0>(h), this->chunkMap[std::get<1>(h)]);
+    }
+
+    template<typename TString>
+    inline std::vector<uint64_t> getHash(TString & text) // TODO cannot be const for ModifiedString
+    {
+        if (this->kmerSize > seqan::length(text))
+            return std::vector<uint64_t> {};
+        typedef ModifiedString<ModifiedString<TString, ModComplementDna>, ModReverse> TRC;
+        TRC revComp(text);
+        uint32_t possible = seqan::length(text) > windowSize ? seqan::length(text) - windowSize + 1 : 1;
+        uint32_t windowKmers = windowSize - this->kmerSize + 1;
+
+        decltype(BDHash::kmerShape) chunkShape;
+        decltype(BDHash::kmerShape) revChunkShape;
+        seqan::resize(chunkShape, this->significantPositions);
+        seqan::resize(revChunkShape, this->significantPositions);
+
+        uint16_t cacheKmerSize = this->kmerSize;
+        this->resize(this->kmerSize - this->significantPositions, windowSize);
+
+        std::vector<uint64_t> kmerHashes;
+        kmerHashes.reserve(possible);
+        minBegin.reserve(possible);
+        minEnd.reserve(possible);
+
+        this->hashInit(begin(text));
+        revHashInit(begin(revComp));
+        auto it = begin(text);
+        auto rcit = begin(revComp);
+        auto itChunk = begin(text) + this->kmerSize;
+        auto itRevChunk = begin(revComp) + this->kmerSize;
+        if (this->significantPositions > 1)
+            seqan::hashInit(chunkShape, itChunk);
+        if (this->significantPositions > 1)
+            seqan::hashInit(revChunkShape, itRevChunk);
+        std::vector<std::tuple<std::tuple<uint64_t, uint8_t>, uint64_t, uint64_t>> windowValues;
+        windowValues.reserve(windowKmers);
+
+        for (uint32_t i = 0; i < windowKmers; ++i)
+        {
+            uint64_t kmerHash = this->hashNext(it);
+            uint64_t revcHash = revHashNext(rcit);
+            if (kmerHash <= revcHash)
+            {
+                uint64_t distance = std::distance(begin(text), it);
+                windowValues.push_back(std::make_tuple(std::make_tuple(kmerHash, hashNext(itChunk)), distance, distance + this->kmerSize - 1));
+                hashNext(itRevChunk);
+            }
+            else
+            {
+                uint64_t distance = std::distance(begin(revComp), rcit);
+                windowValues.push_back(std::make_tuple(std::make_tuple(revcHash, hashNext(itRevChunk)), distance, distance + this->kmerSize - 1));
+                hashNext(itChunk);
+            }
+            ++it;
+            ++rcit;
+            ++itChunk;
+            ++itRevChunk;
+        }
+
+        auto max = *std::min_element(std::begin(windowValues), std::end(windowValues));
+        kmerHashes.push_back(hash(std::get<0>(max)));
+        minBegin.push_back(std::get<1>(max));
+        minEnd.push_back(std::get<2>(max));
+
+        for (uint32_t i = 1; i < possible; ++i)
+        {
+            windowValues.erase(std::begin(windowValues));
+            uint64_t kmerHash = this->hashNext(it);
+            uint64_t revcHash = revHashNext(rcit);
+            if (kmerHash <= revcHash)
+            {
+                uint64_t distance = std::distance(begin(text), it);
+                windowValues.push_back(std::make_tuple(std::make_tuple(kmerHash, hashNext(itChunk)), distance, distance + this->kmerSize - 1));
+                hashNext(itRevChunk);
+            }
+            else
+            {
+                uint64_t distance = std::distance(begin(revComp), rcit);
+                windowValues.push_back(std::make_tuple(std::make_tuple(revcHash, hashNext(itRevChunk)), distance, distance + this->kmerSize - 1));
+                hashNext(itChunk);
+            }
+            ++it;
+            ++rcit;
+            ++itChunk;
+            ++itRevChunk;
+
+            auto max = *std::min_element(std::begin(windowValues), std::end(windowValues));
+            kmerHashes.push_back(hash(std::get<0>(max)));
+            minBegin.push_back(std::get<1>(max));
+            minEnd.push_back(std::get<2>(max));
+        }
+        this->resize(cacheKmerSize);
+        return kmerHashes;
+    }
+
+    template<typename TString>
+    inline std::vector<std::tuple<uint64_t, uint8_t>> getRawHash(TString & text)
+    {
+        if (this->kmerSize > seqan::length(text))
+            return std::vector<std::tuple<uint64_t, uint8_t>> {};
+        typedef ModifiedString<ModifiedString<TString, ModComplementDna>, ModReverse> TRC;
+        TRC revComp(text);
+        uint32_t possible = seqan::length(text) > windowSize ? seqan::length(text) - windowSize + 1 : 1;
+        uint32_t windowKmers = windowSize - this->kmerSize + 1;
+
+        decltype(BDHash::kmerShape) chunkShape;
+        decltype(BDHash::kmerShape) revChunkShape;
+        seqan::resize(chunkShape, this->significantPositions);
+        seqan::resize(revChunkShape, this->significantPositions);
+
+        uint16_t cacheKmerSize = this->kmerSize;
+        this->resize(this->kmerSize - this->significantPositions, windowSize);
+
+        std::vector<std::tuple<uint64_t, uint8_t>> kmerHashes;
+        kmerHashes.reserve(possible);
+        minBegin.reserve(possible);
+        minEnd.reserve(possible);
+
+        this->hashInit(begin(text));
+        revHashInit(begin(revComp));
+        auto it = begin(text);
+        auto rcit = begin(revComp);
+        auto itChunk = begin(text) + this->kmerSize;
+        auto itRevChunk = begin(revComp) + this->kmerSize;
+        if (this->significantPositions > 1)
+            seqan::hashInit(chunkShape, itChunk);
+        if (this->significantPositions > 1)
+            seqan::hashInit(revChunkShape, itRevChunk);
+        std::vector<std::tuple<std::tuple<uint64_t, uint8_t>, uint64_t, uint64_t>> windowValues;
+        windowValues.reserve(windowKmers);
+
+        for (uint32_t i = 0; i < windowKmers; ++i)
+        {
+            uint64_t kmerHash = this->hashNext(it);
+            uint64_t revcHash = revHashNext(rcit);
+            if (kmerHash <= revcHash)
+            {
+                uint64_t distance = std::distance(begin(text), it);
+                windowValues.push_back(std::make_tuple(std::make_tuple(kmerHash, hashNext(chunkShape, itChunk)), distance, distance + this->kmerSize - 1));
+                hashNext(revChunkShape, itRevChunk);
+            }
+            else
+            {
+                uint64_t distance = std::distance(begin(revComp), rcit);
+                windowValues.push_back(std::make_tuple(std::make_tuple(revcHash, hashNext(revChunkShape, itRevChunk)), distance, distance + this->kmerSize - 1));
+                hashNext(chunkShape, itChunk);
+            }
+            ++it;
+            ++rcit;
+            ++itChunk;
+            ++itRevChunk;
+        }
+
+        auto max = *std::min_element(std::begin(windowValues), std::end(windowValues));
+        kmerHashes.push_back(rawHash(std::get<0>(max)));
+        minBegin.push_back(std::get<1>(max));
+        minEnd.push_back(std::get<2>(max));
+
+        for (uint32_t i = 1; i < possible; ++i)
+        {
+            windowValues.erase(std::begin(windowValues));
+            uint64_t kmerHash = this->hashNext(it);
+            uint64_t revcHash = revHashNext(rcit);
+            if (kmerHash <= revcHash)
+            {
+                uint64_t distance = std::distance(begin(text), it);
+                windowValues.push_back(std::make_tuple(std::make_tuple(kmerHash, hashNext(chunkShape, itChunk)), distance, distance + this->kmerSize - 1));
+                hashNext(revChunkShape, itRevChunk);
+            }
+            else
+            {
+                uint64_t distance = std::distance(begin(revComp), rcit);
+                windowValues.push_back(std::make_tuple(std::make_tuple(revcHash, hashNext(revChunkShape, itRevChunk)), distance, distance + this->kmerSize - 1));
+                hashNext(chunkShape, itChunk);
+            }
+            ++it;
+            ++rcit;
+            ++itChunk;
+            ++itRevChunk;
+
+            auto max = *std::min_element(std::begin(windowValues), std::end(windowValues));
+            kmerHashes.push_back(rawHash(std::get<0>(max)));
+            minBegin.push_back(std::get<1>(max));
+            minEnd.push_back(std::get<2>(max));
+        }
+        this->resize(cacheKmerSize);
+        return kmerHashes;
+    }
+
+    inline uint32_t maxCoverage()
+    {
+        get_coverage();
+        return *std::max_element(coverage.begin(), coverage.end());
+    }
+
+    inline void get_coverage()
+    {
+        uint64_t bIndex{1};
+        uint64_t eIndex{0};
+        auto uMinEnd = minEnd;
+        uMinEnd.erase(unique(uMinEnd.begin(), uMinEnd.end()), uMinEnd.end());
+        auto uMinBegin = minBegin;
+        uMinBegin.erase(unique(uMinBegin.begin(), uMinBegin.end()), uMinBegin.end());
+        coverageBegin.push_back(uMinBegin[0]);
+        coverage.push_back(1);
+
+        while ((bIndex < uMinBegin.size() ) || (eIndex < uMinEnd.size()))
+        {
+            uint64_t begin = bIndex < uMinBegin.size() ? uMinBegin[bIndex] : 0xFFFFFFFFFFFFFFFFULL;
+            uint64_t end   = uMinEnd[eIndex];
+            // Overlap
+            if (begin < end)
+            {
+                coverageEnd.push_back(begin-1);
+                coverageBegin.push_back(begin);
+                coverage.push_back(coverage.back()+1);
+                ++bIndex;
+            }
+            // Flatten consecutive positions, where one kmer ends and other one starts
+            if (begin == end)
+            {
+                coverageEnd.push_back(begin-1);
+                coverageBegin.push_back(begin);
+                coverage.push_back(coverage.back()+1);
+                while (uMinBegin[bIndex] == uMinEnd[eIndex])
+                {
+                    ++bIndex;
+                    ++eIndex;
+                }
+                --eIndex;
+            }
+            // Kmer ends
+            if (end < begin)
+            {
+                coverageEnd.push_back(end);
+                coverageBegin.push_back(end+1);
+                coverage.push_back(coverage.back()-1);
+                ++eIndex;
+            }
+        }
+        coverageBegin.pop_back();
+        coverage.pop_back();
+    }
+};
+
 }   // namespace seqan
 
 
