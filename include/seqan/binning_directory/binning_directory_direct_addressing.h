@@ -295,6 +295,60 @@ public:
         }
     }
 
+    template<typename THashCount, typename TAnyString>
+    void count(std::vector<uint64_t> & counts, TAnyString const & text, uint32_t & threshold) const
+    {
+        BDHash<TValue, THashCount> shape;
+        shape.resize(kmerSize);
+        std::vector<uint64_t> kmerHashes = shape.getHash(text);
+
+        for (auto kmerHash : kmerHashes)
+        {
+            // Move to first bit representing the hash kmerHash for bin 0, the next bit would be for bin 1, and so on
+            kmerHash *= blockBitSize;
+
+            TNoOfBins binNo = 0;
+            for (TBinWidth batchNo = 0; batchNo < binWidth; ++batchNo)
+            {
+                binNo = batchNo * intSize;
+                // get_int(idx, len) returns the integer value of the binary string of length len starting
+                // at position idx, i.e. len+idx-1|_______|idx, Vector is right to left.
+                uint64_t tmp = bitvector.get_int(kmerHash, intSize);
+
+                // Behaviour for a bit shift with >= maximal size is undefined, i.e. shifting a 64 bit integer by 64
+                // positions is not defined and hence we need a special case for this.
+                if (tmp ^ (1ULL<<(intSize-1)))
+                {
+                    // As long as any bit is set
+                    while (tmp > 0)
+                    {
+                        // sdsl::bits::lo calculates the position of the rightmost 1-bit in
+                        // the 64bit integer x if it exists.
+                        // For example, for 8 = 1000 it would return 3
+                        uint64_t step = sdsl::bits::lo(tmp);
+                        // Adjust our bins
+                        binNo += step;
+                        // Remove up to next 1
+                        ++step;
+                        tmp >>= step;
+                        // Count
+                        ++counts[binNo];
+                        // ++binNo because step is 0-based, e.g., if we had a hit with the next bit we
+                        // would otherwise count it for binNo=+ 0
+                        ++binNo;
+                    }
+                }
+                else
+                {
+                    ++counts[binNo + intSize - 1];
+                }
+                // We will now start with the next batch if possible, so we need to shift the index.
+                kmerHash += intSize;
+            }
+        }
+        threshold = shape.get_threshold(length(text), threshold);
+    }
+
 
     /*!
      * \brief Adds all k-mers from a text to the IBF.
