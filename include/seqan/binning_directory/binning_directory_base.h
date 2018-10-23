@@ -376,6 +376,54 @@ inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> const &  me,
 
     return counts;
 }
+/// threshold
+template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString>
+inline void count(BinningDirectory<TSpec, TConfig> const &  me, std::vector<uint64_t> & counts, TAnyString const & text, uint32_t & threshold)
+{
+    typedef typename TConfig::THash THash;
+    if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
+    {
+        me.template count<THashCount>(counts, text, threshold);
+    }
+    else
+    {
+        me.template count<THash>(counts, text, threshold);
+    }
+}
+
+template<typename TSpec, typename TConfig, typename TAnyString>
+inline void count(BinningDirectory<TSpec, TConfig> const &  me, std::vector<uint64_t> & counts, TAnyString const & text, uint32_t & threshold)
+{
+    typedef typename TConfig::THash THash;
+    me.template count<THash>(counts, text, threshold);
+}
+
+template<typename TSpec, typename TConfig, typename TAnyString>
+inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, uint32_t & threshold)
+{
+    typedef typename TConfig::THash THash;
+    std::vector<uint64_t> counts(me.noOfBins, 0);
+    me.template count<THash>(counts, text, threshold);
+    return counts;
+}
+
+template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString>
+inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, uint32_t & threshold)
+{
+    typedef typename TConfig::THash THash;
+    std::vector<uint64_t> counts(me.noOfBins, 0);
+
+    if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
+    {
+        count<THashCount>(me, counts, text, threshold);
+    }
+    else
+    {
+        count<THash>(me, counts, text, threshold);
+    }
+
+    return counts;
+}
 
 /*!
  * \brief Tests for occurence in each bin given a text and count threshold.
@@ -384,10 +432,11 @@ inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> const &  me,
  * \param threshold Minimal count (>=) of containing k-mers to report bin as containing text.
  */
 template<typename TSpec, typename TConfig, typename TAnyString, typename TInt>
-inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<bool> & selected, TAnyString const & text, TInt && threshold)
+inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<bool> & selected, TAnyString const & text, TInt && errors)
 {
     std::vector<uint64_t> counts(me.noOfBins, 0);
-    count(me, counts, text);
+    uint32_t threshold{errors};
+    count(me, counts, text, threshold);
     for(TNoOfBins binNo=0; binNo < me.noOfBins; ++binNo)
     {
         if(counts[binNo] >= threshold)
@@ -396,26 +445,27 @@ inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<boo
 }
 
 template<typename TSpec, typename TConfig, typename TAnyString, typename TInt>
-inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && threshold)
+inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && errors)
 {
     std::vector<bool> selected(me.noOfBins, 0);
-    select(me, selected, text, threshold);
+    select(me, selected, text, errors);
     return selected;
 }
 
 template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt>
-inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && threshold)
+inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && errors)
 {
    typedef typename TConfig::THash THash;
    std::vector<uint64_t> counts(me.noOfBins, 0);
+   uint32_t threshold{errors};
 
    if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
    {
-       count<THashCount>(me, counts, text);
+       count<THashCount>(me, counts, text, threshold);
    }
    else
    {
-       count<THash>(me, counts, text);
+       count<THash>(me, counts, text, threshold);
    }
    std::vector<bool> selected(me.noOfBins, 0);
    for(TNoOfBins binNo=0; binNo < me.noOfBins; ++binNo)
@@ -428,18 +478,19 @@ inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TA
 }
 
 template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt>
-inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<bool> & selected, TAnyString const & text, TInt && threshold)
+inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<bool> & selected, TAnyString const & text, TInt && errors)
 {
    typedef typename TConfig::THash THash;
    std::vector<uint64_t> counts(me.noOfBins, 0);
+   uint32_t threshold{errors};
 
    if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
    {
-       count<THashCount>(me, counts, text);
+       count<THashCount>(me, counts, text, threshold);
    }
    else
    {
-       count<THash>(me, counts, text);
+       count<THash>(me, counts, text, threshold);
    }
    for(TNoOfBins binNo=0; binNo < me.noOfBins; ++binNo)
    {

@@ -70,6 +70,11 @@ public:
         return seqan::length(kmerShape);
     }
 
+    inline uint32_t get_threshold(uint32_t t, uint16_t e)
+    {
+        return std::max(0, (t - kmerSize * (1+e) + 1));
+    }
+
     template<typename TString>
     inline std::vector<uint64_t> getHash(TString const & text)
     {
@@ -126,6 +131,11 @@ public:
     inline auto length()
     {
         return seqan::length(kmerShape);
+    }
+
+    inline uint32_t get_threshold(uint32_t t, uint16_t e)
+    {
+        return std::max(0, std::floor((t - kmerSize * (1 + e) + 1)/o));
     }
 
     template<typename TString>
@@ -301,10 +311,10 @@ public:
         return kmerHashes;
     }
 
-    inline uint32_t maxCoverage()
+    inline uint32_t get_threshold(uint32_t t, uint16_t e)
     {
         get_coverage();
-        return *std::max_element(coverage.begin(), coverage.end());
+        return std::max(0, (t - *std::max_element(coverage.begin(), coverage.end()) * (1+e) + 1));
     }
 
     inline void get_coverage()
