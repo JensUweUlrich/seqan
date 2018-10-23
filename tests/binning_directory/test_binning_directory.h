@@ -67,7 +67,8 @@ using namespace seqan;
 typedef
     TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Normal,     Uncompressed> >,
     TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Offset<1>,  Uncompressed> >,
-    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Normal,     Compressed> > > > >
+    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Minimizer<3,4>,  Uncompressed> >,
+    TagList<BinningDirectory<InterleavedBloomFilter,    BDConfig<Dna,   Normal,     Compressed> > > > > >
     BinningDirectoriesIBF;
 
 typedef
