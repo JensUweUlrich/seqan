@@ -528,14 +528,20 @@ public:
             ++rcit;
         }
 
-        auto max = *std::min_element(std::begin(windowValues), std::end(windowValues));
-        kmerHashes.push_back(hash(std::get<0>(max)));
-        minBegin.push_back(std::get<1>(max));
-        minEnd.push_back(std::get<2>(max));
+        auto min = std::min_element(std::begin(windowValues), std::end(windowValues));
+        kmerHashes.push_back(hash(std::get<0>(*min)));
+        minBegin.push_back(std::get<1>(*min));
+        minEnd.push_back(std::get<2>(*min));
 
         for (uint32_t i = 1; i < possible; ++i)
         {
-            windowValues.pop_front();
+            if (min == std::begin(windowValues))
+            {
+                windowValues.pop_front();
+                min = std::min_element(std::begin(windowValues), std::end(windowValues));
+            }
+            else
+                windowValues.pop_front();
             uint64_t kmerHash = this->hashNext(it);
             uint64_t revcHash = revHashNext(rcit);
             if (kmerHash <= revcHash)
@@ -551,10 +557,12 @@ public:
             ++it;
             ++rcit;
 
-            auto max = *std::min_element(std::begin(windowValues), std::end(windowValues));
-            kmerHashes.push_back(hash(std::get<0>(max)));
-            minBegin.push_back(std::get<1>(max));
-            minEnd.push_back(std::get<2>(max));
+            if (std::get<0>(windowValues.back()) < std::get<0>(*min))
+                min = std::end(windowValues) - 1;
+
+            kmerHashes.push_back(hash(std::get<0>(*min)));
+            minBegin.push_back(std::get<1>(*min));
+            minEnd.push_back(std::get<2>(*min));
         }
         return kmerHashes;
     }
@@ -598,14 +606,20 @@ public:
             ++rcit;
         }
 
-        auto max = *std::min_element(std::begin(windowValues), std::end(windowValues));
-        kmerHashes.push_back(rawHash(std::get<0>(max)));
-        minBegin.push_back(std::get<1>(max));
-        minEnd.push_back(std::get<2>(max));
+        auto min = std::min_element(std::begin(windowValues), std::end(windowValues));
+        kmerHashes.push_back(std::get<0>(*min));
+        minBegin.push_back(std::get<1>(*min));
+        minEnd.push_back(std::get<2>(*min));
 
         for (uint32_t i = 1; i < possible; ++i)
         {
-            windowValues.pop_front();
+            if (min == std::begin(windowValues))
+            {
+                windowValues.pop_front();
+                min = std::min_element(std::begin(windowValues), std::end(windowValues));
+            }
+            else
+                windowValues.pop_front();
             uint64_t kmerHash = this->hashNext(it);
             uint64_t revcHash = revHashNext(rcit);
             if (kmerHash <= revcHash)
@@ -621,10 +635,12 @@ public:
             ++it;
             ++rcit;
 
-            auto max = *std::min_element(std::begin(windowValues), std::end(windowValues));
-            kmerHashes.push_back(rawHash(std::get<0>(max)));
-            minBegin.push_back(std::get<1>(max));
-            minEnd.push_back(std::get<2>(max));
+            if (std::get<0>(windowValues.back()) < std::get<0>(*min))
+               min = std::end(windowValues) - 1;
+
+            kmerHashes.push_back(std::get<0>(*min));
+            minBegin.push_back(std::get<1>(*min));
+            minEnd.push_back(std::get<2>(*min));
         }
         return kmerHashes;
     }
@@ -786,14 +802,20 @@ public:
             ++itRevChunk;
         }
 
-        auto max = *std::min_element(std::begin(windowValues), std::end(windowValues));
-        kmerHashes.push_back(hash(std::get<0>(max)));
-        minBegin.push_back(std::get<1>(max));
-        minEnd.push_back(std::get<2>(max));
+        auto min = std::min_element(std::begin(windowValues), std::end(windowValues));
+        kmerHashes.push_back(std::get<0>(*min));
+        minBegin.push_back(std::get<1>(*min));
+        minEnd.push_back(std::get<2>(*min));
 
         for (uint32_t i = 1; i < possible; ++i)
         {
-            windowValues.pop_front();
+            if (min == std::begin(windowValues))
+            {
+                windowValues.pop_front();
+                min = std::min_element(std::begin(windowValues), std::end(windowValues));
+            }
+            else
+                windowValues.pop_front();
             uint64_t kmerHash = this->hashNext(it);
             uint64_t revcHash = revHashNext(rcit);
             if (kmerHash <= revcHash)
@@ -813,10 +835,13 @@ public:
             ++itChunk;
             ++itRevChunk;
 
-            auto max = *std::min_element(std::begin(windowValues), std::end(windowValues));
-            kmerHashes.push_back(hash(std::get<0>(max)));
-            minBegin.push_back(std::get<1>(max));
-            minEnd.push_back(std::get<2>(max));
+            if (std::get<0>(windowValues.back()) < std::get<0>(*min))
+                min = std::end(windowValues) - 1;
+
+            kmerHashes.push_back(std::get<0>(*min));
+            minBegin.push_back(std::get<1>(*min));
+            minEnd.push_back(std::get<2>(*min));
+        }
         }
         this->resize(cacheKmerSize);
         return kmerHashes;
@@ -879,14 +904,20 @@ public:
             ++itRevChunk;
         }
 
-        auto max = *std::min_element(std::begin(windowValues), std::end(windowValues));
-        kmerHashes.push_back(rawHash(std::get<0>(max)));
-        minBegin.push_back(std::get<1>(max));
-        minEnd.push_back(std::get<2>(max));
+        auto min = std::min_element(std::begin(windowValues), std::end(windowValues));
+        kmerHashes.push_back(std::get<0>(*min));
+        minBegin.push_back(std::get<1>(*min));
+        minEnd.push_back(std::get<2>(*min));
 
         for (uint32_t i = 1; i < possible; ++i)
         {
-            windowValues.pop_front();
+            if (min == std::begin(windowValues))
+            {
+                windowValues.pop_front();
+                min = std::min_element(std::begin(windowValues), std::end(windowValues));
+            }
+            else
+                windowValues.pop_front();
             uint64_t kmerHash = this->hashNext(it);
             uint64_t revcHash = revHashNext(rcit);
             if (kmerHash <= revcHash)
@@ -906,10 +937,12 @@ public:
             ++itChunk;
             ++itRevChunk;
 
-            auto max = *std::min_element(std::begin(windowValues), std::end(windowValues));
-            kmerHashes.push_back(rawHash(std::get<0>(max)));
-            minBegin.push_back(std::get<1>(max));
-            minEnd.push_back(std::get<2>(max));
+            if (std::get<0>(windowValues.back()) < std::get<0>(*min))
+                min = std::end(windowValues) - 1;
+
+            kmerHashes.push_back(std::get<0>(*min));
+            minBegin.push_back(std::get<1>(*min));
+            minEnd.push_back(std::get<2>(*min));
         }
         this->resize(cacheKmerSize);
         return kmerHashes;
