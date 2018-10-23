@@ -44,6 +44,7 @@ template<typename TValue, typename TChunks>
 struct BDHashBase
 {
 public:
+    static constexpr uint64_t seed{0x8F3F73B5CF1C9ADE};
     uint8_t chunks{TChunks::VALUE};
     std::vector<uint8_t> chunkMap{0};
     Shape<TValue, SimpleShape> kmerShape;
@@ -479,14 +480,14 @@ public:
         return seqan::hashNext(revCompShape, it);
     }
 
-    inline uint64_t hash(uint64_t & h)
+    inline uint64_t hash(uint64_t & h) // incoming original hash without xor!
     {
-        return (h >> this->significantBits) + this->chunkMap[(h & (this->effectiveChunks - 1))] * this->chunkOffset;
+        return ((h ^ this->seed) >> this->significantBits) + this->chunkMap[(h & (this->effectiveChunks - 1))] * this->chunkOffset;
     }
 
     inline std::tuple<uint64_t, uint8_t> rawHash(uint64_t & h)
     {
-        return std::make_tuple(h >> this->significantBits, this->chunkMap[(h & (this->effectiveChunks - 1))]);
+        return std::make_tuple((h ^ this->seed) >> this->significantBits, this->chunkMap[(h & (this->effectiveChunks - 1))]);
     }
 
     template<typename TString>
@@ -514,7 +515,7 @@ public:
         {
             uint64_t kmerHash = this->hashNext(it);
             uint64_t revcHash = revHashNext(rcit);
-            if (kmerHash <= revcHash)
+            if (kmerHash ^ this->seed <= revcHash ^ this->seed)
             {
                 uint64_t distance = std::distance(begin(text), it);
                 windowValues.push_back(std::make_tuple(kmerHash, distance, distance + this->kmerSize - 1));
@@ -544,7 +545,7 @@ public:
                 windowValues.pop_front();
             uint64_t kmerHash = this->hashNext(it);
             uint64_t revcHash = revHashNext(rcit);
-            if (kmerHash <= revcHash)
+            if (kmerHash ^ this->seed <= revcHash ^ this->seed)
             {
                 uint64_t distance = std::distance(begin(text), it);
                 windowValues.push_back(std::make_tuple(kmerHash, distance, distance + this->kmerSize - 1));
@@ -592,7 +593,7 @@ public:
         {
             uint64_t kmerHash = this->hashNext(it);
             uint64_t revcHash = revHashNext(rcit);
-            if (kmerHash <= revcHash)
+            if (kmerHash ^ this->seed <= revcHash ^ this->seed)
             {
                 uint64_t distance = std::distance(begin(text), it);
                 windowValues.push_back(std::make_tuple(kmerHash, distance, distance + this->kmerSize - 1));
@@ -607,7 +608,7 @@ public:
         }
 
         auto min = std::min_element(std::begin(windowValues), std::end(windowValues));
-        kmerHashes.push_back(std::get<0>(*min));
+        kmerHashes.push_back(rawHash(std::get<0>(*min)));
         minBegin.push_back(std::get<1>(*min));
         minEnd.push_back(std::get<2>(*min));
 
@@ -622,7 +623,7 @@ public:
                 windowValues.pop_front();
             uint64_t kmerHash = this->hashNext(it);
             uint64_t revcHash = revHashNext(rcit);
-            if (kmerHash <= revcHash)
+            if (kmerHash ^ this->seed <= revcHash ^ this->seed)
             {
                 uint64_t distance = std::distance(begin(text), it);
                 windowValues.push_back(std::make_tuple(kmerHash, distance, distance + this->kmerSize - 1));
@@ -638,7 +639,7 @@ public:
             if (std::get<0>(windowValues.back()) < std::get<0>(*min))
                min = std::end(windowValues) - 1;
 
-            kmerHashes.push_back(std::get<0>(*min));
+            kmerHashes.push_back(rawHash(std::get<0>(*min)));
             minBegin.push_back(std::get<1>(*min));
             minEnd.push_back(std::get<2>(*min));
         }
@@ -782,8 +783,8 @@ public:
 
         for (uint32_t i = 0; i < windowKmers; ++i)
         {
-            uint64_t kmerHash = this->hashNext(it);
-            uint64_t revcHash = revHashNext(rcit);
+            uint64_t kmerHash = this->hashNext(it) ^ this->seed;
+            uint64_t revcHash = revHashNext(rcit) ^ this->seed;
             if (kmerHash <= revcHash)
             {
                 uint64_t distance = std::distance(begin(text), it);
@@ -803,7 +804,7 @@ public:
         }
 
         auto min = std::min_element(std::begin(windowValues), std::end(windowValues));
-        kmerHashes.push_back(std::get<0>(*min));
+        kmerHashes.push_back(hash(std::get<0>(*min)));
         minBegin.push_back(std::get<1>(*min));
         minEnd.push_back(std::get<2>(*min));
 
@@ -816,8 +817,8 @@ public:
             }
             else
                 windowValues.pop_front();
-            uint64_t kmerHash = this->hashNext(it);
-            uint64_t revcHash = revHashNext(rcit);
+            uint64_t kmerHash = this->hashNext(it) ^ this->seed;
+            uint64_t revcHash = revHashNext(rcit) ^ this->seed;
             if (kmerHash <= revcHash)
             {
                 uint64_t distance = std::distance(begin(text), it);
@@ -838,10 +839,9 @@ public:
             if (std::get<0>(windowValues.back()) < std::get<0>(*min))
                 min = std::end(windowValues) - 1;
 
-            kmerHashes.push_back(std::get<0>(*min));
+            kmerHashes.push_back(hash(std::get<0>(*min)));
             minBegin.push_back(std::get<1>(*min));
             minEnd.push_back(std::get<2>(*min));
-        }
         }
         this->resize(cacheKmerSize);
         return kmerHashes;
@@ -884,8 +884,8 @@ public:
 
         for (uint32_t i = 0; i < windowKmers; ++i)
         {
-            uint64_t kmerHash = this->hashNext(it);
-            uint64_t revcHash = revHashNext(rcit);
+            uint64_t kmerHash = this->hashNext(it) ^ this->seed;
+            uint64_t revcHash = revHashNext(rcit) ^ this->seed;
             if (kmerHash <= revcHash)
             {
                 uint64_t distance = std::distance(begin(text), it);
@@ -905,7 +905,7 @@ public:
         }
 
         auto min = std::min_element(std::begin(windowValues), std::end(windowValues));
-        kmerHashes.push_back(std::get<0>(*min));
+        kmerHashes.push_back(rawHash(std::get<0>(*min)));
         minBegin.push_back(std::get<1>(*min));
         minEnd.push_back(std::get<2>(*min));
 
@@ -918,8 +918,8 @@ public:
             }
             else
                 windowValues.pop_front();
-            uint64_t kmerHash = this->hashNext(it);
-            uint64_t revcHash = revHashNext(rcit);
+            uint64_t kmerHash = this->hashNext(it) ^ this->seed;
+            uint64_t revcHash = revHashNext(rcit) ^ this->seed;
             if (kmerHash <= revcHash)
             {
                 uint64_t distance = std::distance(begin(text), it);
@@ -940,7 +940,7 @@ public:
             if (std::get<0>(windowValues.back()) < std::get<0>(*min))
                 min = std::end(windowValues) - 1;
 
-            kmerHashes.push_back(std::get<0>(*min));
+            kmerHashes.push_back(rawHash(std::get<0>(*min)));
             minBegin.push_back(std::get<1>(*min));
             minEnd.push_back(std::get<2>(*min));
         }

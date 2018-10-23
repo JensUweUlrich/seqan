@@ -52,9 +52,8 @@ typedef
 
 typedef
     TagList<BinningDirectory<DirectAddressing,          BDConfig<Dna,   Normal<6>,     Uncompressed> >,
-    TagList<BinningDirectory<DirectAddressing,          BDConfig<Dna,   Minimizer<6,8>,     Uncompressed> >,
     TagList<BinningDirectory<DirectAddressing,          BDConfig<Dna,   Offset<6,1>,  Compressed> >,
-    TagList<BinningDirectory<DirectAddressing,          BDConfig<Dna,   Normal<6>,     CompressedDisk> > > > > >
+    TagList<BinningDirectory<DirectAddressing,          BDConfig<Dna,   Normal<6>,     CompressedDisk> > > > >
     BinningDirectoriesDA;
 
 typedef
