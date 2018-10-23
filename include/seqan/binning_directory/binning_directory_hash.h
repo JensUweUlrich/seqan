@@ -72,7 +72,8 @@ public:
 
     inline uint32_t get_threshold(uint32_t t, uint16_t e)
     {
-        return std::max(0, (t - kmerSize * (1+e) + 1));
+        uint32_t threshold = (t - kmerSize * (1+e) + 1);
+        return threshold > 0 ? threshold : 0;
     }
 
     template<typename TString>
@@ -135,7 +136,8 @@ public:
 
     inline uint32_t get_threshold(uint32_t t, uint16_t e)
     {
-        return std::max(0, std::floor((t - kmerSize * (1 + e) + 1)/o));
+        uint32_t threshold = std::floor((t - kmerSize * (1 + e) + 1)/o);
+        return threshold > 0 ? threshold : 0;
     }
 
     template<typename TString>
@@ -314,7 +316,8 @@ public:
     inline uint32_t get_threshold(uint32_t t, uint16_t e)
     {
         get_coverage();
-        return std::max(0, (t - *std::max_element(coverage.begin(), coverage.end()) * (1+e) + 1));
+        uint32_t threshold = (t - *std::max_element(coverage.begin(), coverage.end()) * (1+e) + 1);
+        return threshold > 0 ? threshold : 0;
     }
 
     inline void get_coverage()
