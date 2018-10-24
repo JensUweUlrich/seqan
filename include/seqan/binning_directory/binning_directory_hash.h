@@ -97,7 +97,8 @@ public:
                 kmerHashes[i] = hashNext(it);
                 ++it;
             }
-
+            std::sort(std::begin(kmerHashes), std::end(kmerHashes));
+            kmerHashes.erase(std::unique(std::begin(kmerHashes), std::end(kmerHashes)), std::end(kmerHashes));
             return kmerHashes;
         }
     }
@@ -178,7 +179,8 @@ public:
                 }
                 ++it;
             }
-
+            std::sort(std::begin(kmerHashes), std::end(kmerHashes));
+            kmerHashes.erase(std::unique(std::begin(kmerHashes), std::end(kmerHashes)), std::end(kmerHashes));
             return kmerHashes;
         }
     }
@@ -310,6 +312,8 @@ public:
             minBegin.push_back(std::get<1>(*min));
             minEnd.push_back(std::get<2>(*min));
         }
+        std::sort(std::begin(kmerHashes), std::end(kmerHashes));
+        kmerHashes.erase(std::unique(std::begin(kmerHashes), std::end(kmerHashes)), std::end(kmerHashes));
         return kmerHashes;
     }
 
@@ -324,17 +328,16 @@ public:
     {
         uint64_t bIndex{1};
         uint64_t eIndex{0};
-        auto uMinEnd = minEnd;
-        uMinEnd.erase(unique(uMinEnd.begin(), uMinEnd.end()), uMinEnd.end());
-        auto uMinBegin = minBegin;
-        uMinBegin.erase(unique(uMinBegin.begin(), uMinBegin.end()), uMinBegin.end());
-        coverageBegin.push_back(uMinBegin[0]);
+        coverageBegin.push_back(minBegin[0]);
         coverage.push_back(1);
 
-        while ((bIndex < uMinBegin.size() ) || (eIndex < uMinEnd.size()))
+        minBegin.erase(std::unique(std::begin(minBegin), std::end(minBegin)), std::end(minBegin));
+        minEnd.erase(std::unique(std::begin(minEnd), std::end(minEnd)), std::end(minEnd));
+
+        while ((bIndex < minBegin.size() ) || (eIndex < minEnd.size()))
         {
-            uint64_t begin = bIndex < uMinBegin.size() ? uMinBegin[bIndex] : 0xFFFFFFFFFFFFFFFFULL;
-            uint64_t end   = uMinEnd[eIndex];
+            uint64_t begin = bIndex < minBegin.size() ? minBegin[bIndex] : 0xFFFFFFFFFFFFFFFFULL;
+            uint64_t end   = minEnd[eIndex];
             // Overlap
             if (begin < end)
             {
@@ -349,7 +352,7 @@ public:
                 coverageEnd.push_back(begin-1);
                 coverageBegin.push_back(begin);
                 coverage.push_back(coverage.back()+1);
-                while (uMinBegin[bIndex] == uMinEnd[eIndex])
+                while (minBegin[bIndex] == minEnd[eIndex])
                 {
                     ++bIndex;
                     ++eIndex;
