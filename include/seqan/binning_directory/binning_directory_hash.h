@@ -321,7 +321,13 @@ public:
     {
         get_coverage();
         (void) t;
-        uint32_t destroyed = *std::max_element(coverage.begin(), coverage.end()) * e;
+        uint32_t destroyed{0};
+        for (uint16_t i = 0; i < e; ++i)
+        {
+            auto max = std::max_element(coverage.begin(), coverage.end());
+            destroyed += *max;
+            *max = 0;
+        }
         return destroyed > minBegin.size() > 0 ? 0 : minBegin.size() - destroyed;
     }
 
