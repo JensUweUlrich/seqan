@@ -97,7 +97,7 @@ public:
                 kmerHashes[i] = hashNext(it);
                 ++it;
             }
-            std::sort(std::begin(kmerHashes), std::end(kmerHashes));
+            // std::sort(std::begin(kmerHashes), std::end(kmerHashes));
             kmerHashes.erase(std::unique(std::begin(kmerHashes), std::end(kmerHashes)), std::end(kmerHashes));
             return kmerHashes;
         }
@@ -179,7 +179,7 @@ public:
                 }
                 ++it;
             }
-            std::sort(std::begin(kmerHashes), std::end(kmerHashes));
+            // std::sort(std::begin(kmerHashes), std::end(kmerHashes));
             kmerHashes.erase(std::unique(std::begin(kmerHashes), std::end(kmerHashes)), std::end(kmerHashes));
             return kmerHashes;
         }
@@ -312,7 +312,7 @@ public:
             minBegin.push_back(std::get<1>(*min));
             minEnd.push_back(std::get<2>(*min));
         }
-        std::sort(std::begin(kmerHashes), std::end(kmerHashes));
+        // std::sort(std::begin(kmerHashes), std::end(kmerHashes));
         kmerHashes.erase(std::unique(std::begin(kmerHashes), std::end(kmerHashes)), std::end(kmerHashes));
         return kmerHashes;
     }
@@ -320,7 +320,8 @@ public:
     inline uint32_t get_threshold(uint32_t t, uint16_t e)
     {
         get_coverage();
-        uint32_t threshold = (t - *std::max_element(coverage.begin(), coverage.end()) * (1+e) + 1);
+        (void) t;
+        uint32_t threshold = minBegin.size() - *std::max_element(coverage.begin(), coverage.end()) * e;
         return threshold > 0 ? threshold : 0;
     }
 
