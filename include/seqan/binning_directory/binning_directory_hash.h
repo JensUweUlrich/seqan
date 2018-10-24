@@ -321,8 +321,8 @@ public:
     {
         get_coverage();
         (void) t;
-        uint32_t threshold = minBegin.size() - *std::max_element(coverage.begin(), coverage.end()) * e;
-        return threshold > 0 ? threshold : 0;
+        uint32_t destroyed = *std::max_element(coverage.begin(), coverage.end()) * e;
+        return destroyed > minBegin.size() > 0 ? 0 : minBegin.size() - destroyed;
     }
 
     inline void get_coverage()
