@@ -262,15 +262,14 @@ public:
         {
             uint64_t kmerHash = hashNext(it) ^ seed;
             uint64_t revcHash = revHashNext(rcit) ^ seed;
+            uint64_t distance = std::distance(begin(text), it);
             if (kmerHash <= revcHash)
             {
-                uint64_t distance = std::distance(begin(text), it);
-                windowValues.push_back(std::make_tuple(kmerHash, distance, distance + kmerSize - 1));
+                windowValues.push_back(std::make_tuple(kmerHash, distance, distance + k - 1));
             }
             else
             {
-                uint64_t distance = std::distance(begin(revComp), rcit);
-                windowValues.push_back(std::make_tuple(revcHash, distance, distance + kmerSize - 1));
+                windowValues.push_back(std::make_tuple(revcHash, distance, distance + k - 1));
             }
             ++it;
             ++rcit;
@@ -290,17 +289,17 @@ public:
             }
             else
                 windowValues.pop_front();
+
             uint64_t kmerHash = hashNext(it) ^ seed;
             uint64_t revcHash = revHashNext(rcit) ^ seed;
+            uint64_t distance = std::distance(begin(text), it);
             if (kmerHash <= revcHash)
             {
-                uint64_t distance = std::distance(begin(text), it);
-                windowValues.push_back(std::make_tuple(kmerHash, distance, distance + kmerSize - 1));
+                windowValues.push_back(std::make_tuple(kmerHash, distance, distance + k - 1));
             }
             else
             {
-                uint64_t distance = std::distance(begin(revComp), rcit);
-                windowValues.push_back(std::make_tuple(revcHash, distance, distance + kmerSize - 1));
+                windowValues.push_back(std::make_tuple(revcHash, distance, distance + k - 1));
             }
             ++it;
             ++rcit;
@@ -323,7 +322,7 @@ public:
         uint32_t destroyed{0};
         minBegin.erase(std::unique(std::begin(minBegin), std::end(minBegin)), std::end(minBegin));
         uint32_t available{static_cast<uint32_t>(minBegin.size())};
-        destroyed += e;
+        // destroyed += e;
 
         for (uint16_t i = 0; i < e; ++i)
         {
