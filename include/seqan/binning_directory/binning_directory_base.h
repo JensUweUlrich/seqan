@@ -431,12 +431,13 @@ inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> const &  me,
  * \param text Text to count occurences for.
  * \param threshold Minimal count (>=) of containing k-mers to report bin as containing text.
  */
-template<typename TSpec, typename TConfig, typename TAnyString, typename TInt>
-inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<bool> & selected, TAnyString const & text, TInt && errors)
+template<typename TSpec, typename TConfig, typename TAnyString, typename TInt, typename TPenalty>
+inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<bool> & selected, TAnyString const & text, TInt && errors, TPenalty && penalty)
 {
     std::vector<uint64_t> counts(me.noOfBins, 0);
     uint32_t threshold{errors};
     count(me, counts, text, threshold);
+    threshold = threshold > penalty ? threshold - penalty : 0;
     for(TNoOfBins binNo=0; binNo < me.noOfBins; ++binNo)
     {
         if(counts[binNo] >= threshold)
@@ -444,16 +445,16 @@ inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<boo
     }
 }
 
-template<typename TSpec, typename TConfig, typename TAnyString, typename TInt>
-inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && errors)
+template<typename TSpec, typename TConfig, typename TAnyString, typename TInt, typename TPenalty>
+inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && errors, TPenalty && penalty)
 {
     std::vector<bool> selected(me.noOfBins, 0);
-    select(me, selected, text, errors);
+    select(me, selected, text, errors, penalty);
     return selected;
 }
 
-template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt>
-inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && errors)
+template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt, typename TPenalty>
+inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && errors, TPenalty && penalty)
 {
    typedef typename TConfig::THash THash;
    std::vector<uint64_t> counts(me.noOfBins, 0);
@@ -468,6 +469,7 @@ inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TA
        count<THash>(me, counts, text, threshold);
    }
    std::vector<bool> selected(me.noOfBins, 0);
+   threshold = threshold > penalty ? threshold - penalty : 0;
    for(TNoOfBins binNo=0; binNo < me.noOfBins; ++binNo)
    {
        if(counts[binNo] >= threshold)
@@ -477,8 +479,8 @@ inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TA
    return selected;
 }
 
-template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt>
-inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<bool> & selected, TAnyString const & text, TInt && errors)
+template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt, typename TPenalty>
+inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<bool> & selected, TAnyString const & text, TInt && errors, TPenalty && penalty)
 {
    typedef typename TConfig::THash THash;
    std::vector<uint64_t> counts(me.noOfBins, 0);
@@ -492,6 +494,7 @@ inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<boo
    {
        count<THash>(me, counts, text, threshold);
    }
+   threshold = threshold > penalty ? threshold - penalty : 0;
    for(TNoOfBins binNo=0; binNo < me.noOfBins; ++binNo)
    {
        if(counts[binNo] >= threshold)
