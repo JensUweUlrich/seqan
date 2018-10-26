@@ -322,7 +322,7 @@ public:
         uint32_t destroyed{0};
         minBegin.erase(std::unique(std::begin(minBegin), std::end(minBegin)), std::end(minBegin));
         uint32_t available{static_cast<uint32_t>(minBegin.size())};
-        // destroyed += e;
+        destroyed += e;
 
         for (uint16_t i = 0; i < e; ++i)
         {
