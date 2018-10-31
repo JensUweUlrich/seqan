@@ -47,7 +47,7 @@ public:
     Shape<TValue, SimpleShape> kmerShape;
     uint16_t kmerSize{0};
 
-    inline void resize(TKmerSize newKmerSize)
+    inline void resize(TKmerSize newKmerSize, uint32_t)
     {
         kmerSize = newKmerSize;
         seqan::resize(kmerShape, kmerSize);
@@ -112,7 +112,7 @@ public:
     uint16_t offset = o;
     uint16_t kmerSize{0};
 
-    inline void resize(TKmerSize newKmerSize)
+    inline void resize(TKmerSize newKmerSize, uint32_t)
     {
         kmerSize = newKmerSize;
         seqan::resize(kmerShape, kmerSize);

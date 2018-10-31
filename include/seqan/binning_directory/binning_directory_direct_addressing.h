@@ -85,6 +85,8 @@ public:
     TNoOfBins        noOfBins;
     //!\brief The k-mer size.
     TKmerSize        kmerSize;
+    //!\brief The window size.
+    TWindowSize      windowSize;
     //!\brief The size of the bit vector.
     TNoOfBits        noOfBits;
     //!\brief The number of possible hash values that can fit into a single block.
@@ -130,6 +132,10 @@ public:
         kmerSize(kmer_size),
         bitvector(n_bins, ipow(ValueSize<TValue>::VALUE, kmerSize) * std::ceil((double)noOfBins / intSize) * intSize)
     {
+        if (is_minimizer<THash>::value)
+            windowSize = THash::WINDOWSIZE;
+        else
+            windowSize = kmerSize;
         init();
     }
 
@@ -246,7 +252,7 @@ public:
     void count(std::vector<uint64_t> & counts, TAnyString const & text) const
     {
         BDHash<TValue, THashCount> shape;
-        shape.resize(kmerSize);
+        shape.resize(kmerSize, windowSize);
         std::vector<uint64_t> kmerHashes = shape.getHash(text);
 
         for (auto kmerHash : kmerHashes)
@@ -299,7 +305,7 @@ public:
     void count(std::vector<uint64_t> & counts, TAnyString const & text, uint32_t & threshold) const
     {
         BDHash<TValue, THashCount> shape;
-        shape.resize(kmerSize);
+        shape.resize(kmerSize, windowSize);
         std::vector<uint64_t> kmerHashes = shape.getHash(text);
 
         for (auto kmerHash : kmerHashes)
@@ -371,7 +377,7 @@ public:
     inline void insertKmer(TString const & text, TNoOfBins binNo)
     {
         BDHash<TValue, THashInsert> shape;
-        shape.resize(kmerSize);
+        shape.resize(kmerSize, windowSize);
         std::vector<uint64_t> kmerHashes = shape.getHash(text);
 
         for (auto kmerHash : kmerHashes)

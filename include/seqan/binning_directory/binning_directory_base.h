@@ -132,14 +132,24 @@ struct BDHash;
 template<uint16_t>
 struct Offset;
 
-template<uint16_t, uint32_t>
-struct Minimizer;
+template<uint16_t k, uint32_t w>
+struct Minimizer
+{
+    static const uint16_t KMERSIZE = k;
+    static const uint32_t WINDOWSIZE = w;
+};
 
 template<typename>
 struct is_offset : std::false_type {};
 
 template<uint16_t o>
 struct is_offset<Offset<o>> : std::true_type {};
+
+template<typename>
+struct is_minimizer : std::false_type {};
+
+template<uint16_t k, uint32_t w>
+struct is_minimizer<Minimizer<k, w>> : std::true_type {};
 
 // --------------------------------------------------------------------------
 // Class BinningDirectory
@@ -167,6 +177,7 @@ struct Value<BinningDirectory<TSpec, TConfig> >
 {
     typedef uint32_t noOfBins;
     typedef uint16_t kmerSize;
+    typedef uint16_t windowSize;
     typedef uint64_t noOfBits;
     typedef uint64_t noOfBlocks;
     typedef uint32_t binWidth;
@@ -181,6 +192,7 @@ struct Value<BinningDirectory<TSpec, TConfig> >
 
 typedef uint32_t TNoOfBins;
 typedef uint16_t TKmerSize;
+typedef uint16_t TWindowSize;
 typedef uint64_t TNoOfBits;
 typedef uint64_t TNoOfBlocks;
 typedef uint32_t TBinWidth;
