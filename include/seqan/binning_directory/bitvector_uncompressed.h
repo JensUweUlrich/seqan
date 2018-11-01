@@ -158,6 +158,7 @@ struct Bitvector<Uncompressed> : BitvectorBase
         TBlockBitSize delta = newBlockBitSize - blockBitSize + 1;
         if (delta == 1)
         {
+            noOfBins = bins;
             return;
         }
         uncompressed_vector.reset(new sdsl::bit_vector(newNoOfBits+FILTER_METADATA_SIZE,0));
