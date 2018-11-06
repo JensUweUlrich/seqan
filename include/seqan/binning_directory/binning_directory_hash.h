@@ -237,11 +237,18 @@ public:
     }
 
     template<typename TString>
-    inline std::vector<uint64_t> getHash(TString & text) // TODO cannot be const for ModifiedString
+    inline std::vector<uint64_t> getHash(TString const & text)
     {
+        String<TValue> s = text;
+        return getHash(s);
+    }
+
+    inline std::vector<uint64_t> getHash(String<TValue> const & text)
+    {
+        typedef String<TValue> TString;
         if (kmerSize > seqan::length(text))
             return std::vector<uint64_t> {};
-        typedef ModifiedString<ModifiedString<TString, ModComplementDna>, ModReverse> TRC;
+        typedef ModifiedString<ModifiedString<TString const, ModView<FunctorComplement<TValue>>>, ModReverse> TRC;
         TRC revComp(text);
         uint32_t possible = seqan::length(text) > windowSize ? seqan::length(text) - windowSize + 1 : 1;
         uint32_t windowKmers = windowSize - kmerSize + 1;
