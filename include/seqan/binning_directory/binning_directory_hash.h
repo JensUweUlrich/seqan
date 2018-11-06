@@ -257,10 +257,9 @@ public:
 
     inline std::vector<uint64_t> getHash(String<TValue> const & text)
     {
-        typedef String<TValue> TString;
         if (kmerSize > seqan::length(text))
             return std::vector<uint64_t> {};
-        typedef ModifiedString<ModifiedString<TString const, ModView<FunctorComplement<TValue>>>, ModReverse> TRC;
+        typedef ModifiedString<ModifiedString<String<TValue> const, ModView<FunctorComplement<TValue>>>, ModReverse> TRC;
         TRC revComp(text);
         uint32_t possible = seqan::length(text) > windowSize ? seqan::length(text) - windowSize + 1 : 1;
         uint32_t windowKmers = windowSize - kmerSize + 1;
