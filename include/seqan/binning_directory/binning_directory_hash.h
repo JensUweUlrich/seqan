@@ -79,6 +79,12 @@ public:
     template<typename TString>
     inline std::vector<uint64_t> getHash(TString const & text)
     {
+        String<TValue> s = text;
+        return getHash(s);
+    }
+
+    inline std::vector<uint64_t> getHash(String<TValue> const & text)
+    {
         if (kmerSize > seqan::length(text))
         {
             return std::vector<uint64_t> {};
@@ -143,6 +149,12 @@ public:
 
     template<typename TString>
     inline std::vector<uint64_t> getHash(TString const & text)
+    {
+        String<TValue> s = text;
+        return getHash(s);
+    }
+
+    inline std::vector<uint64_t> getHash(String<TValue> const & text)
     {
         if (kmerSize > seqan::length(text))
         {
