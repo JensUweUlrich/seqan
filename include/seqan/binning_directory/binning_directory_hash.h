@@ -408,7 +408,7 @@ public:
                 coverageEnd.push_back(begin-1);
                 coverageBegin.push_back(begin);
                 coverage.push_back(coverage.back()+1);
-                while (minBegin[bIndex] == minEnd[eIndex])
+                while (bIndex < minBegin.size() && eIndex < minEnd.size() && minBegin[bIndex] == minEnd[eIndex])
                 {
                     ++bIndex;
                     ++eIndex;
