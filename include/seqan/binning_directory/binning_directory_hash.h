@@ -343,35 +343,38 @@ public:
 
         for (uint16_t i = 0; i < e; ++i)
         {
-            get_coverage();
-            auto max = std::max_element(coverage.begin(), coverage.end());
-            if (i == e - 1)
-                destroyed += *max;
-            else
+            if (minBegin.size() > 0)
             {
-                destroyed += *max;
-                std::vector<uint64_t> newBegin;
-                std::vector<uint64_t> newEnd;
-                newBegin.reserve(available - destroyed);
-                newEnd.reserve(available - destroyed);
-
-                auto idx = std::distance(coverage.begin(), max);
-                auto cb = coverageBegin[idx];
-                auto ce =  coverageEnd[idx];
-                for (uint64_t i = 0; i < minBegin.size(); ++i)
+                get_coverage();
+                auto max = std::max_element(coverage.begin(), coverage.end());
+                if (i == e - 1)
+                    destroyed += *max;
+                else
                 {
-                    auto mb = minBegin[i];
-                    auto me = minEnd[i];
-                    if ((mb >= cb && mb <= ce) || (me >= cb && me <= ce))
-                        continue;
-                    newBegin.push_back(mb);
-                    newEnd.push_back(me);
+                    destroyed += *max;
+                    std::vector<uint64_t> newBegin;
+                    std::vector<uint64_t> newEnd;
+                    newBegin.reserve(available - destroyed);
+                    newEnd.reserve(available - destroyed);
+
+                    auto idx = std::distance(coverage.begin(), max);
+                    auto cb = coverageBegin[idx];
+                    auto ce =  coverageEnd[idx];
+                    for (uint64_t i = 0; i < minBegin.size(); ++i)
+                    {
+                        auto mb = minBegin[i];
+                        auto me = minEnd[i];
+                        if ((mb >= cb && mb <= ce) || (me >= cb && me <= ce))
+                            continue;
+                        newBegin.push_back(mb);
+                        newEnd.push_back(me);
+                    }
+                    minBegin = std::move(newBegin);
+                    minEnd = std::move(newEnd);
+                    coverageBegin.clear();
+                    coverageEnd.clear();
+                    coverage.clear();
                 }
-                minBegin = std::move(newBegin);
-                minEnd = std::move(newEnd);
-                coverageBegin.clear();
-                coverageEnd.clear();
-                coverage.clear();
             }
         }
         return destroyed > available ? 0 : available - destroyed;
