@@ -269,10 +269,10 @@ public:
         minBegin.reserve(possible);
         minEnd.reserve(possible);
 
-        hashInit(begin(text));
-        revHashInit(begin(revComp));
         auto it = begin(text);
         auto rcit = begin(revComp);
+        hashInit(it);
+        revHashInit(rcit);
 
         std::deque<std::tuple<uint64_t, uint64_t, uint64_t>> windowValues;
 
@@ -293,7 +293,7 @@ public:
             ++rcit;
         }
 
-        auto min = std::min_element(std::begin(windowValues), std::end(windowValues));
+        auto min = std::min_element(std::begin(windowValues), std::end(windowValues), [] (auto const & lhs, auto const & rhs) { return std::get<0>(lhs) != std::get<0>(rhs) ? lhs < rhs : std::get<1>(lhs) > std::get<1>(rhs);});
         kmerHashes.push_back(std::get<0>(*min));
         minBegin.push_back(std::get<1>(*min));
         minEnd.push_back(std::get<2>(*min));
@@ -303,7 +303,7 @@ public:
             if (min == std::begin(windowValues))
             {
                 windowValues.pop_front();
-                min = std::min_element(std::begin(windowValues), std::end(windowValues));
+                min = std::min_element(std::begin(windowValues), std::end(windowValues), [] (auto const & lhs, auto const & rhs) { return std::get<0>(lhs) != std::get<0>(rhs) ? lhs < rhs : std::get<1>(lhs) > std::get<1>(rhs);});
             }
             else
                 windowValues.pop_front();
@@ -325,12 +325,15 @@ public:
             if (std::get<0>(windowValues.back()) < std::get<0>(*min))
                 min = std::end(windowValues) - 1;
 
-            kmerHashes.push_back(std::get<0>(*min));
-            minBegin.push_back(std::get<1>(*min));
-            minEnd.push_back(std::get<2>(*min));
+            if (minBegin.back() != std::get<1>(*min))
+            {
+                kmerHashes.push_back(std::get<0>(*min));
+                minBegin.push_back(std::get<1>(*min));
+                minEnd.push_back(std::get<2>(*min));
+            }
         }
         // std::sort(std::begin(kmerHashes), std::end(kmerHashes));
-        kmerHashes.erase(std::unique(std::begin(kmerHashes), std::end(kmerHashes)), std::end(kmerHashes));
+        // kmerHashes.erase(std::unique(std::begin(kmerHashes), std::end(kmerHashes)), std::end(kmerHashes));
         return kmerHashes;
     }
 
@@ -338,7 +341,7 @@ public:
     {
         (void) t;
         uint32_t destroyed{0};
-        minBegin.erase(std::unique(std::begin(minBegin), std::end(minBegin)), std::end(minBegin));
+        // minBegin.erase(std::unique(std::begin(minBegin), std::end(minBegin)), std::end(minBegin));
         uint32_t available{static_cast<uint32_t>(minBegin.size())};
 
         for (uint16_t i = 0; i < e; ++i)
@@ -387,8 +390,8 @@ public:
         coverageBegin.push_back(minBegin[0]);
         coverage.push_back(1);
 
-        minBegin.erase(std::unique(std::begin(minBegin), std::end(minBegin)), std::end(minBegin));
-        minEnd.erase(std::unique(std::begin(minEnd), std::end(minEnd)), std::end(minEnd));
+        // minBegin.erase(std::unique(std::begin(minBegin), std::end(minBegin)), std::end(minBegin));
+        // minEnd.erase(std::unique(std::begin(minEnd), std::end(minEnd)), std::end(minEnd));
 
         while ((bIndex < minBegin.size() ) || (eIndex < minEnd.size()))
         {

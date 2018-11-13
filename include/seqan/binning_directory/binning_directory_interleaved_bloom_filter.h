@@ -133,12 +133,13 @@ public:
         getMetadata(*this);
         init();
     }
-    
+
     BinningDirectory(CharString fileName, TWindowSize window_size):
         windowSize(window_size),
         bitvector(fileName)
     {
         getMetadata(*this);
+        windowSize = window_size;
         init();
     }
 
@@ -253,6 +254,10 @@ public:
     template<typename THashCount, typename TAnyString>
     void count(std::vector<uint64_t> & counts, TAnyString const & text) const
     {
+        // if (std::is_same<TValue, Dna>::value)
+        //     std::cerr << "DNA\n";
+        // if (std::is_same<TValue, Dna5>::value)
+        //     std::cerr << "DNA5\n";
         BDHash<TValue, THashCount> shape;
         shape.resize(kmerSize, windowSize);
         std::vector<uint64_t> kmerHashes = shape.getHash(text);
@@ -317,6 +322,10 @@ public:
     template<typename THashCount, typename TAnyString>
     void count(std::vector<uint64_t> & counts, TAnyString const & text, uint32_t & threshold) const
     {
+        // if (std::is_same<TValue, Dna>::value)
+        //     std::cerr << "DNA\n";
+        // if (std::is_same<TValue, Dna5>::value)
+        //     std::cerr << "DNA5\n";
         BDHash<TValue, THashCount> shape;
         shape.resize(kmerSize, windowSize);
         std::vector<uint64_t> kmerHashes = shape.getHash(text);
@@ -414,6 +423,10 @@ public:
     template<typename THashInsert>
     inline void insertKmer(TString const & text, TNoOfBins binNo)
     {
+        // if (std::is_same<TValue, Dna>::value)
+        //     std::cerr << "DNA\n";
+        // if (std::is_same<TValue, Dna5>::value)
+        //     std::cerr << "DNA5\n";
         BDHash<TValue, THashInsert> shape;
         shape.resize(kmerSize, windowSize);
         std::vector<uint64_t> kmerHashes = shape.getHash(text);

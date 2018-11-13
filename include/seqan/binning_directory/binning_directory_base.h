@@ -552,6 +552,7 @@ inline void getMetadata(BinningDirectory<TSpec, TConfig> &  me)
     me.noOfBins = me.bitvector.get_int(metadataStart);
     me.noOfHashFunc = me.bitvector.get_int(metadataStart+64);
     me.kmerSize = me.bitvector.get_int(metadataStart+128);
+    me.windowSize = me.bitvector.get_int(metadataStart+192);
 }
 
 /*!
@@ -570,6 +571,7 @@ inline void setMetadata(BinningDirectory<TSpec, TConfig> &  me)
     me.bitvector.set_int(metadataStart, me.noOfBins);
     me.bitvector.set_int(metadataStart + 64, me.noOfHashFunc);
     me.bitvector.set_int(metadataStart+128, me.kmerSize);
+    me.bitvector.set_int(metadataStart+192, me.windowSize);
 }
 
 /*!
