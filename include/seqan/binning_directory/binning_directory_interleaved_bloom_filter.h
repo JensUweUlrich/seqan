@@ -133,6 +133,14 @@ public:
         getMetadata(*this);
         init();
     }
+    
+    BinningDirectory(CharString fileName, TWindowSize window_size):
+        windowSize(window_size),
+        bitvector(fileName)
+    {
+        getMetadata(*this);
+        init();
+    }
 
     /*!
      * \brief Constructs an IBF given parameters.
@@ -169,6 +177,7 @@ public:
         kmerSize = other.kmerSize;
         noOfBits = other.noOfBits;
         bitvector = other.bitvector;
+        windowSize = other.windowSize;
         init();
         return *this;
     }
@@ -187,6 +196,7 @@ public:
         kmerSize = std::move(other.kmerSize);
         noOfBits = std::move(other.noOfBits);
         bitvector = std::move(other.bitvector);
+        windowSize = std::move(other.windowSize);
         init();
         return *this;
     }
