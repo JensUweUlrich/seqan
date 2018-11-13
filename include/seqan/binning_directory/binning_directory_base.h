@@ -520,7 +520,7 @@ inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<boo
  * \returns Value<BinningDirectory<TValue, TSpec> >::Type Number of bins.
  */
 template<typename TSpec, typename TConfig>
-inline TNoOfBins getNumberOfBins(BinningDirectory<TSpec, TConfig> &  me)
+inline TNoOfBins getNumberOfBins(BinningDirectory<TSpec, TConfig> const &  me)
 {
     return me.noOfBins;
 }
@@ -531,7 +531,7 @@ inline TNoOfBins getNumberOfBins(BinningDirectory<TSpec, TConfig> &  me)
  * \returns Value<BinningDirectory<TValue, TSpec> >::Type k-mer size.
  */
 template<typename TSpec, typename TConfig>
-inline TKmerSize getKmerSize(BinningDirectory<TSpec, TConfig> &  me)
+inline TKmerSize getKmerSize(BinningDirectory<TSpec, TConfig> const &  me)
 {
     return me.kmerSize;
 }
@@ -578,7 +578,7 @@ inline void setMetadata(BinningDirectory<TSpec, TConfig> &  me)
  * \returns double filter vector size in MB.
  */
 template<typename TSpec, typename TConfig>
-inline double size(BinningDirectory<TSpec, TConfig> &  me)
+inline double size(BinningDirectory<TSpec, TConfig> const & me)
 {
     return me.bitvector.size_in_mega_bytes();
 }
