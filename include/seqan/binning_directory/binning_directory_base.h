@@ -38,6 +38,9 @@
 
 #include <sdsl/bit_vectors.hpp>
 #include <seqan/seq_io.h>
+#include <seqan/index/shape_gapped.h>
+#include <seqan/index/shape_threshold.h>
+#include <seqan/index/shape_predefined.h>
 #include <valarray>
 #include <algorithm>
 #include <future>

@@ -44,13 +44,16 @@ template<typename TValue>
 struct BDHash<TValue, Normal>
 {
 public:
-    Shape<TValue, SimpleShape> kmerShape;
-    uint16_t kmerSize{0};
+    // 11011000110111110110001101111
+    Shape<TValue, ShapeDREAMYara> kmerShape;
+    uint16_t kmerSize{29};
+    uint64_t textLength{0};
 
     inline void resize(TKmerSize newKmerSize)
     {
         kmerSize = newKmerSize;
-        seqan::resize(kmerShape, kmerSize);
+        kmerSize = 29;
+        // seqan::resize(kmerShape, kmerSize);
     }
 
     template<typename TIt>
@@ -79,6 +82,7 @@ public:
         }
         else
         {
+            textLength = seqan::length(text);
             uint32_t possible = seqan::length(text) - kmerSize + 1;
 
             std::vector<uint64_t> kmerHashes(possible, 0);

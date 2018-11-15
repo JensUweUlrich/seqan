@@ -60,7 +60,10 @@ namespace seqan
         HardwiredShape< 1, 1, 2, 3, 2, 3, 1, 2, 1, 1 >
     > ShapePatternHunter;
 
-
+    // 11011000110111110110001101111
+    typedef GappedShape<
+        HardwiredShape< 1, 2, 1, 4, 1, 2, 1, 1, 1, 1, 2, 1, 4, 1, 2, 1, 1, 1 >
+    > ShapeDREAMYara;
 
     //////////////////////////////////////////////////////////////////////////////
     // Multiple seeds of
