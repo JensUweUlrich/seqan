@@ -447,7 +447,7 @@ template<typename TSpec, typename TConfig, typename TAnyString, typename TInt, t
 inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<bool> & selected, TAnyString const & text, TInt && errors, TPenalty && penalty)
 {
     std::vector<uint64_t> counts(me.noOfBins, 0);
-    uint32_t threshold{errors};
+    uint32_t threshold{static_cast<uint32_t>(errors)};
     count(me, counts, text, threshold);
     threshold = threshold > penalty ? threshold - penalty : 0;
     for(TNoOfBins binNo=0; binNo < me.noOfBins; ++binNo)
@@ -470,7 +470,7 @@ inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TA
 {
    typedef typename TConfig::THash THash;
    std::vector<uint64_t> counts(me.noOfBins, 0);
-   uint32_t threshold{errors};
+   uint32_t threshold{static_cast<uint32_t>(errors)};
 
    if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
    {
@@ -496,7 +496,7 @@ inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<boo
 {
    typedef typename TConfig::THash THash;
    std::vector<uint64_t> counts(me.noOfBins, 0);
-   uint32_t threshold{errors};
+   uint32_t threshold{static_cast<uint32_t>(errors)};
 
    if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
    {
@@ -518,7 +518,7 @@ template<typename TSpec, typename TConfig, typename TAnyString, typename TInt>
 inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<bool> & selected, TAnyString const & text, TInt && errors)
 {
     std::vector<uint64_t> counts(me.noOfBins, 0);
-    uint32_t threshold{errors};
+    uint32_t threshold{static_cast<uint32_t>(errors)};
     count(me, counts, text, threshold);
     for(TNoOfBins binNo=0; binNo < me.noOfBins; ++binNo)
     {
@@ -540,7 +540,7 @@ inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TA
 {
    typedef typename TConfig::THash THash;
    std::vector<uint64_t> counts(me.noOfBins, 0);
-   uint32_t threshold{errors};
+   uint32_t threshold{static_cast<uint32_t>(errors)};
 
    if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
    {
@@ -565,7 +565,7 @@ inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<boo
 {
    typedef typename TConfig::THash THash;
    std::vector<uint64_t> counts(me.noOfBins, 0);
-   uint32_t threshold{errors};
+   uint32_t threshold{static_cast<uint32_t>(errors)};
 
    if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
    {

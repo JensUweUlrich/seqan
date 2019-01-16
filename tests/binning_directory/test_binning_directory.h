@@ -628,7 +628,7 @@ SEQAN_TEST(BinningDirectoryIBFTest, resize)
 
     auto result1 = count(bd, DnaString{"TAAC"});
     auto result2 = count(bd2, DnaString{"TAAC"});
-    SEQAN_ASSERT_EQ(73, result2.size());
+    SEQAN_ASSERT_EQ(static_cast<decltype(result2.size())>(73), result2.size());
 
     for (uint64_t i = 0; i < 64; ++i)
     {
@@ -665,7 +665,7 @@ SEQAN_TEST(BinningDirectoryDATest, resize)
 
     auto result1 = count(bd, DnaString{"TAAC"});
     auto result2 = count(bd2, DnaString{"TAAC"});
-    SEQAN_ASSERT_EQ(73, result2.size());
+    SEQAN_ASSERT_EQ(static_cast<decltype(result2.size())>(73), result2.size());
 
     for (uint64_t i = 0; i < 64; ++i)
     {
