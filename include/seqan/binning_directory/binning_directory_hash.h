@@ -109,7 +109,7 @@ public:
                 ++it;
             }
             // std::sort(std::begin(kmerHashes), std::end(kmerHashes));
-            kmerHashes.erase(std::unique(std::begin(kmerHashes), std::end(kmerHashes)), std::end(kmerHashes));
+            // kmerHashes.erase(std::unique(std::begin(kmerHashes), std::end(kmerHashes)), std::end(kmerHashes));
             return kmerHashes;
         }
     }
@@ -202,7 +202,7 @@ public:
                 ++it;
             }
             // std::sort(std::begin(kmerHashes), std::end(kmerHashes));
-            kmerHashes.erase(std::unique(std::begin(kmerHashes), std::end(kmerHashes)), std::end(kmerHashes));
+            // kmerHashes.erase(std::unique(std::begin(kmerHashes), std::end(kmerHashes)), std::end(kmerHashes));
             return kmerHashes;
         }
     }
