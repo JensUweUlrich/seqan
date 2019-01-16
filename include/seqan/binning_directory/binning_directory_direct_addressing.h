@@ -132,7 +132,7 @@ public:
         kmerSize(kmer_size),
         bitvector(n_bins, ipow(ValueSize<TValue>::VALUE, kmerSize) * std::ceil((double)noOfBins / intSize) * intSize)
     {
-        if (is_minimizer<THash>::value)
+        if constexpr (is_minimizer<THash>::value)
             windowSize = THash::WINDOWSIZE;
         else
             windowSize = kmerSize;

@@ -157,7 +157,7 @@ public:
         noOfBits(vec_size),
         bitvector(noOfBins, noOfBits)
     {
-        if (is_minimizer<THash>::value)
+        if constexpr (is_minimizer<THash>::value)
             windowSize = THash::WINDOWSIZE;
         else
             windowSize = kmerSize;
