@@ -71,6 +71,18 @@ struct FilterVector<Uncompressed>
         return sdsl::size_in_mega_bytes(*uncompressed_vector);
     }
 
+    std::string random_string()
+    {
+         std::string str("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+
+         std::random_device rd;
+         std::mt19937 generator(rd());
+
+         std::shuffle(str.begin(), str.end(), generator);
+
+         return str.substr(0, 32);
+    }
+
     FilterVector() {}
 
     FilterVector(uint32_t bins, uint64_t bits):
@@ -82,7 +94,7 @@ struct FilterVector<Uncompressed>
         // How big is then a block (multiple of 64 bit)
         blockBitSize = binWidth * INT_SIZE;
         // How many hash values can we represent
-        noOfBlocks = (noOfBits + FILTER_METADATA_SIZE) / blockBitSize;
+        noOfBlocks = noOfBits / blockBitSize;
 
         noOfChunks = 1;
         chunkSize = noOfBits;
@@ -136,7 +148,7 @@ struct FilterVector<Uncompressed>
         // How big is then a block (multiple of 64 bit)
         blockBitSize = binWidth * INT_SIZE;
         // How many hash values can we represent
-        noOfBlocks = (noOfBits + FILTER_METADATA_SIZE) / blockBitSize;
+        noOfBlocks = noOfBits / blockBitSize;
     }
 
     uint64_t get_int(uint64_t idx, uint64_t len = 1ULL<<6)
@@ -159,6 +171,11 @@ struct FilterVector<Uncompressed>
         (*uncompressed_vector)[idx] = true;
     }
 
+    inline void set_pos(uint64_t idx)
+    {
+        (*uncompressed_vector)[idx] = true;
+    }
+
     void unset_pos(uint64_t idx)
     {
         (*uncompressed_vector)[idx] = false;
@@ -172,6 +189,44 @@ struct FilterVector<Uncompressed>
     void retrieve(CharString fileName)
     {
         *this = FilterVector(fileName);
+    }
+
+    void resize(uint32_t bins, uint64_t newNoOfBits, uint32_t newBlockBitSize, uint16_t newBinWidth)
+    {
+        CharString file{random_string()};
+        store(file);
+        uint32_t delta = newBlockBitSize - blockBitSize + 1;
+        if (delta == 1)
+        {
+            noOfBins = bins;
+            return;
+        }
+        uncompressed_vector.reset(new sdsl::bit_vector(newNoOfBits+FILTER_METADATA_SIZE,0));
+        sdsl::int_vector_buffer<1> buffered_vector(toCString(file));
+        uint64_t pos{0};
+        uint64_t posBuff{0};
+        for (auto it = buffered_vector.begin(); it != buffered_vector.end() && pos != newNoOfBits; ++it)
+        {
+            if (*it)
+            {
+              set_pos(pos);
+            }
+            if (posBuff == blockBitSize -1)
+            {
+                posBuff = 0;
+                pos += delta;
+            }
+            else
+            {
+                ++pos;
+                ++posBuff;
+            }
+        }
+        sdsl::remove(toCString(file));
+        noOfBins = bins;
+        binWidth = newBinWidth;
+        blockBitSize = newBlockBitSize;
+        noOfBits = newNoOfBits;
     }
 };
 
@@ -253,7 +308,7 @@ struct FilterVector<CompressedSimple>
         // How big is then a block (multiple of 64 bit)
         blockBitSize = binWidth * INT_SIZE;
         // How many hash values can we represent
-        noOfBlocks = (noOfBits + FILTER_METADATA_SIZE) / blockBitSize;
+        noOfBlocks = noOfBits / blockBitSize;
 
         noOfChunks = 1;
         chunkSize = noOfBits;
@@ -314,7 +369,7 @@ struct FilterVector<CompressedSimple>
         // How big is then a block (multiple of 64 bit)
         blockBitSize = binWidth * INT_SIZE;
         // How many hash values can we represent
-        noOfBlocks = (noOfBits + FILTER_METADATA_SIZE) / blockBitSize;
+        noOfBlocks = noOfBits / blockBitSize;
     }
 
     inline uint64_t get_int(uint64_t idx, uint64_t len = 1ULL<<6)
@@ -338,6 +393,11 @@ struct FilterVector<CompressedSimple>
     void set_pos(uint64_t idx, uint64_t)
     {
         decompress();
+        (*uncompressed_vector)[idx] = true;
+    }
+
+    inline void set_pos(uint64_t idx)
+    {
         (*uncompressed_vector)[idx] = true;
     }
 
@@ -431,7 +491,7 @@ struct FilterVector<CompressedArray>
         // How big is then a block (multiple of 64 bit)
         blockBitSize = binWidth * INT_SIZE;
         // How many hash values can we represent
-        noOfBlocks = (noOfBits + FILTER_METADATA_SIZE) / blockBitSize;
+        noOfBlocks = noOfBits / blockBitSize;
 
         // If we split, we need to split at the end of a block.
         chunkSize = std::min((double)noOfBlocks * blockBitSize, std::ceil((double)MAX_VEC/blockBitSize) * blockBitSize);
@@ -527,7 +587,7 @@ struct FilterVector<CompressedArray>
         // How big is then a block (multiple of 64 bit)
         blockBitSize = binWidth * INT_SIZE;
         // How many hash values can we represent
-        noOfBlocks = (noOfBits + FILTER_METADATA_SIZE) / blockBitSize;
+        noOfBlocks = noOfBits / blockBitSize;
     }
 
     uint64_t get_int(uint64_t idx, uint64_t len = 1ULL<<6)

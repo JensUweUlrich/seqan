@@ -236,14 +236,14 @@ public:
      */
     void select(std::vector<uint32_t> & counts, TString const & text)
     {
-        uint16_t possible = length(text) - kmerSize + 1; // Supports text lengths up to 65535 + k
+        uint64_t possible = length(text) - kmerSize + 1; // Supports text lengths up to 65535 + k
         std::vector<uint64_t> kmerHashes(possible, 0);
 
         TShape kmerShape;
         resize(kmerShape, kmerSize);
         hashInit(kmerShape, begin(text));
         auto it = begin(text);
-        for (uint16_t i = 0; i < possible; ++i)
+        for (uint64_t i = 0; i < possible; ++i)
         {
             kmerHashes[i] = hashNext(kmerShape, it);
             ++it;
@@ -345,6 +345,20 @@ public:
         // Size of the bit vector
         noOfBits = noOfBlocks * blockBitSize;
         // filterVector = FilterVector<TFilterVector>(noOfBins, noOfBits);
+    }
+
+    void resizeBins(uint32_t bins)
+    {
+        static_assert(std::is_same<TFilterVector, Uncompressed>::value,
+            "Resize is only available for Uncompressed Bitvectors.");
+        uint16_t newBinWidth = std::ceil((double)bins / intSize);
+        uint32_t newBlockBitSize = newBinWidth * intSize;
+        uint64_t newNoOfBits = noOfBlocks * newBlockBitSize;
+        filterVector.resize(bins, newNoOfBits, newBlockBitSize, newBinWidth);
+        noOfBins = bins;
+        binWidth = newBinWidth;
+        blockBitSize = newBlockBitSize;
+        noOfBits = newNoOfBits;
     }
 };
 }

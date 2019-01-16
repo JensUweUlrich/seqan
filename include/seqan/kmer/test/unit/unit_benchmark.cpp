@@ -55,7 +55,7 @@ int main()
     [[maybe_unused]]
     uint64_t hashFunc{3};
     [[maybe_unused]]
-    uint64_t bits{1ULL<<33};
+    uint64_t bits{1ULL<<25};
 
 
     // ==========================================================================
@@ -142,13 +142,49 @@ int main()
 
 
     // ==========================================================================
+    // Test resize
+    // ==========================================================================
+    std::cout << "Testing resize" << '\n';
+
+    KmerFilter<Dna, TSpec, TFilter> resizedBD = ctor_default;
+    resizedBD.resizeBins(73);
+
+    uint64_t bds = ctor_default.filterVector.noOfBits;
+    uint64_t bd2s = resizedBD.filterVector.noOfBits;
+
+    assert(2*bds == bd2s);
+
+    for (uint64_t i = 0, j = 0; i < bds && j < bd2s; ++i, ++j)
+    {
+        if (!(i % 64) && i > 0)
+        {
+            j += 64;
+        }
+        assert(ctor_default.filterVector.get_pos(i) == resizedBD.filterVector.get_pos(j));
+    }
+
+    std::vector<uint32_t> result1 = select(ctor_default, DnaString(std::string(kmerSize, 'A')));
+    std::vector<uint32_t> result2 = select(resizedBD, DnaString(std::string(kmerSize, 'A')));
+
+    assert(static_cast<decltype(result2.size())>(73) == result2.size());
+
+    for (uint64_t i = 0; i < 10; ++i)
+    {
+        assert(result1[i] == result2[i]);
+    }
+    for (uint64_t i = 10; i < 73; ++i)
+    {
+        assert(result2[i] == 0u);
+    }
+
+    // ==========================================================================
     // Test clear()
     // ==========================================================================
     std::cout << "Testing clear" << '\n';
 
     // Check if any elements are set in the filters.
     bool ctor_default_any = false;
-    for (uint64_t i = 0; i < ctor_default.noOfBlocks * ctor_default.noOfBins; ++i)
+    for (uint64_t i = 0; i < ctor_default.filterVector.noOfBits; ++i)
     {
         if (ctor_default.filterVector.get_pos(i))
         {
@@ -163,7 +199,7 @@ int main()
 
     // Check if filter Vectors are empty.
     ctor_default_any = false;
-    for (uint64_t i = 0; i < ctor_default.noOfBlocks * ctor_default.noOfBins; ++i)
+    for (uint64_t i = 0; i < ctor_default.filterVector.noOfBits; ++i)
     {
         if (ctor_default.filterVector.get_pos(i))
         {
