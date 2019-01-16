@@ -514,6 +514,74 @@ inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<boo
    }
 }
 
+template<typename TSpec, typename TConfig, typename TAnyString, typename TInt>
+inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<bool> & selected, TAnyString const & text, TInt && errors)
+{
+    std::vector<uint64_t> counts(me.noOfBins, 0);
+    uint32_t threshold{errors};
+    count(me, counts, text, threshold);
+    for(TNoOfBins binNo=0; binNo < me.noOfBins; ++binNo)
+    {
+        if(counts[binNo] >= threshold)
+            selected[binNo] = true;
+    }
+}
+
+template<typename TSpec, typename TConfig, typename TAnyString, typename TInt>
+inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && errors)
+{
+    std::vector<bool> selected(me.noOfBins, 0);
+    select(me, selected, text, errors);
+    return selected;
+}
+
+template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt>
+inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && errors)
+{
+   typedef typename TConfig::THash THash;
+   std::vector<uint64_t> counts(me.noOfBins, 0);
+   uint32_t threshold{errors};
+
+   if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
+   {
+       count<THashCount>(me, counts, text, threshold);
+   }
+   else
+   {
+       count<THash>(me, counts, text, threshold);
+   }
+   std::vector<bool> selected(me.noOfBins, 0);
+   for(TNoOfBins binNo=0; binNo < me.noOfBins; ++binNo)
+   {
+       if(counts[binNo] >= threshold)
+           selected[binNo] = true;
+   }
+
+   return selected;
+}
+
+template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt>
+inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<bool> & selected, TAnyString const & text, TInt && errors)
+{
+   typedef typename TConfig::THash THash;
+   std::vector<uint64_t> counts(me.noOfBins, 0);
+   uint32_t threshold{errors};
+
+   if (std::is_same<THash, Normal>::value || is_offset<THash>::value)
+   {
+       count<THashCount>(me, counts, text, threshold);
+   }
+   else
+   {
+       count<THash>(me, counts, text, threshold);
+   }
+   for(TNoOfBins binNo=0; binNo < me.noOfBins; ++binNo)
+   {
+       if(counts[binNo] >= threshold)
+           selected[binNo] = true;
+   }
+}
+
 /*!
  * \brief Returns the number of bins.
  * \param me The BinningDirectory instance.
