@@ -78,8 +78,7 @@ public:
 
     inline uint32_t get_threshold(uint32_t t, uint16_t e)
     {
-        uint32_t threshold = (t - kmerSize * (1+e) + 1);
-        return threshold > 0 ? threshold : 0;
+        return t + 1u > kmerSize * (1u+e) ? (t - kmerSize * (1u+e) + 1u) : 0u;
     }
 
     template<typename TString>
@@ -155,8 +154,7 @@ public:
 
     inline uint32_t get_threshold(uint32_t t, uint16_t e)
     {
-        uint32_t threshold = std::floor((t - kmerSize * (1 + e) + 1)/o);
-        return threshold > 0 ? threshold : 0;
+        return t + 1u > kmerSize * (1u+e) ? std::floor((t - kmerSize * (1u + e) + 1u)/o) : 0u;
     }
 
     template<typename TString>
