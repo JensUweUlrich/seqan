@@ -418,12 +418,12 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, select)
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
 
-    auto result = select(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
-    auto result2 = select(bd, String<TValue>{"TAA"}, 1);
-    auto result3 = select(bd, String<TValue>{""}, 1);
-    auto result4 = select<Normal>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
-    auto result5 = select<Offset<1>>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
-    auto result6 = select<Offset<3>>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
+    auto result = select(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
+    auto result2 = select(bd, String<TValue>{"TAA"}, 0);
+    auto result3 = select(bd, String<TValue>{""}, 0);
+    auto result4 = select<Normal>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
+    auto result5 = select<Offset<1>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
+    auto result6 = select<Offset<3>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
 
     SEQAN_ASSERT_EQ(result[0], true);
     SEQAN_ASSERT_EQ(result[1], true);
@@ -445,12 +445,12 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, select)
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
 
-    auto result = select(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
-    auto result2 = select(bd, String<TValue>{"TAA"}, 1);
-    auto result3 = select(bd, String<TValue>{""}, 1);
-    auto result4 = select<Normal>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
-    auto result5 = select<Offset<1>>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
-    auto result6 = select<Offset<3>>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
+    auto result = select(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
+    auto result2 = select(bd, String<TValue>{"TAA"}, 0);
+    auto result3 = select(bd, String<TValue>{""}, 0);
+    auto result4 = select<Normal>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
+    auto result5 = select<Offset<1>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
+    auto result6 = select<Offset<3>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
 
     SEQAN_ASSERT_EQ(result[0], true);
     SEQAN_ASSERT_EQ(result[1], true);
@@ -698,7 +698,7 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, constness)
         SEQAN_ASSERT_EQ(countRes[i], 0u);
     }
 
-    auto selectRes = select(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
+    auto selectRes = select(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
 
     SEQAN_ASSERT_EQ(selectRes[0], true);
 
@@ -729,7 +729,7 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, constness)
         SEQAN_ASSERT_EQ(countRes[i], 0u);
     }
 
-    auto selectRes = select(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
+    auto selectRes = select(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
 
     SEQAN_ASSERT_EQ(selectRes[0], true);
 
