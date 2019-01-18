@@ -113,9 +113,9 @@ struct Bitvector<CompressedDisk> : BitvectorBase
 
         // If we split, we need to split at the end of a block.
         chunkSize = (noOfBlocks / noOfChunks) * blockBitSize;
-        for (uint64_t i = 0; i < noOfChunks; ++i)
+        for (uint8_t i = 0; i < noOfChunks; ++i)
         {
-            if (i == noOfChunks -1)
+            if (i == noOfChunks - 1)
             {
                 filterVector.emplace_back(std::make_tuple(false,
                                                        std::make_unique<sdsl::bit_vector>(chunkSize + FILTER_METADATA_SIZE, 0),

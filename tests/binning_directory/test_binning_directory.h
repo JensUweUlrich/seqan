@@ -441,12 +441,12 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, count)
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
 
-    auto result = count(bd, String<TValue>{"TAACTTTTTTAT"}, 3);
-    auto result2 = count<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{"TAACTTTTTTATATATATAAA"});
-    auto result3 = count<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{"TAA"});
-    auto result4 = count<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{""});
-    auto result5 = count<Offset<TBinning::THash::VALUE,1>>(bd, String<TValue>{"TAACTTTTTTAT"});
-    auto result6 = count<Offset<TBinning::THash::VALUE,3>>(bd, String<TValue>{"TAACTTTTTTAT"});
+    auto result = count(bd, String<TValue>{"TAACTTTTTTAT"}, 0, 3);
+    auto result2 = count<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{"TAACTTTTTTATATATATAAA"}, 0);
+    auto result3 = count<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{"TAA"}, 0);
+    auto result4 = count<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{""}, 0);
+    auto result5 = count<Offset<TBinning::THash::VALUE,1>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
+    auto result6 = count<Offset<TBinning::THash::VALUE,3>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
 
     SEQAN_ASSERT_NEQ(result[0], 0u);
     SEQAN_ASSERT_NEQ(result[1], 0u);
@@ -468,12 +468,12 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, count)
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
 
-    auto result = count(bd, String<TValue>{"TAACTTTTTTAT"}, 3);
-    auto result2 = count<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{"TAACTTTTTTATATATATAAA"});
-    auto result3 = count<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{"TAA"});
-    auto result4 = count<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{""});
-    auto result5 = count<Offset<TBinning::THash::VALUE,1>>(bd, String<TValue>{"TAACTTTTTTAT"});
-    auto result6 = count<Offset<TBinning::THash::VALUE,3>>(bd, String<TValue>{"TAACTTTTTTAT"});
+    auto result = count(bd, String<TValue>{"TAACTTTTTTAT"}, 0, 3);
+    auto result2 = count<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{"TAACTTTTTTATATATATAAA"}, 0);
+    auto result3 = count<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{"TAA"}, 0);
+    auto result4 = count<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{""}, 0);
+    auto result5 = count<Offset<TBinning::THash::VALUE,1>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
+    auto result6 = count<Offset<TBinning::THash::VALUE,3>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
 
     SEQAN_ASSERT_NEQ(result[0], 0u);
     SEQAN_ASSERT_NEQ(result[1], 0u);
@@ -496,12 +496,12 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, select)
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
 
-    auto result = select(bd, String<TValue>{"TAACTTTTTTAT"}, 1, 3);
-    auto result2 = select(bd, String<TValue>{"TAA"}, 1);
-    auto result3 = select(bd, String<TValue>{""}, 1);
-    auto result4 = select<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
-    auto result5 = select<Offset<TBinning::THash::VALUE,1>>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
-    auto result6 = select<Offset<TBinning::THash::VALUE,3>>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
+    auto result = select(bd, String<TValue>{"TAACTTTTTTAT"}, 0, 3);
+    auto result2 = select(bd, String<TValue>{"TAA"}, 0);
+    auto result3 = select(bd, String<TValue>{""}, 0);
+    auto result4 = select<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
+    auto result5 = select<Offset<TBinning::THash::VALUE,1>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
+    auto result6 = select<Offset<TBinning::THash::VALUE,3>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
 
     SEQAN_ASSERT_EQ(result[0], true);
     SEQAN_ASSERT_EQ(result[1], true);
@@ -523,12 +523,12 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, select)
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
     insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
 
-    auto result = select(bd, String<TValue>{"TAACTTTTTTAT"}, 1, 3);
-    auto result2 = select(bd, String<TValue>{"TAA"}, 1);
-    auto result3 = select(bd, String<TValue>{""}, 1);
-    auto result4 = select<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
-    auto result5 = select<Offset<TBinning::THash::VALUE,1>>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
-    auto result6 = select<Offset<TBinning::THash::VALUE,3>>(bd, String<TValue>{"TAACTTTTTTAT"}, 1);
+    auto result = select(bd, String<TValue>{"TAACTTTTTTAT"}, 0, 3);
+    auto result2 = select(bd, String<TValue>{"TAA"}, 0);
+    auto result3 = select(bd, String<TValue>{""}, 0);
+    auto result4 = select<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
+    auto result5 = select<Offset<TBinning::THash::VALUE,1>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
+    auto result6 = select<Offset<TBinning::THash::VALUE,3>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
     SEQAN_ASSERT_EQ(result[0], true);
     SEQAN_ASSERT_EQ(result[1], true);
     SEQAN_ASSERT_EQ(result[2], true);
@@ -707,9 +707,9 @@ SEQAN_TEST(BinningDirectoryIBFTest, resize)
         SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i), bd2.bitvector.get_pos(j));
     }
 
-    std::vector<uint64_t> result1 = count(bd, DnaString{"TAAC"}, 1);
-    std::vector<uint64_t> result2 = count(bd2, DnaString{"TAAC"}, 1);
-    SEQAN_ASSERT_EQ(73, result2.size());
+    std::vector<uint64_t> result1 = count(bd, DnaString{"TAAC"}, 0, 1);
+    std::vector<uint64_t> result2 = count(bd2, DnaString{"TAAC"}, 0, 1);
+    SEQAN_ASSERT_EQ(static_cast<decltype(result2.size())>(73), result2.size());
 
     for (uint64_t i = 0; i < 64; ++i)
     {
@@ -744,9 +744,9 @@ SEQAN_TEST(BinningDirectoryDATest, resize)
         SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i), bd2.bitvector.get_pos(j));
     }
 
-    auto result1 = count(bd, DnaString{"TAAC"}, 1);
-    auto result2 = count(bd2, DnaString{"TAAC"}, 1);
-    SEQAN_ASSERT_EQ(73, result2.size());
+    auto result1 = count(bd, DnaString{"TAAC"}, 0, 1);
+    auto result2 = count(bd2, DnaString{"TAAC"}, 0, 1);
+    SEQAN_ASSERT_EQ(static_cast<decltype(result2.size())>(73), result2.size());
 
     for (uint64_t i = 0; i < 64; ++i)
     {
@@ -810,7 +810,7 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, constness)
 
         TBinning const bd(tmp);
 
-        auto countRes = count(bd, String<TValue>{"TAACTTTTTTAT"}, 3);
+        auto countRes = count(bd, String<TValue>{"TAACTTTTTTAT"}, 0, 3);
 
         SEQAN_ASSERT_NEQ(countRes[0], 0u);
 
@@ -819,7 +819,7 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, constness)
             SEQAN_ASSERT_EQ(countRes[i], 0u);
         }
 
-        auto selectRes = select(bd, String<TValue>{"TAACTTTTTTAT"}, 1, 3);
+        auto selectRes = select(bd, String<TValue>{"TAACTTTTTTAT"}, 0, 3);
 
         SEQAN_ASSERT_EQ(selectRes[0], true);
 
@@ -845,7 +845,7 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, constness)
 
         TBinning const bd(tmp);
 
-        auto countRes = count(bd, String<TValue>{"TAACTTTTTTAT"}, 3);
+        auto countRes = count(bd, String<TValue>{"TAACTTTTTTAT"}, 0, 3);
 
         SEQAN_ASSERT_NEQ(countRes[0], 0u);
 
@@ -855,7 +855,7 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, constness)
             SEQAN_ASSERT_EQ(countRes[i], 0u);
         }
 
-        auto selectRes = select(bd, String<TValue>{"TAACTTTTTTAT"}, 1, 3);
+        auto selectRes = select(bd, String<TValue>{"TAACTTTTTTAT"}, 0, 3);
 
         SEQAN_ASSERT_EQ(selectRes[0], true);
 
@@ -867,7 +867,7 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, constness)
 }
 
 template<typename TValue>
-auto getKmers(auto k, auto rank)
+auto getKmers(uint64_t k, uint64_t rank)
 {
     StringSet<String<TValue>> kmers;
     auto sigma = ValueSize<TValue>::VALUE;
@@ -879,14 +879,14 @@ auto getKmers(auto k, auto rank)
     {
         String<TValue> kmer;
         resize(kmer, k);
-        for (auto i = 0; i < k - 1; ++i)
+        for (uint64_t i = 0; i < k - 1; ++i)
         {
             kmer[i] = (TValue) currentRanks[i];
         }
         kmer[k-1] = (TValue) rank;
         appendValue(kmers, kmer);
 
-        for (auto i = k-2;; --i)
+        for (uint64_t i = k-2;; --i)
         {
             if (i < 0)
                 return kmers;
@@ -914,24 +914,24 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, chunkConfinement)
         std::vector<uint32_t> bins;
         bins.resize(ipow(sigma, k-1), 0);
 
-        for (auto rank = 0; rank < sigma; ++rank)
+        for (uint64_t rank = 0; rank < sigma; ++rank)
         {
             TBinning bd(64, 3, k, size);
             StringSet<String<TValue>> kmers = getKmers<TValue>(k, rank);
             configureChunkMap(bd);
             insertKmer(bd, kmers, bins);
 
-            for (auto i = 0                   ; i < rank * chunkSize    ; i += 64)    // All before should be 0
-                SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i, i/chunkSize), 0);
-            for (auto i = rank * chunkSize    ; i < (rank+1) * chunkSize; i += 64)    // All current should be 1
+            for (uint64_t i = 0                   ; i < rank * chunkSize    ; i += 64)    // All before should be 0
+                SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i, i/chunkSize), 0u);
+            for (uint64_t i = rank * chunkSize    ; i < (rank+1) * chunkSize; i += 64)    // All current should be 1
             {
                 // SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i), 1);    // cannot guarantee uniform distribution....
                 for (auto j = i + 1; j < i + 64; ++j)
-                    SEQAN_ASSERT_EQ(bd.bitvector.get_pos(j, i/chunkSize), 0);
+                    SEQAN_ASSERT_EQ(bd.bitvector.get_pos(j, i/chunkSize), 0u);
             }
-            for (auto i = (rank+1) * chunkSize; i < size                ; i += 64)    // All after should be 0
+            for (uint64_t i = (rank+1) * chunkSize; i < size                ; i += 64)    // All after should be 0
             {
-                SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i, i/chunkSize), 0);
+                SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i, i/chunkSize), 0u);
             }
         }
     }
@@ -950,22 +950,22 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, chunkConfinement)
         std::vector<uint32_t> bins;
         bins.resize(ipow(sigma, k-1), 0);
 
-        for (auto rank = 0; rank < sigma; ++rank)
+        for (uint64_t rank = 0; rank < sigma; ++rank)
         {
             TBinning bd(64, k);
             StringSet<String<TValue>> kmers = getKmers<TValue>(k, rank);
             configureChunkMap(bd);
             insertKmer(bd, kmers, bins);
-            for (auto i = 0                   ; i < rank * chunkSize    ; i += 64)    // All before should be 0
-                SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i, i/chunkSize), 0);
-            for (auto i = rank * chunkSize    ; i < (rank+1) * chunkSize; i += 64)    // All current should be 1 for bin 0
+            for (uint64_t i = 0                   ; i < rank * chunkSize    ; i += 64)    // All before should be 0
+                SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i, i/chunkSize), 0u);
+            for (uint64_t i = rank * chunkSize    ; i < (rank+1) * chunkSize; i += 64)    // All current should be 1 for bin 0
             {
-                SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i, i/chunkSize), 1);
-                for (auto j = i + 1; j < i + 64; ++j)
-                    SEQAN_ASSERT_EQ(bd.bitvector.get_pos(j, i/chunkSize), 0);
+                SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i, i/chunkSize), 1u);
+                for (uint64_t j = i + 1; j < i + 64; ++j)
+                    SEQAN_ASSERT_EQ(bd.bitvector.get_pos(j, i/chunkSize), 0u);
             }
-            for (auto i = (rank+1) * chunkSize; i < size                ; i += 64)    // All after should be 0
-                SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i, i/chunkSize), 0);
+            for (uint64_t i = (rank+1) * chunkSize; i < size                ; i += 64)    // All after should be 0
+                SEQAN_ASSERT_EQ(bd.bitvector.get_pos(i, i/chunkSize), 0u);
         }
     }
 }

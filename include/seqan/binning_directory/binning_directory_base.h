@@ -355,9 +355,9 @@ template<typename TSpec, typename TConfig, std::enable_if_t<std::is_same<typenam
 inline void configureChunkMap(BinningDirectory<TSpec, TConfig> & me)
 {
     me.chunkMapSet = true;
-    typedef typename TConfig::TValue TValue;
+    // typedef typename TConfig::TValue TValue;
     TNoOfChunks chunks = TConfig::TChunks::VALUE;
-    TKmerSize kmerSize{me.kmerSize};
+    // TKmerSize kmerSize{me.kmerSize};
     uint16_t effectiveChunks = nextPow4(chunks);
     TNoOfChunks significantBits = sdsl::bits::hi(effectiveChunks);
     TNoOfChunks significantPositions = significantBits >> 1;

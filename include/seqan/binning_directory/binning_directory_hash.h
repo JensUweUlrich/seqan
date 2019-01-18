@@ -347,7 +347,7 @@ public:
 
     inline uint32_t get_threshold(uint32_t t, uint16_t e)
     {
-        return t + 1u > kmerSize * (1u+e) ? std::floor((t - kmerSize * (1u + e) + 1u)/o) : 0u;
+        return t + 1u > this->kmerSize * (1u+e) ? std::floor((t - this->kmerSize * (1u + e) + 1u)/o) : 0u;
     }
 };
 
@@ -403,6 +403,7 @@ struct BDHash<TValue, Offset<k, o>, TChunks> : BDHashBase<TValue, TChunks>
                 ++it;
                 ++itChunk;
             }
+            this->resize(cacheKmerSize);
 
             return kmerHashes;
         }
@@ -455,6 +456,7 @@ struct BDHash<TValue, Offset<k, o>, TChunks> : BDHashBase<TValue, TChunks>
                 ++it;
                 ++itChunk;
             }
+            this->resize(cacheKmerSize);
 
             return kmerHashes;
         }
@@ -462,7 +464,7 @@ struct BDHash<TValue, Offset<k, o>, TChunks> : BDHashBase<TValue, TChunks>
 
     inline uint32_t get_threshold(uint32_t t, uint16_t e)
     {
-        return t + 1u > kmerSize * (1u+e) ? std::floor((t - kmerSize * (1u + e) + 1u)/o) : 0u;
+        return t + 1u > this->kmerSize * (1u+e) ? std::floor((t - this->kmerSize * (1u + e) + 1u)/o) : 0u;
     }
 };
 
@@ -719,6 +721,52 @@ public:
         }
         coverageBegin.pop_back();
         coverage.pop_back();
+    }
+
+    inline uint32_t get_threshold(uint32_t t, uint16_t e)
+    {
+        (void) t;
+        uint32_t destroyed{0};
+        // minBegin.erase(std::unique(std::begin(minBegin), std::end(minBegin)), std::end(minBegin));
+        uint32_t available{static_cast<uint32_t>(minBegin.size())};
+
+        for (uint16_t i = 0; i < e; ++i)
+        {
+            if (minBegin.size() > 0)
+            {
+                get_coverage();
+                auto max = std::max_element(coverage.begin(), coverage.end());
+                if (i == e - 1)
+                    destroyed += *max;
+                else
+                {
+                    destroyed += *max;
+                    std::vector<uint64_t> newBegin;
+                    std::vector<uint64_t> newEnd;
+                    newBegin.reserve(available - destroyed);
+                    newEnd.reserve(available - destroyed);
+
+                    auto idx = std::distance(coverage.begin(), max);
+                    auto cb = coverageBegin[idx];
+                    auto ce =  coverageEnd[idx];
+                    for (uint64_t i = 0; i < minBegin.size(); ++i)
+                    {
+                        auto mb = minBegin[i];
+                        auto me = minEnd[i];
+                        if ((mb >= cb && mb <= ce) || (me >= cb && me <= ce))
+                            continue;
+                        newBegin.push_back(mb);
+                        newEnd.push_back(me);
+                    }
+                    minBegin = std::move(newBegin);
+                    minEnd = std::move(newEnd);
+                    coverageBegin.clear();
+                    coverageEnd.clear();
+                    coverage.clear();
+                }
+            }
+        }
+        return destroyed > available ? 0 : available - destroyed;
     }
 };
 
@@ -1020,6 +1068,52 @@ public:
         }
         coverageBegin.pop_back();
         coverage.pop_back();
+    }
+
+    inline uint32_t get_threshold(uint32_t t, uint16_t e)
+    {
+        (void) t;
+        uint32_t destroyed{0};
+        // minBegin.erase(std::unique(std::begin(minBegin), std::end(minBegin)), std::end(minBegin));
+        uint32_t available{static_cast<uint32_t>(minBegin.size())};
+
+        for (uint16_t i = 0; i < e; ++i)
+        {
+            if (minBegin.size() > 0)
+            {
+                get_coverage();
+                auto max = std::max_element(coverage.begin(), coverage.end());
+                if (i == e - 1)
+                    destroyed += *max;
+                else
+                {
+                    destroyed += *max;
+                    std::vector<uint64_t> newBegin;
+                    std::vector<uint64_t> newEnd;
+                    newBegin.reserve(available - destroyed);
+                    newEnd.reserve(available - destroyed);
+
+                    auto idx = std::distance(coverage.begin(), max);
+                    auto cb = coverageBegin[idx];
+                    auto ce =  coverageEnd[idx];
+                    for (uint64_t i = 0; i < minBegin.size(); ++i)
+                    {
+                        auto mb = minBegin[i];
+                        auto me = minEnd[i];
+                        if ((mb >= cb && mb <= ce) || (me >= cb && me <= ce))
+                            continue;
+                        newBegin.push_back(mb);
+                        newEnd.push_back(me);
+                    }
+                    minBegin = std::move(newBegin);
+                    minEnd = std::move(newEnd);
+                    coverageBegin.clear();
+                    coverageEnd.clear();
+                    coverage.clear();
+                }
+            }
+        }
+        return destroyed > available ? 0 : available - destroyed;
     }
 };
 
