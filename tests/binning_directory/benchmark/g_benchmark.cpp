@@ -31,7 +31,7 @@
 // ==========================================================================
 #include <random>
 #include <benchmark/benchmark.h>
-#include <seqan/kmer.h>
+#include <seqan/binning_directory.h>
 #include <atomic>
 
 using namespace seqan;
@@ -40,14 +40,14 @@ using namespace seqan;
 CharString baseDir{"/srv/hdd/seiler/IBF/"}; // redwood
 uint64_t e{3};
 
-template <typename TAlphabet, typename TFilter>
+template <typename TValue, typename THash, typename TBitvector>
 static void insertKmer_IBF(benchmark::State& state)
 {
     auto bins = state.range(0);
     auto k = state.range(1);
     auto bits = state.range(2);
     auto hash = state.range(3);
-    KmerFilter<TAlphabet, InterleavedBloomFilter, TFilter> ibf (bins, hash, k, (1ULL<<bits));
+    BinningDirectory<InterleavedBloomFilter, BDConfig<TValue, THash, TBitvector> > ibf (bins, hash, k, (1ULL<<bits));
 
     for (auto _ : state)
     {
@@ -76,7 +76,7 @@ static void insertKmer_IBF(benchmark::State& state)
     append(storage, CharString(std::to_string(k)));
     append(storage, CharString("_"));
     append(storage, CharString(std::to_string(bits)));
-    if constexpr (std::is_same_v<TFilter, Uncompressed>) {
+    if constexpr (std::is_same_v<TBitvector, Uncompressed>) {
         append(storage, CharString("_Uncompressed"));
     }
     else
@@ -86,9 +86,9 @@ static void insertKmer_IBF(benchmark::State& state)
     append(storage, CharString("_ibf.filter"));
     store(ibf, storage);
 
-    state.counters["Size"] = ibf.filterVector.size_in_mega_bytes();
+    state.counters["Size"] = size(ibf);
 }
-
+/*
 template <typename TAlphabet, typename TFilter>
 static void select_IBF(benchmark::State& state)
 {
@@ -224,13 +224,13 @@ static void select_IBF(benchmark::State& state)
         state.counters["fullTime"] = std::chrono::duration_cast<std::chrono::duration<double> >(fullTime2 - fullTime).count();
     }
 }
-
-template <typename TAlphabet, typename TFilter>
+*/
+template <typename TValue, typename THash, typename TBitvector>
 static void insertKmer_DA(benchmark::State& state)
 {
     auto bins = state.range(0);
     auto k = state.range(1);
-    KmerFilter<TAlphabet, DirectAddressing, TFilter> da (bins, k);
+    BinningDirectory<DirectAddressing, BDConfig<TValue, THash, TBitvector> > da (bins, k);
 
     for (auto _ : state)
     {
@@ -257,7 +257,7 @@ static void insertKmer_DA(benchmark::State& state)
     append(storage, CharString(std::to_string(bins)));
     append(storage, CharString("_"));
     append(storage, CharString(std::to_string(k)));
-    if constexpr (std::is_same_v<TFilter, Uncompressed>) {
+    if constexpr (std::is_same_v<TBitvector, Uncompressed>) {
         append(storage, CharString("_Uncompressed"));
     }
     else
@@ -267,9 +267,9 @@ static void insertKmer_DA(benchmark::State& state)
     append(storage, CharString("_da.filter"));
     store(da, storage);
 
-    state.counters["Size"] = da.filterVector.size_in_mega_bytes();
+    state.counters["Size"] = size(da);
 }
-
+/*
 template <typename TAlphabet, typename TFilter>
 static void select_DA(benchmark::State& state)
 {
@@ -402,7 +402,7 @@ static void select_DA(benchmark::State& state)
         break;
     }
 }
-
+*/
 [[maybe_unused]]
 static void IBFArguments(benchmark::internal::Benchmark* b)
 {
@@ -411,10 +411,10 @@ static void IBFArguments(benchmark::internal::Benchmark* b)
     {
         if ((binNo > 1 && binNo < 64) || binNo==128 || binNo==512 || binNo==2048 || binNo==4096)
             continue;
-        for (int32_t k = 8; k < 14; ++k)
+        for (int32_t k = 19; k < 20; ++k)
         {
             // 35 = 4GiB, 36 = 8GiB, 37 = 16GiB
-            for (int32_t bits = 20; bits <= 30; ++bits )
+            for (int32_t bits = 33; bits <= 37; ++bits )
             {
                 for (int32_t hashNo = 3; hashNo < 4; ++hashNo)
                 {
@@ -433,7 +433,7 @@ static void DAArguments(benchmark::internal::Benchmark* b)
     {
         if ((binNo > 1 && binNo < 64) || binNo==128 || binNo==512 || binNo==2048 || binNo==4096)
             continue;
-        for (int32_t k = 3; k <= 9; ++k)
+        for (int32_t k = 10; k <= 15; ++k)
         {
             if (binNo == 8192 && k == 14)
                 continue;
@@ -441,14 +441,13 @@ static void DAArguments(benchmark::internal::Benchmark* b)
         }
     }
 }
-
-// BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Uncompressed)->Apply(IBFArguments);
-// BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, CompressedSimple)->Apply(IBFArguments)->UseManualTime();
+BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, Uncompressed)->Apply(IBFArguments);
+BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, Compressed)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, CompressedArray)->Apply(IBFAddArguments)->UseManualTime();
-// BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Uncompressed)->Apply(DAArguments);
-// BENCHMARK_TEMPLATE(insertKmer_DA, Dna, CompressedSimple)->Apply(DAArguments)->UseManualTime();
+BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Normal<5>, Uncompressed)->Apply(DAArguments);
+BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Normal<5>, Compressed)->Apply(DAArguments);
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, CompressedArray)->Apply(DAAddArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(select_IBF, Dna, Uncompressed)->Apply(IBFArguments);
+// BENCHMARK_TEMPLATE(select_IBF, Dna, Uncompressed)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedSimple)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedArray)->Apply(IBFWhichArguments)->UseManualTime();
 // BENCHMARK_TEMPLATE(select_DA, Dna, Uncompressed)->Apply(DAArguments);

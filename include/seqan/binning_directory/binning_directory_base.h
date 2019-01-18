@@ -538,41 +538,63 @@ inline void insertKmer(BinningDirectory<TSpec, TConfig> & me, StringSet<String<t
  * bin_01.fasta, ..., bin_63.fasta.
  * Up to <threads> fasta files are added to the bitvector at the same time.
  */
-// template<typename TValue, typename TSpec, typename TBitvector>
-// inline void insertKmerDir(BinningDirectory<TValue, TSpec, TBitvector> &  me, const char * baseDir, uint8_t threads)
-// {
-//     Semaphore thread_limiter(threads);
-//     // std::mutex mtx;
-//     std::vector<std::future<void>> tasks;
-//
-//     uint32_t bins = me.noOfBins;
-//     for (uint8_t c = 0; c < me.bitvector.noOfChunks; ++c)
-//     {
-//         me.bitvector.decompress(c);
-//         for(uint32_t i = 0; i < bins; ++i)
-//         {
-//             CharString file(baseDir);
-//             append(file, CharString(std::to_string(bins)));
-//             append(file, CharString{"/bins/bin_"});
-//             append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
-//             append(file, CharString(".fasta"));
-//             tasks.emplace_back(
-//                 std::async(std::launch::async, [=, &thread_limiter, &me] { // &mtx
-//                     Critical_section _(thread_limiter);
-//                     insertKmer(me, toCString(file), i, true, c);
-//                     // mtx.lock();
-//                     // std::cerr << "IBF Bin " << i << " done." << '\n';
-//                     // mtx.unlock();
-//                 })
-//             );
-//         }
-//
-//         for (auto &&task : tasks){
-//             task.get();
-//         }
-//         me.bitvector.compress(c);
-//     }
-// }
+template<typename TSpec, typename TConfig>
+inline void insertKmerDir(BinningDirectory<TSpec, TConfig> & me, const char * baseDir, uint8_t threads)
+{
+    Semaphore thread_limiter(threads);
+    std::mutex mtx;
+    std::vector<std::future<void>> tasks;
+    if (!me.chunkMapSet)
+        configureChunkMap(me);
+
+    uint32_t bins = me.noOfBins;
+    for (uint8_t c = 0; c < (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value ? TConfig::TChunks::VALUE : 1); ++c)
+    {
+        me.bitvector.decompress(c);
+        for(uint32_t i = 0; i < bins; ++i)
+        {
+            CharString file(baseDir);
+            append(file, CharString(std::to_string(bins)));
+            append(file, CharString{"/bins/bin_"});
+            append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
+            append(file, CharString(".fasta"));
+            tasks.emplace_back(
+                std::async(std::launch::async, [=, &mtx, &thread_limiter, &me] { // &mtx
+                    Critical_section _(thread_limiter);
+
+                    CharString id;
+                    String<typename TConfig::TValue> seq;
+                    SeqFileIn seqFileIn;
+
+                    if (!open(seqFileIn, toCString(file)))
+                    {
+                        CharString msg = "Unable to open contigs file: ";
+                        append(msg, file);
+                        std::cerr << msg << std::endl;
+                        throw toCString(msg);
+                    }
+                    while(!atEnd(seqFileIn))
+                    {
+                        readRecord(id, seq, seqFileIn);
+                        if(length(seq) < me.kmerSize)
+                            continue;
+                        insertKmer(me, seq, i, c);
+                    }
+                    close(seqFileIn);
+
+                    mtx.lock();
+                    std::cerr << "IBF Bin " << i << " done." << '\n';
+                    mtx.unlock();
+                })
+            );
+        }
+
+        for (auto &&task : tasks){
+            task.get();
+        }
+        me.bitvector.compress(c);
+    }
+}
 
 /*!
  * \brief Calculates the k-mer counts of a given text.
