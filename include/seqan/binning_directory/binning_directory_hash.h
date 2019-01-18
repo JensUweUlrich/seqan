@@ -165,6 +165,11 @@ public:
             return kmerHashes;
         }
     }
+
+    inline uint32_t get_threshold(uint32_t t, uint16_t e)
+    {
+        return t + 1u > this->kmerSize * (1u+e) ? (t - this->kmerSize * (1u+e) + 1u) : 0u;
+    }
 };
 
 template<typename TValue, uint16_t k, typename TChunks>
@@ -236,6 +241,11 @@ struct BDHash<TValue, Normal<k>, TChunks> : BDHashBase<TValue, TChunks>
             this->resize(cacheKmerSize);
             return kmerHashes;
         }
+    }
+
+    inline uint32_t get_threshold(uint32_t t, uint16_t e)
+    {
+        return t + 1u > this->kmerSize * (1u+e) ? (t - this->kmerSize * (1u+e) + 1u) : 0u;
     }
 };
 
@@ -333,6 +343,11 @@ public:
 
             return kmerHashes;
         }
+    }
+
+    inline uint32_t get_threshold(uint32_t t, uint16_t e)
+    {
+        return t + 1u > kmerSize * (1u+e) ? std::floor((t - kmerSize * (1u + e) + 1u)/o) : 0u;
     }
 };
 
@@ -443,6 +458,11 @@ struct BDHash<TValue, Offset<k, o>, TChunks> : BDHashBase<TValue, TChunks>
 
             return kmerHashes;
         }
+    }
+
+    inline uint32_t get_threshold(uint32_t t, uint16_t e)
+    {
+        return t + 1u > kmerSize * (1u+e) ? std::floor((t - kmerSize * (1u + e) + 1u)/o) : 0u;
     }
 };
 
@@ -746,12 +766,11 @@ public:
         return std::make_tuple(std::get<0>(h), this->chunkMap[std::get<1>(h)]);
     }
 
-    template<typename TString>
-    inline std::vector<uint64_t> getHash(TString & text) // TODO cannot be const for ModifiedString
+    inline std::vector<uint64_t> getHash(String<TValue> const & text)
     {
         if (this->kmerSize > seqan::length(text))
             return std::vector<uint64_t> {};
-        typedef ModifiedString<ModifiedString<TString, ModComplementDna>, ModReverse> TRC;
+        typedef ModifiedString<ModifiedString<String<TValue> const, ModView<FunctorComplement<TValue>>>, ModReverse> TRC;
         TRC revComp(text);
         uint32_t possible = seqan::length(text) > windowSize ? seqan::length(text) - windowSize + 1 : 1;
         uint32_t windowKmers = windowSize - this->kmerSize + 1;
