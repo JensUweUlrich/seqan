@@ -491,25 +491,27 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, select)
     typedef typename TestFixture::TBinning      TBinning;
     typedef typename TBinning::TValue  TValue;
 
-    TBinning bd(64, 3, TBinning::THash::VALUE, 32_m);
-    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
-    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
-    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
-
-    auto result = select(bd, String<TValue>{"TAACTTTTTTAT"}, 0, 3);
-    auto result2 = select(bd, String<TValue>{"TAA"}, 0);
-    auto result3 = select(bd, String<TValue>{""}, 0);
-    auto result4 = select<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
-    auto result5 = select<Offset<TBinning::THash::VALUE,1>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
-    auto result6 = select<Offset<TBinning::THash::VALUE,3>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
-
-    SEQAN_ASSERT_EQ(result[0], true);
-    SEQAN_ASSERT_EQ(result[1], true);
-    SEQAN_ASSERT_EQ(result[2], true);
-
-    for (uint16_t i = 3; i < 64; ++i)
+    if (!std::is_same<typename TBinning::TBitvector, CompressedDisk>::value) // select invalid for chunks
     {
-        SEQAN_ASSERT_EQ(result[i], false);
+        TBinning bd(64, 3, TBinning::THash::VALUE, 32_m);
+        insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
+        insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
+        insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
+
+        auto result = select(bd, String<TValue>{"TAACTTTTTTAT"}, 0, 3);
+        auto result2 = select(bd, String<TValue>{"TAA"}, 0);
+        auto result3 = select(bd, String<TValue>{""}, 0);
+        auto result4 = select<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
+        auto result5 = select<Offset<TBinning::THash::VALUE,1>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
+        auto result6 = select<Offset<TBinning::THash::VALUE,3>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
+        SEQAN_ASSERT_EQ(result[0], true);
+        SEQAN_ASSERT_EQ(result[1], true);
+        SEQAN_ASSERT_EQ(result[2], true);
+
+        for (uint16_t i = 3; i < 64; ++i)
+        {
+            SEQAN_ASSERT_EQ(result[i], false);
+        }
     }
 }
 
@@ -518,24 +520,27 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, select)
     typedef typename TestFixture::TBinning      TBinning;
     typedef typename TBinning::TValue  TValue;
 
-    TBinning bd(64, TBinning::THash::VALUE);
-    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
-    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
-    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
-
-    auto result = select(bd, String<TValue>{"TAACTTTTTTAT"}, 0, 3);
-    auto result2 = select(bd, String<TValue>{"TAA"}, 0);
-    auto result3 = select(bd, String<TValue>{""}, 0);
-    auto result4 = select<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
-    auto result5 = select<Offset<TBinning::THash::VALUE,1>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
-    auto result6 = select<Offset<TBinning::THash::VALUE,3>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
-    SEQAN_ASSERT_EQ(result[0], true);
-    SEQAN_ASSERT_EQ(result[1], true);
-    SEQAN_ASSERT_EQ(result[2], true);
-
-    for (uint16_t i = 3; i < 64; ++i)
+    if (!std::is_same<typename TBinning::TBitvector, CompressedDisk>::value) // select invalid for chunks
     {
-        SEQAN_ASSERT_EQ(result[i], false);
+        TBinning bd(64, TBinning::THash::VALUE);
+        insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
+        insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 1);
+        insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 2);
+
+        auto result = select(bd, String<TValue>{"TAACTTTTTTAT"}, 0, 3);
+        auto result2 = select(bd, String<TValue>{"TAA"}, 0);
+        auto result3 = select(bd, String<TValue>{""}, 0);
+        auto result4 = select<Normal<TBinning::THash::VALUE>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
+        auto result5 = select<Offset<TBinning::THash::VALUE,1>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
+        auto result6 = select<Offset<TBinning::THash::VALUE,3>>(bd, String<TValue>{"TAACTTTTTTAT"}, 0);
+        SEQAN_ASSERT_EQ(result[0], true);
+        SEQAN_ASSERT_EQ(result[1], true);
+        SEQAN_ASSERT_EQ(result[2], true);
+
+        for (uint16_t i = 3; i < 64; ++i)
+        {
+            SEQAN_ASSERT_EQ(result[i], false);
+        }
     }
 }
 
@@ -886,7 +891,7 @@ auto getKmers(uint64_t k, uint64_t rank)
         kmer[k-1] = (TValue) rank;
         appendValue(kmers, kmer);
 
-        for (uint64_t i = k-2;; --i)
+        for (int64_t i = k-2;; --i)
         {
             if (i < 0)
                 return kmers;
