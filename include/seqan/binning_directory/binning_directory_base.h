@@ -194,6 +194,7 @@ struct Chunks
     static const uint8_t VALUE = chunks;
 };
 
+// Everything besides CompressedDisk will 1 Chunk internally
 template<typename TValue_ = Dna, typename THash_ = Normal<4>, typename TBitvector_ = Uncompressed, typename TChunks_ = Chunks<4>>
 struct BDConfig
 {
@@ -653,6 +654,8 @@ inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> const &  me,
 template<typename TSpec, typename TConfig, typename TAnyString, typename TInt, typename TChunkNo>
 inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<bool> & selected, TAnyString const & text, TInt && errors, TChunkNo && chunk = 0)
 {
+    if (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value)
+        throw std::logic_error("Select no valid for CompressedDisk");
     std::vector<uint64_t> counts(me.noOfBins, 0);
     uint32_t threshold{static_cast<uint32_t>(errors)};
     count(me, counts, text, threshold, chunk);
@@ -666,12 +669,16 @@ inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<boo
 template<typename TSpec, typename TConfig, typename TAnyString, typename TInt>
 inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<bool> & selected, TAnyString const & text, TInt && errors)
 {
+    if (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value)
+        throw std::logic_error("Select no valid for CompressedDisk");
     select(me, selected, text, errors, 0);
 }
 
 template<typename TSpec, typename TConfig, typename TAnyString, typename TInt, typename TChunkNo>
 inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && errors, TChunkNo && chunk = 0)
 {
+    if (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value)
+        throw std::logic_error("Select no valid for CompressedDisk");
     std::vector<bool> selected(me.noOfBins, false);
     select(me, selected, text, errors, chunk);
     return selected;
@@ -680,18 +687,24 @@ inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TA
 template<typename TSpec, typename TConfig, typename TAnyString, typename TInt>
 inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && errors)
 {
+    if (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value)
+        throw std::logic_error("Select no valid for CompressedDisk");
     return select(me, text, errors, 0);
 }
 
 template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt>
 inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && errors)
 {
+    if (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value)
+        throw std::logic_error("Select no valid for CompressedDisk");
    return select<THashCount>(me, text, errors, 0);
 }
 
 template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt, typename TChunkNo>
 inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && errors, TChunkNo && chunk = 0)
 {
+    if (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value)
+        throw std::logic_error("Select no valid for CompressedDisk");
    typedef typename TConfig::THash THash;
    std::vector<uint64_t> counts(me.noOfBins, 0);
    uint32_t threshold{static_cast<uint32_t>(errors)};
@@ -717,12 +730,16 @@ inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TA
 template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt>
 inline void select(BinningDirectory<TSpec, TConfig> &  me, std::vector<bool> const & selected, TAnyString const & text, TInt && errors)
 {
+    if (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value)
+        throw std::logic_error("Select no valid for CompressedDisk");
    select<THashCount>(me, selected, text, errors, 0);
 }
 
 template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt, typename TChunkNo>
 inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<bool> & selected, TAnyString const & text, TInt && errors, TChunkNo && chunk = 0)
 {
+    if (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value)
+        throw std::logic_error("Select no valid for CompressedDisk");
    typedef typename TConfig::THash THash;
    std::vector<uint64_t> counts(me.noOfBins, 0);
    uint32_t threshold{static_cast<uint32_t>(errors)};
