@@ -127,10 +127,16 @@ struct Bitvector<Compressed> : BitvectorBase
 
     Bitvector(CharString fileName)
     {
+        /*
         uncompressed_vector = std::make_unique<sdsl::bit_vector>(0,0);
         sdsl::load_from_file(*uncompressed_vector, toCString(fileName));
 
         noOfBits = uncompressed_vector->size();
+        */
+        compressed_vector = std::make_unique<sdsl::sd_vector<>>();
+        sdsl::load_from_file(*compressed_vector, toCString(fileName));
+
+        noOfBits = compressed_vector->size();
         noOfBits -= FILTER_METADATA_SIZE;
         // How many blocks of 64 bit do we need to represent our noOfBins
         binWidth = std::ceil((double)noOfBins / INT_SIZE);
@@ -176,8 +182,11 @@ struct Bitvector<Compressed> : BitvectorBase
 
     bool store(CharString fileName)
     {
-        decompress();
-        return sdsl::store_to_file(*uncompressed_vector, toCString(fileName));
+        compress();
+        return sdsl::store_to_file(*compressed_vector, toCString(fileName));
+        // bool store_compressed = sdsl::store_to_file(*compressed_vector, toCString(fileName));
+        // decompress();
+        // return store_compressed && sdsl::store_to_file(*uncompressed_vector, toCString(fileName)+std::string(".decomp"));
     }
 
     void retrieve(CharString fileName)
