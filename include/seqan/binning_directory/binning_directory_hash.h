@@ -129,8 +129,9 @@ public:
         seqan::resize(kmerShape, kmerSize);
     }
 
-    inline void resize(TKmerSize newKmerSize, uint32_t)
+    inline void resize(TKmerSize newKmerSize, uint16_t newOffset)
     {
+        offset = newOffset;
         kmerSize = newKmerSize;
         seqan::resize(kmerShape, kmerSize);
     }
@@ -154,7 +155,7 @@ public:
 
     inline uint32_t get_threshold(uint32_t t, uint16_t e)
     {
-        return t + 1u > kmerSize * (1u+e) ? std::floor((t - kmerSize * (1u + e) + 1u)/o) : 0u;
+        return t + 1u > kmerSize * (1u+e) ? std::floor((t - kmerSize * (1u + e) + 1u)/offset) : 0u;
     }
 
     template<typename TString>
