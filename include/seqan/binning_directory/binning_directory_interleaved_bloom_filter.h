@@ -91,6 +91,8 @@ public:
     TNoOfHashFunc    noOfHashFunc;
     //!\brief The k-mer size.
     TKmerSize        kmerSize;
+    //!\brief The offset.
+    TOffset          offset{1};
     //!\brief The window size.
     TWindowSize      windowSize;
     //!\brief The size of the bit vector.
@@ -179,6 +181,7 @@ public:
         noOfBits = other.noOfBits;
         bitvector = other.bitvector;
         windowSize = other.windowSize;
+        offset = other.offset;
         init();
         return *this;
     }
@@ -198,6 +201,7 @@ public:
         noOfBits = std::move(other.noOfBits);
         bitvector = std::move(other.bitvector);
         windowSize = std::move(other.windowSize);
+        offset = std::move(other.offset);
         init();
         return *this;
     }
@@ -259,7 +263,10 @@ public:
         // if (std::is_same<TValue, Dna5>::value)
         //     std::cerr << "DNA5\n";
         BDHash<TValue, THashCount> shape;
-        shape.resize(kmerSize, windowSize);
+        if constexpr(is_offset<THashCount>::value)
+            shape.resize(kmerSize, offset);
+        else
+            shape.resize(kmerSize, windowSize);
         std::vector<uint64_t> kmerHashes = shape.getHash(text);
 
         for (uint64_t kmerHash : kmerHashes)
@@ -327,7 +334,10 @@ public:
         // if (std::is_same<TValue, Dna5>::value)
         //     std::cerr << "DNA5\n";
         BDHash<TValue, THashCount> shape;
-        shape.resize(kmerSize, windowSize);
+        if constexpr(is_offset<THashCount>::value)
+            shape.resize(kmerSize, offset);
+        else
+            shape.resize(kmerSize, windowSize);
         std::vector<uint64_t> kmerHashes = shape.getHash(text);
 
         for (uint64_t kmerHash : kmerHashes)
@@ -428,7 +438,10 @@ public:
         // if (std::is_same<TValue, Dna5>::value)
         //     std::cerr << "DNA5\n";
         BDHash<TValue, THashInsert> shape;
-        shape.resize(kmerSize, windowSize);
+        if constexpr(is_offset<THashInsert>::value)
+            shape.resize(kmerSize, offset);
+        else
+            shape.resize(kmerSize, windowSize);
         std::vector<uint64_t> kmerHashes = shape.getHash(text);
 
         for (auto kmerHash : kmerHashes)

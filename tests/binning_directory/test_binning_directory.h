@@ -407,6 +407,42 @@ SEQAN_TYPED_TEST(BinningDirectoryDATest, count)
     }
 }
 
+SEQAN_TEST(BinningDirectoryIBFTest, set_offset)
+{
+    typedef BinningDirectory<InterleavedBloomFilter, BDConfig<Dna, Offset<2>, Uncompressed> > TBinning;
+
+    TBinning bd(64, 3, 3, 32_m);
+    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
+
+    auto result1 = count<Offset<3>>(bd, String<Dna>{"AAA"});
+    bd.offset = 3u;
+
+    auto result2 = count(bd, String<Dna>{"AAA"});
+
+    SEQAN_ASSERT_EQ(result1.size(), result2.size());
+
+    for (size_t i = 0; i < result1.size(); ++i)
+        SEQAN_ASSERT_EQ(result1[i], result2[i]);
+}
+
+SEQAN_TEST(BinningDirectoryDATest, set_offset)
+{
+    typedef BinningDirectory<DirectAddressing, BDConfig<Dna, Offset<2>, Uncompressed> > TBinning;
+
+    TBinning bd(64, 3);
+    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
+
+    auto result1 = count<Offset<3>>(bd, String<Dna>{"AAA"});
+    bd.offset = 3u;
+
+    auto result2 = count(bd, String<Dna>{"AAA"});
+
+    SEQAN_ASSERT_EQ(result1.size(), result2.size());
+
+    for (size_t i = 0; i < result1.size(); ++i)
+        SEQAN_ASSERT_EQ(result1[i], result2[i]);
+}
+
 // select
 SEQAN_TYPED_TEST(BinningDirectoryIBFTest, select)
 {
@@ -676,7 +712,7 @@ SEQAN_TEST(BinningDirectoryDATest, resize)
         SEQAN_ASSERT_EQ(result2[i], 0u);
     }
 }
-
+/*
 SEQAN_TYPED_TEST(BinningDirectoryDATest, constness)
 {
     typedef typename TestFixture::TBinning      TBinning;
@@ -738,7 +774,7 @@ SEQAN_TYPED_TEST(BinningDirectoryIBFTest, constness)
         SEQAN_ASSERT_EQ(selectRes[i], false);
     }
 }
-
+*/
 SEQAN_TYPED_TEST(HashTest, offset)
 {
     typedef typename TestFixture::THash      THash;
