@@ -425,6 +425,24 @@ SEQAN_TEST(BinningDirectoryIBFTest, set_offset)
         SEQAN_ASSERT_EQ(result1[i], result2[i]);
 }
 
+SEQAN_TEST(BinningDirectoryIBFTest, set_offset_normal)
+{
+    typedef BinningDirectory<InterleavedBloomFilter, BDConfig<Dna, Offset<2>, Uncompressed> > TBinning;
+
+    TBinning bd(64, 3, 3, 32_m);
+    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
+
+    auto result1 = count<Normal>(bd, String<Dna>{"AAA"});
+    bd.offset = 1u;
+
+    auto result2 = count(bd, String<Dna>{"AAA"});
+
+    SEQAN_ASSERT_EQ(result1.size(), result2.size());
+
+    for (size_t i = 0; i < result1.size(); ++i)
+        SEQAN_ASSERT_EQ(result1[i], result2[i]);
+}
+
 SEQAN_TEST(BinningDirectoryDATest, set_offset)
 {
     typedef BinningDirectory<DirectAddressing, BDConfig<Dna, Offset<2>, Uncompressed> > TBinning;
@@ -434,6 +452,24 @@ SEQAN_TEST(BinningDirectoryDATest, set_offset)
 
     auto result1 = count<Offset<3>>(bd, String<Dna>{"AAA"});
     bd.offset = 3u;
+
+    auto result2 = count(bd, String<Dna>{"AAA"});
+
+    SEQAN_ASSERT_EQ(result1.size(), result2.size());
+
+    for (size_t i = 0; i < result1.size(); ++i)
+        SEQAN_ASSERT_EQ(result1[i], result2[i]);
+}
+
+SEQAN_TEST(BinningDirectoryDATest, set_offset_normal)
+{
+    typedef BinningDirectory<DirectAddressing, BDConfig<Dna, Offset<2>, Uncompressed> > TBinning;
+
+    TBinning bd(64, 3);
+    insertKmer(bd, getAbsolutePath("tests/binning_directory/test.fasta").c_str(), 0);
+
+    auto result1 = count<Normal>(bd, String<Dna>{"AAA"});
+    bd.offset = 1u;
 
     auto result2 = count(bd, String<Dna>{"AAA"});
 

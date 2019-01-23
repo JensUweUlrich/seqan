@@ -365,7 +365,15 @@ template<typename TSpec, typename TConfig, typename TAnyString>
 inline void count(BinningDirectory<TSpec, TConfig> & me, std::vector<uint64_t> & counts, TAnyString const & text)
 {
     typedef typename TConfig::THash THash;
-    me.template count<THash>(counts, text);
+    if constexpr (is_offset<THash>::value)
+    {
+        if (me.offset == 1u)
+            me.template count<Normal>(counts, text);
+        else
+            me.template count<THash>(counts, text);
+    }
+    else
+        me.template count<THash>(counts, text);
 }
 
 template<typename TSpec, typename TConfig, typename TAnyString>
@@ -373,7 +381,15 @@ inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> & me, TAnySt
 {
     typedef typename TConfig::THash THash;
     std::vector<uint64_t> counts(me.noOfBins, 0);
-    me.template count<THash>(counts, text);
+    if constexpr (is_offset<THash>::value)
+    {
+        if (me.offset == 1u)
+            me.template count<Normal>(counts, text);
+        else
+            me.template count<THash>(counts, text);
+    }
+    else
+        me.template count<THash>(counts, text);
     return counts;
 }
 
@@ -415,7 +431,15 @@ template<typename TSpec, typename TConfig, typename TAnyString>
 inline void count(BinningDirectory<TSpec, TConfig> & me, std::vector<uint64_t> & counts, TAnyString const & text, uint32_t & threshold)
 {
     typedef typename TConfig::THash THash;
-    me.template count<THash>(counts, text, threshold);
+    if constexpr (is_offset<THash>::value)
+    {
+        if (me.offset == 1u)
+            me.template count<Normal>(counts, text, threshold);
+        else
+            me.template count<THash>(counts, text, threshold);
+    }
+    else
+        me.template count<THash>(counts, text, threshold);
 }
 
 template<typename TSpec, typename TConfig, typename TAnyString>
@@ -423,7 +447,15 @@ inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> & me, TAnySt
 {
     typedef typename TConfig::THash THash;
     std::vector<uint64_t> counts(me.noOfBins, 0);
-    me.template count<THash>(counts, text, threshold);
+    if constexpr (is_offset<THash>::value)
+    {
+        if (me.offset == 1u)
+            me.template count<Normal>(counts, text, threshold);
+        else
+            me.template count<THash>(counts, text, threshold);
+    }
+    else
+        me.template count<THash>(counts, text, threshold);
     return counts;
 }
 
