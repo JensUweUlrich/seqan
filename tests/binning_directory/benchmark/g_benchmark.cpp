@@ -88,15 +88,15 @@ static void insertKmer_IBF(benchmark::State& state)
 
     state.counters["Size"] = size(ibf);
 }
-/*
-template <typename TAlphabet, typename TFilter>
+
+template <typename TValue, typename THash, typename TBitvector>
 static void select_IBF(benchmark::State& state)
 {
     auto bins = state.range(0);
     auto k = state.range(1);
     auto bits = state.range(2);
-    auto hash = state.range(3);
-    KmerFilter<TAlphabet, InterleavedBloomFilter, TFilter> ibf(bins, hash, k, (1ULL<<bits));
+    // auto hash = state.range(3);
+    // BinningDirectory<InterleavedBloomFilter, BDConfig<TValue, THash, TBitvector> > ibf (bins, hash, k, (1ULL<<bits));
 
     CharString storage("");
     append(storage, CharString(std::to_string(bins)));
@@ -104,8 +104,13 @@ static void select_IBF(benchmark::State& state)
     append(storage, CharString(std::to_string(k)));
     append(storage, CharString("_"));
     append(storage, CharString(std::to_string(bits)));
-    if constexpr (std::is_same_v<TFilter, Uncompressed> || std::is_same_v<TFilter, CompressedSimple>) {
+    if constexpr (std::is_same_v<TBitvector, Uncompressed>)
+    {
         append(storage, CharString("_Uncompressed"));
+    }
+    else if constexpr (std::is_same_v<TBitvector, Compressed>)
+    {
+        append(storage, CharString("_Compressed"));
     }
     else
     {
@@ -117,14 +122,15 @@ static void select_IBF(benchmark::State& state)
 
     double loadingTime{0.0};
     auto start = std::chrono::high_resolution_clock::now();
-    retrieve(ibf, storage);
+    BinningDirectory<InterleavedBloomFilter, BDConfig<TValue, THash, TBitvector> > ibf (storage);
+    // retrieve(ibf, storage);
     auto end   = std::chrono::high_resolution_clock::now();
     loadingTime = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
 
 
     double compressionTime{0.0};
     start = std::chrono::high_resolution_clock::now();
-    ibf.filterVector.compress(0); // Loading automatically compresses
+    ibf.bitvector.compress(0); // Loading automatically compresses
     end   = std::chrono::high_resolution_clock::now();
     compressionTime = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
 
@@ -139,14 +145,15 @@ static void select_IBF(benchmark::State& state)
     {
         double selectTime{0.0};
         double ioTime{0.0};
-        Semaphore thread_limiter(8);
+        Semaphore thread_limiter(32);
         std::mutex mtx;
         std::mutex mtx2;
         std::vector<std::future<void>> tasks;
 
         for(int32_t i = 0; i < bins; ++i)
         {
-            CharString file(baseDir);
+            CharString file{"/dev/shm/IBF/"};
+            // CharString file(baseDir);
             append(file, CharString(std::to_string(bins)));
             append(file, CharString{"/reads/bin_"});
             append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
@@ -156,7 +163,7 @@ static void select_IBF(benchmark::State& state)
                 std::async(std::launch::async, [&, file, i] {
                     Critical_section _(thread_limiter);
                     CharString id;
-                    String<TAlphabet> seq;
+                    String<TValue> seq;
                     SeqFileIn seqFileIn;
                     uint64_t c{0};
                     if (!open(seqFileIn, toCString(file)))
@@ -175,7 +182,7 @@ static void select_IBF(benchmark::State& state)
                         mtx2.unlock();
 
                         start = std::chrono::high_resolution_clock::now();
-                        auto res = select(ibf, seq, 100-k+1 - k*e);
+                        auto res = select(ibf, seq, e);
                         end   = std::chrono::high_resolution_clock::now();
                         ++readNo;
                         mtx.lock();
@@ -205,26 +212,27 @@ static void select_IBF(benchmark::State& state)
         }
 
         auto fullTime2   = std::chrono::high_resolution_clock::now();
-        state.counters["5_TP"] = tp.load();
-        state.counters["6_FN"] = fn.load();
-        state.counters["7_FP"] = fp.load();
-        state.counters["8_P"] = p.load();
-        state.counters["99_readNo"] = readNo.load();
-        state.counters["9_verifications"] = verifications.load();
-        state.counters["0_Verifications"] = static_cast<double>(verifications.load())/readNo.load();
-        state.counters["1_Sensitivity"] = static_cast<double>(tp.load())/readNo.load();
-        state.counters["2_Precision"] = static_cast<double>(tp.load())/p.load();
-        state.counters["3_FNR"] = static_cast<double>(fn.load())/readNo.load();
-        state.counters["4_FDR"] = static_cast<double>(fp.load())/p.load();
+        state.counters["TP"] = tp.load();
+        state.counters["FN"] = fn.load();
+        state.counters["FP"] = fp.load();
+        state.counters["P"] = p.load();
+        state.counters["readNo"] = readNo.load();
+        state.counters["verifications"] = verifications.load();
+        state.counters["Verifications"] = static_cast<double>(verifications.load())/readNo.load();
+        state.counters["Sensitivity"] = static_cast<double>(tp.load())/readNo.load();
+        state.counters["Precision"] = static_cast<double>(tp.load())/p.load();
+        state.counters["FNR"] = static_cast<double>(fn.load())/readNo.load();
+        state.counters["FDR"] = static_cast<double>(fp.load())/p.load();
         state.counters["compressionTime"] = compressionTime;
         state.counters["loadingTime"] = loadingTime;
         state.counters["ioTime"] = ioTime;
         state.counters["selectTime"] = selectTime;
-        state.counters["vectorSize"] = ibf.filterVector.size_in_mega_bytes();
+        state.counters["vectorSize"] = size(ibf);
         state.counters["fullTime"] = std::chrono::duration_cast<std::chrono::duration<double> >(fullTime2 - fullTime).count();
+        break;
     }
 }
-*/
+
 template <typename TValue, typename THash, typename TBitvector>
 static void insertKmer_DA(benchmark::State& state)
 {
@@ -269,20 +277,25 @@ static void insertKmer_DA(benchmark::State& state)
 
     state.counters["Size"] = size(da);
 }
-/*
-template <typename TAlphabet, typename TFilter>
+
+template <typename TValue, typename THash, typename TBitvector>
 static void select_DA(benchmark::State& state)
 {
     auto bins = state.range(0);
     auto k = state.range(1);
-    KmerFilter<TAlphabet, DirectAddressing, TFilter> da (bins, k);
+    // BinningDirectory<DirectAddressing, BDConfig<TValue, THash, TBitvector> > da (bins, k);
 
     CharString storage("");
     append(storage, CharString(std::to_string(bins)));
     append(storage, CharString("_"));
     append(storage, CharString(std::to_string(k)));
-    if constexpr (std::is_same_v<TFilter, Uncompressed> || std::is_same_v<TFilter, CompressedSimple>) {
+    if constexpr (std::is_same_v<TBitvector, Uncompressed>)
+    {
         append(storage, CharString("_Uncompressed"));
+    }
+    else if constexpr (std::is_same_v<TBitvector, Compressed>)
+    {
+        append(storage, CharString("_Compressed"));
     }
     else
     {
@@ -294,14 +307,15 @@ static void select_DA(benchmark::State& state)
 
     double loadingTime{0.0};
     auto start = std::chrono::high_resolution_clock::now();
-    retrieve(da, storage);
+    // retrieve(da, storage);
+    BinningDirectory<DirectAddressing, BDConfig<TValue, THash, TBitvector> > da (storage);
     auto end   = std::chrono::high_resolution_clock::now();
     loadingTime = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
 
 
     double compressionTime{0.0};
     start = std::chrono::high_resolution_clock::now();
-    da.filterVector.compress(0); // Loading automatically compresses
+    da.bitvector.compress(0); // Loading automatically compresses
     end   = std::chrono::high_resolution_clock::now();
     compressionTime = std::chrono::duration_cast<std::chrono::duration<double> >(end - start).count();
 
@@ -316,14 +330,15 @@ static void select_DA(benchmark::State& state)
     {
         double selectTime{0.0};
         double ioTime{0.0};
-        Semaphore thread_limiter(8);
+        Semaphore thread_limiter(32);
         std::mutex mtx;
         std::mutex mtx2;
         std::vector<std::future<void>> tasks;
 
         for(int32_t i = 0; i < bins; ++i)
         {
-            CharString file(baseDir);
+            CharString file{"/dev/shm/IBF/"};
+            // CharString file(baseDir);
             append(file, CharString(std::to_string(bins)));
             append(file, CharString{"/reads/bin_"});
             append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
@@ -333,7 +348,7 @@ static void select_DA(benchmark::State& state)
                 std::async(std::launch::async, [&, file, i] {
                     Critical_section _(thread_limiter);
                     CharString id;
-                    String<TAlphabet> seq;
+                    String<TValue> seq;
                     SeqFileIn seqFileIn;
                     uint64_t c{0};
                     if (!open(seqFileIn, toCString(file)))
@@ -352,7 +367,7 @@ static void select_DA(benchmark::State& state)
                         mtx2.unlock();
 
                         start = std::chrono::high_resolution_clock::now();
-                        auto res = select(da, seq, 100-k+1 - k*e);
+                        auto res = select(da, seq, e);
                         end   = std::chrono::high_resolution_clock::now();
                         ++readNo;
                         mtx.lock();
@@ -382,27 +397,27 @@ static void select_DA(benchmark::State& state)
         }
 
         auto fullTime2   = std::chrono::high_resolution_clock::now();
-        state.counters["5_TP"] = tp.load();
-        state.counters["6_FN"] = fn.load();
-        state.counters["7_FP"] = fp.load();
-        state.counters["8_P"] = p.load();
-        state.counters["99_readNo"] = readNo.load();
-        state.counters["9_verifications"] = verifications.load();
-        state.counters["0_Verifications"] = static_cast<double>(verifications.load())/readNo.load();
-        state.counters["1_Sensitivity"] = static_cast<double>(tp.load())/readNo.load();
-        state.counters["2_Precision"] = static_cast<double>(tp.load())/p.load();
-        state.counters["3_FNR"] = static_cast<double>(fn.load())/readNo.load();
-        state.counters["4_FDR"] = static_cast<double>(fp.load())/p.load();
+        state.counters["TP"] = tp.load();
+        state.counters["FN"] = fn.load();
+        state.counters["FP"] = fp.load();
+        state.counters["P"] = p.load();
+        state.counters["readNo"] = readNo.load();
+        state.counters["verifications"] = verifications.load();
+        state.counters["Verifications"] = static_cast<double>(verifications.load())/readNo.load();
+        state.counters["Sensitivity"] = static_cast<double>(tp.load())/readNo.load();
+        state.counters["Precision"] = static_cast<double>(tp.load())/p.load();
+        state.counters["FNR"] = static_cast<double>(fn.load())/readNo.load();
+        state.counters["FDR"] = static_cast<double>(fp.load())/p.load();
         state.counters["compressionTime"] = compressionTime;
         state.counters["loadingTime"] = loadingTime;
         state.counters["ioTime"] = ioTime;
         state.counters["selectTime"] = selectTime;
-        state.counters["vectorSize"] = da.filterVector.size_in_mega_bytes();
+        state.counters["vectorSize"] = size(da);
         state.counters["fullTime"] = std::chrono::duration_cast<std::chrono::duration<double> >(fullTime2 - fullTime).count();
         break;
     }
 }
-*/
+
 [[maybe_unused]]
 static void IBFArguments(benchmark::internal::Benchmark* b)
 {
@@ -441,17 +456,17 @@ static void DAArguments(benchmark::internal::Benchmark* b)
         }
     }
 }
-BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, Uncompressed)->Apply(IBFArguments);
-BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, Compressed)->Apply(IBFArguments);
+// BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, Uncompressed)->Apply(IBFArguments);
+// BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, Compressed)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, CompressedArray)->Apply(IBFAddArguments)->UseManualTime();
-BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Normal<5>, Uncompressed)->Apply(DAArguments);
-BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Normal<5>, Compressed)->Apply(DAArguments);
+// BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Normal<5>, Uncompressed)->Apply(DAArguments);
+// BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Normal<5>, Compressed)->Apply(DAArguments);
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, CompressedArray)->Apply(DAAddArguments)->UseManualTime();
-// BENCHMARK_TEMPLATE(select_IBF, Dna, Uncompressed)->Apply(IBFArguments);
-// BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedSimple)->Apply(IBFArguments);
+BENCHMARK_TEMPLATE(select_IBF, Dna, Normal<5>, Uncompressed)->Apply(IBFArguments);
+BENCHMARK_TEMPLATE(select_IBF, Dna, Normal<5>, Compressed)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(select_IBF, Dna, CompressedArray)->Apply(IBFWhichArguments)->UseManualTime();
-// BENCHMARK_TEMPLATE(select_DA, Dna, Uncompressed)->Apply(DAArguments);
-// BENCHMARK_TEMPLATE(select_DA, Dna, CompressedSimple)->Apply(DAArguments);
+BENCHMARK_TEMPLATE(select_DA, Dna, Normal<5>, Uncompressed)->Apply(DAArguments);
+BENCHMARK_TEMPLATE(select_DA, Dna, Normal<5>, Compressed)->Apply(DAArguments);
 // BENCHMARK_TEMPLATE(select_DA, Dna, CompressedArray)->Apply(DAWhichArguments));
 
 BENCHMARK_MAIN();
