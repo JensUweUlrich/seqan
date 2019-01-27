@@ -229,7 +229,6 @@ static void select_IBF(benchmark::State& state)
         state.counters["selectTime"] = selectTime;
         state.counters["vectorSize"] = size(ibf);
         state.counters["fullTime"] = std::chrono::duration_cast<std::chrono::duration<double> >(fullTime2 - fullTime).count();
-        break;
     }
 }
 
@@ -414,7 +413,6 @@ static void select_DA(benchmark::State& state)
         state.counters["selectTime"] = selectTime;
         state.counters["vectorSize"] = size(da);
         state.counters["fullTime"] = std::chrono::duration_cast<std::chrono::duration<double> >(fullTime2 - fullTime).count();
-        break;
     }
 }
 
