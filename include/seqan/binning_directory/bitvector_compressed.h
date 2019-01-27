@@ -144,6 +144,7 @@ struct Bitvector<Compressed> : BitvectorBase
         blockBitSize = binWidth * INT_SIZE;
         // How many hash values can we represent
         noOfBlocks = noOfBits / blockBitSize;
+        compressed = true;
     }
 
     inline uint64_t get_int(uint64_t idx, uint8_t = 0, uint8_t len = 64) const
