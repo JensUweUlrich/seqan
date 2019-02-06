@@ -68,33 +68,35 @@ struct Bitvector<CompressedDisk> : BitvectorBase
         double size{0};
         for (uint8_t j = 0; j < noOfChunks; j++)
         {
-            size += sdsl::size_in_mega_bytes(*std::get<2>(filterVector[j]));
+            size += sdsl::size_in_mega_bytes(*std::get<1>(filterVector[j]));
         }
         return size;
     }
 
     inline void decompress(uint8_t chunk)
     {
-        if (std::get<0>(filterVector[chunk]))
-        {
-            for (uint8_t c = 0; c < noOfChunks; ++c)
-            {
-                compress(c);
-            }
-            sdsl::load_from_file(*std::get<1>(filterVector[chunk]), toCString(PREFIX)+std::to_string(chunk));
-            std::get<0>(filterVector[chunk]) = false;
-        }
+        (void) chunk;
+        // if (std::get<0>(filterVector[chunk]))
+        // {
+        //     for (uint8_t c = 0; c < noOfChunks; ++c)
+        //     {
+        //         compress(c);
+        //     }
+        //     sdsl::load_from_file(*std::get<1>(filterVector[chunk]), toCString(PREFIX)+std::to_string(chunk));
+        //     std::get<0>(filterVector[chunk]) = false;
+        // }
     }
 
     inline void compress(uint8_t chunk)
     {
-        if (!std::get<0>(filterVector[chunk]))
-        {
-            std::get<2>(filterVector[chunk]) = std::make_unique<sdsl::sd_vector<> >(*std::get<1>(filterVector[chunk]));
-            sdsl::store_to_file(*std::get<1>(filterVector[chunk]), toCString(PREFIX)+std::to_string(chunk));
-            std::get<1>(filterVector[chunk]) = std::make_unique<sdsl::bit_vector>(0,0);
-            std::get<0>(filterVector[chunk]) = true;
-        }
+        (void) chunk;
+        // if (!std::get<0>(filterVector[chunk]))
+        // {
+        //     // std::get<2>(filterVector[chunk]) = std::make_unique<sdsl::sd_vector<> >(*std::get<1>(filterVector[chunk]));
+        //     sdsl::store_to_file(*std::get<1>(filterVector[chunk]), toCString(PREFIX)+std::to_string(chunk));
+        //     std::get<1>(filterVector[chunk]) = std::make_unique<sdsl::bit_vector>(0,0);
+        //     std::get<0>(filterVector[chunk]) = true;
+        // }
     }
 
     Bitvector() {}
@@ -195,15 +197,15 @@ struct Bitvector<CompressedDisk> : BitvectorBase
                 break;
             }
         }
-        chunkSize = std::get<2>(filterVector[0])->size();
+        chunkSize = std::get<1>(filterVector[0])->size();
         noOfChunks = chunk;
         noOfBits = chunkSize;
         for (uint8_t c = 1; c < noOfChunks; ++c)
         {
-            noOfBits += std::get<2>(filterVector[c])->size();
+            noOfBits += std::get<1>(filterVector[c])->size();
         }
         noOfBits -= FILTER_METADATA_SIZE;
-        noOfBins = get_int(noOfBits, noOfChunks);
+        noOfBins = get_int(noOfBits, noOfChunks - 1);
         // How many blocks of 64 bit do we need to represent our noOfBins
         binWidth = std::ceil((double)noOfBins / INT_SIZE);
         // How big is then a block (multiple of 64 bit)
@@ -212,41 +214,37 @@ struct Bitvector<CompressedDisk> : BitvectorBase
         noOfBlocks = noOfBits  / blockBitSize;
     }
 
-    uint64_t get_int(uint64_t idx, uint8_t chunk, uint8_t len = 64) const
+    uint64_t get_int(uint64_t idx, uint8_t chunk, uint8_t len = 64) //const
     {
-        uint8_t chunkNo = idx / chunkSize;
+        uint8_t chunkNo = idx / (chunkSize + (chunk == noOfChunks - 1 ? FILTER_METADATA_SIZE : 0));
         if (chunkNo != chunk)
             return 0;
-        if (chunk == noOfChunks)
-            --chunkNo;
         uint64_t chunkPos = idx - chunkNo * chunkSize;
-        if (std::get<0>(filterVector[chunkNo]))
-            return std::get<2>(filterVector[chunkNo])->get_int(chunkPos, len);
-        else
-            return std::get<1>(filterVector[chunkNo])->get_int(chunkPos, len);
+        // if (std::get<0>(filterVector[chunkNo]))
+        //     return std::get<2>(filterVector[chunkNo])->get_int(chunkPos, len);
+        // else
+        decompress(chunkNo);
+        return std::get<1>(filterVector[chunkNo])->get_int(chunkPos, len);
     }
 
-    uint64_t get_pos(uint64_t vecIndex, uint8_t chunk) const
+    uint64_t get_pos(uint64_t idx, uint8_t chunk) //const
     {
-        uint8_t chunkNo = vecIndex / chunkSize;
+        uint8_t chunkNo = idx / (chunkSize + (chunk == noOfChunks - 1 ? FILTER_METADATA_SIZE : 0));
         if (chunkNo != chunk)
             return 0;
-        if (chunk == noOfChunks)
-            --chunkNo;
-        uint64_t chunkPos = vecIndex - chunkNo * chunkSize;
-        if (std::get<0>(filterVector[chunkNo]))
-            return (*std::get<2>(filterVector[chunkNo]))[chunkPos];
-        else
-            return (*std::get<1>(filterVector[chunkNo]))[chunkPos];
+        uint64_t chunkPos = idx - chunkNo * chunkSize;
+        // if (std::get<0>(filterVector[chunkNo]))
+        //     return (*std::get<2>(filterVector[chunkNo]))[chunkPos];
+        // else
+        decompress(chunkNo);
+        return (*std::get<1>(filterVector[chunkNo]))[chunkPos];
     }
 
     void set_int(uint64_t idx, uint64_t val, uint8_t chunk, uint8_t len = 64)
     {
-        uint8_t chunkNo = idx / chunkSize;
+        uint8_t chunkNo = idx / (chunkSize + (chunk == noOfChunks - 1 ? FILTER_METADATA_SIZE : 0));
         if (chunkNo != chunk)
             return;
-        if (chunk == noOfChunks)
-            --chunkNo;
         uint64_t chunkPos = idx - chunkNo * chunkSize;
         decompress(chunkNo);
         (*std::get<1>(filterVector[chunkNo])).set_int(chunkPos, val, len);
@@ -255,11 +253,9 @@ struct Bitvector<CompressedDisk> : BitvectorBase
 
     void set_pos(uint64_t idx, uint8_t chunk)
     {
-        uint8_t chunkNo = idx / chunkSize;
+        uint8_t chunkNo = idx / (chunkSize + (chunk == noOfChunks - 1 ? FILTER_METADATA_SIZE : 0));
         if (chunkNo != chunk)
             return;
-        if (chunk == noOfChunks)
-            --chunkNo;
         decompress(chunkNo);
         uint64_t chunkPos = idx - chunkNo * chunkSize;
         (*std::get<1>(filterVector[chunkNo]))[chunkPos] = true;
@@ -267,11 +263,9 @@ struct Bitvector<CompressedDisk> : BitvectorBase
 
     void unset_pos(uint64_t idx, uint8_t chunk)
     {
-        uint8_t chunkNo = idx / chunkSize;
+        uint8_t chunkNo = idx / (chunkSize + (chunk == noOfChunks - 1 ? FILTER_METADATA_SIZE : 0));
         if (chunkNo != chunk)
             return;
-        if (chunk == noOfChunks)
-            --chunkNo;
         decompress(chunkNo);
         uint64_t chunkPos = idx - chunkNo * chunkSize;
         (*std::get<1>(filterVector[chunkNo]))[chunkPos] = false;
