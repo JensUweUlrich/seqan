@@ -263,7 +263,7 @@ public:
      * \param text Text to count occurences for.
      */
     template<typename THashCount, typename TAnyString, typename TInt, typename TChunkNo>
-    void count(std::vector<uint64_t> & counts, TAnyString const & text, TInt && threshold, TChunkNo && chunk = 0) const
+    void count(std::vector<uint64_t> & counts, TAnyString const & text, TInt && threshold, TChunkNo && chunk = 0)// const
     {
         BDHash<TValue, THashCount, TChunks> shape;
         shape.resize(kmerSize);

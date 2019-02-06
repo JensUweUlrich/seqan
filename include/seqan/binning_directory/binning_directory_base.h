@@ -548,8 +548,10 @@ inline void insertKmerDir(BinningDirectory<TSpec, TConfig> & me, const char * ba
         configureChunkMap(me);
 
     uint32_t bins = me.noOfBins;
-    for (uint8_t c = 0; c < (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value ? TConfig::TChunks::VALUE : 1); ++c)
+    uint8_t total_chunks = (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value ? TConfig::TChunks::VALUE : 1u);
+    for (uint8_t c = 0; c < total_chunks; ++c)
     {
+        tasks.clear();
         me.bitvector.decompress(c);
         for(uint32_t i = 0; i < bins; ++i)
         {
@@ -583,7 +585,7 @@ inline void insertKmerDir(BinningDirectory<TSpec, TConfig> & me, const char * ba
                     close(seqFileIn);
 
                     mtx.lock();
-                    std::cerr << "IBF Bin " << i << " done." << '\n';
+                    std::cerr << "Iteration " << static_cast<uint16_t>(c+1) << "/" << static_cast<uint16_t>(total_chunks) <<". Bin " << i << "/" << bins << ".\n";
                     mtx.unlock();
                 })
             );
@@ -603,7 +605,7 @@ inline void insertKmerDir(BinningDirectory<TSpec, TConfig> & me, const char * ba
  * \param text A single text to count all contained k-mers for.
  */
 template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt, typename TChunkNo>
-inline void count(BinningDirectory<TSpec, TConfig> const &  me, std::vector<uint64_t> & counts, TAnyString const & text, TInt && threshold, TChunkNo && chunk = 0)
+inline void count(BinningDirectory<TSpec, TConfig> /*const*/ &  me, std::vector<uint64_t> & counts, TAnyString const & text, TInt && threshold, TChunkNo && chunk = 0)
 {
     typedef typename TConfig::THash THash;
     if (is_normal<THash>::value || is_offset<THash>::value)
@@ -617,7 +619,7 @@ inline void count(BinningDirectory<TSpec, TConfig> const &  me, std::vector<uint
 }
 
 template<typename TSpec, typename TConfig, typename TAnyString, typename TInt, typename TChunkNo>
-inline void count(BinningDirectory<TSpec, TConfig> const &  me, std::vector<uint64_t> & counts, TAnyString const & text, TInt && threshold, TChunkNo && chunk = 0)
+inline void count(BinningDirectory<TSpec, TConfig> /*const*/ &  me, std::vector<uint64_t> & counts, TAnyString const & text, TInt && threshold, TChunkNo && chunk = 0)
 {
     typedef typename TConfig::THash THash;
     me.template count<THash>(counts, text, threshold, chunk);
@@ -630,13 +632,13 @@ inline void count(BinningDirectory<TSpec, TConfig> const &  me, std::vector<uint
  * \returns std::vector<uint64_t> of size binNo containing counts.
  */
  template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt>
- inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && threshold)
+ inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> /*const*/ &  me, TAnyString const & text, TInt && threshold)
  {
     return count(me, text, threshold, 0);
  }
 
 template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt, typename TChunkNo>
-inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && threshold, TChunkNo && chunk = 0)
+inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> /*const*/ &  me, TAnyString const & text, TInt && threshold, TChunkNo && chunk = 0)
 {
     typedef typename TConfig::THash THash;
     std::vector<uint64_t> counts(me.noOfBins, 0);
@@ -654,13 +656,13 @@ inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> const &  me,
 }
 
 template<typename TSpec, typename TConfig, typename TAnyString, typename TInt>
-inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && threshold)
+inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> /*const*/ &  me, TAnyString const & text, TInt && threshold)
 {
     return count(me, text, threshold, 0);
 }
 
 template<typename TSpec, typename TConfig, typename TAnyString, typename TInt, typename TChunkNo>
-inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && threshold, TChunkNo && chunk = 0)
+inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> /*const*/ &  me, TAnyString const & text, TInt && threshold, TChunkNo && chunk = 0)
 {
     std::vector<uint64_t> counts(me.noOfBins, 0);
     count(me, counts, text, threshold, chunk);
@@ -674,7 +676,7 @@ inline std::vector<uint64_t> count(BinningDirectory<TSpec, TConfig> const &  me,
  * \param threshold Minimal count (>=) of containing k-mers to report bin as containing text.
  */
 template<typename TSpec, typename TConfig, typename TAnyString, typename TInt, typename TChunkNo>
-inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<bool> & selected, TAnyString const & text, TInt && errors, TChunkNo && chunk = 0)
+inline void select(BinningDirectory<TSpec, TConfig> /*const*/ &  me, std::vector<bool> & selected, TAnyString const & text, TInt && errors, TChunkNo && chunk = 0)
 {
     if (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value)
         throw std::logic_error("Select no valid for CompressedDisk");
@@ -689,7 +691,7 @@ inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<boo
 }
 
 template<typename TSpec, typename TConfig, typename TAnyString, typename TInt>
-inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<bool> & selected, TAnyString const & text, TInt && errors)
+inline void select(BinningDirectory<TSpec, TConfig> /*const*/ &  me, std::vector<bool> & selected, TAnyString const & text, TInt && errors)
 {
     if (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value)
         throw std::logic_error("Select no valid for CompressedDisk");
@@ -697,7 +699,7 @@ inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<boo
 }
 
 template<typename TSpec, typename TConfig, typename TAnyString, typename TInt, typename TChunkNo>
-inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && errors, TChunkNo && chunk = 0)
+inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> /*const*/ &  me, TAnyString const & text, TInt && errors, TChunkNo && chunk = 0)
 {
     if (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value)
         throw std::logic_error("Select no valid for CompressedDisk");
@@ -707,7 +709,7 @@ inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TA
 }
 
 template<typename TSpec, typename TConfig, typename TAnyString, typename TInt>
-inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && errors)
+inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> /*const*/ &  me, TAnyString const & text, TInt && errors)
 {
     if (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value)
         throw std::logic_error("Select no valid for CompressedDisk");
@@ -715,7 +717,7 @@ inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TA
 }
 
 template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt>
-inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && errors)
+inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> /*const*/ &  me, TAnyString const & text, TInt && errors)
 {
     if (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value)
         throw std::logic_error("Select no valid for CompressedDisk");
@@ -723,7 +725,7 @@ inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TA
 }
 
 template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt, typename TChunkNo>
-inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> const &  me, TAnyString const & text, TInt && errors, TChunkNo && chunk = 0)
+inline std::vector<bool> select(BinningDirectory<TSpec, TConfig> /*const*/ &  me, TAnyString const & text, TInt && errors, TChunkNo && chunk = 0)
 {
     if (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value)
         throw std::logic_error("Select no valid for CompressedDisk");
@@ -758,7 +760,7 @@ inline void select(BinningDirectory<TSpec, TConfig> &  me, std::vector<bool> con
 }
 
 template<typename THashCount, typename TSpec, typename TConfig, typename TAnyString, typename TInt, typename TChunkNo>
-inline void select(BinningDirectory<TSpec, TConfig> const &  me, std::vector<bool> & selected, TAnyString const & text, TInt && errors, TChunkNo && chunk = 0)
+inline void select(BinningDirectory<TSpec, TConfig> /*const*/ &  me, std::vector<bool> & selected, TAnyString const & text, TInt && errors, TChunkNo && chunk = 0)
 {
     if (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value)
         throw std::logic_error("Select no valid for CompressedDisk");
@@ -817,12 +819,12 @@ inline void getMetadata(BinningDirectory<TSpec, TConfig> &  me)
     uint8_t chunks = TConfig::TChunks::VALUE;
 
     TNoOfBits metadataStart = me.bitvector.noOfBits;
-    me.noOfBins = me.bitvector.get_int(metadataStart, chunks);
-    me.noOfHashFunc = me.bitvector.get_int(metadataStart+64, chunks);
-    me.kmerSize = me.bitvector.get_int(metadataStart+128, chunks);
-    me.effectiveChunks = me.bitvector.get_int(metadataStart+192, chunks, 8);
-    me.significantPositions = me.bitvector.get_int(metadataStart + 200, chunks, 8);
-    me.significantBits = me.bitvector.get_int(metadataStart+208, chunks, 8);
+    me.noOfBins = me.bitvector.get_int(metadataStart, chunks - 1);
+    me.noOfHashFunc = me.bitvector.get_int(metadataStart+64, chunks - 1);
+    me.kmerSize = me.bitvector.get_int(metadataStart+128, chunks - 1);
+    me.effectiveChunks = me.bitvector.get_int(metadataStart+192, chunks - 1, 8);
+    me.significantPositions = me.bitvector.get_int(metadataStart + 200, chunks - 1, 8);
+    me.significantBits = me.bitvector.get_int(metadataStart+208, chunks - 1, 8);
 }
 
 /*!
@@ -838,12 +840,12 @@ inline void setMetadata(BinningDirectory<TSpec, TConfig> &  me)
 
     TNoOfBits metadataStart = me.noOfBits;
     uint8_t chunks = TConfig::TChunks::VALUE;
-    me.bitvector.set_int(metadataStart, me.noOfBins, chunks);
-    me.bitvector.set_int(metadataStart + 64, me.noOfHashFunc, chunks);
-    me.bitvector.set_int(metadataStart+128, me.kmerSize, chunks);
-    me.bitvector.set_int(metadataStart+192, me.effectiveChunks, chunks, 8);
-    me.bitvector.set_int(metadataStart + 200, me.significantPositions, chunks, 8);
-    me.bitvector.set_int(metadataStart+208, me.significantBits, chunks, 8);
+    me.bitvector.set_int(metadataStart, me.noOfBins, chunks - 1);
+    me.bitvector.set_int(metadataStart + 64, me.noOfHashFunc, chunks - 1);
+    me.bitvector.set_int(metadataStart+128, me.kmerSize, chunks - 1);
+    me.bitvector.set_int(metadataStart+192, me.effectiveChunks, chunks - 1, 8);
+    me.bitvector.set_int(metadataStart + 200, me.significantPositions, chunks - 1, 8);
+    me.bitvector.set_int(metadataStart+208, me.significantBits, chunks - 1, 8);
 }
 
 /*!
