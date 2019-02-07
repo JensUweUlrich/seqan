@@ -647,7 +647,7 @@ static void DAArguments(benchmark::internal::Benchmark* b)
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, CompressedDisk, Chunks<4>)->Apply(IBFChunkedArguments);
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, CompressedDisk, Chunks<8>)->Apply(IBFChunkedArguments);
 BENCHMARK_TEMPLATE(select_IBFChunked, Dna, Normal<5>, CompressedDisk, Chunks<1>)->Apply(IBFChunkedArguments);
-BENCHMARK_TEMPLATE(select_IBFChunked, Dna, Normal<5>, CompressedDiscd k, Chunks<2>)->Apply(IBFChunkedArguments);
+BENCHMARK_TEMPLATE(select_IBFChunked, Dna, Normal<5>, CompressedDisk, Chunks<2>)->Apply(IBFChunkedArguments);
 BENCHMARK_TEMPLATE(select_IBFChunked, Dna, Normal<5>, CompressedDisk, Chunks<4>)->Apply(IBFChunkedArguments);
 BENCHMARK_TEMPLATE(select_IBFChunked, Dna, Normal<5>, CompressedDisk, Chunks<8>)->Apply(IBFChunkedArguments);
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Normal<5>, Uncompressed)->Apply(DAArguments);
