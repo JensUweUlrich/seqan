@@ -640,16 +640,73 @@ static void DAArguments(benchmark::internal::Benchmark* b)
         }
     }
 }
+
+template <typename TValue, typename THash, typename TBitvector, typename TChunks>
+static void get_size(benchmark::State& state)
+{
+    auto bins = state.range(0);
+    auto k = state.range(1);
+    auto bits = state.range(2);
+    auto chunks = TChunks::VALUE;
+
+    CharString storage("");
+    append(storage, CharString(std::to_string(bins)));
+    append(storage, CharString("_"));
+    append(storage, CharString(std::to_string(k)));
+    append(storage, CharString("_"));
+    append(storage, CharString(std::to_string(bits)));
+    append(storage, CharString("_"));
+    append(storage, CharString(std::to_string(TChunks::VALUE)));
+
+    if constexpr (std::is_same_v<TBitvector, Uncompressed>) {
+        append(storage, CharString("_Uncompressed"));
+    }
+    else
+    {
+        append(storage, CharString("_Compressed"));
+    }
+    append(storage, CharString("_ibf.filter"));
+
+    BinningDirectory<InterleavedBloomFilter, BDConfig<TValue, THash, TBitvector, TChunks> > ibf (storage);
+
+    for (auto _ : state)
+    {
+        uint64_t o{0};
+        o += 1;
+        (void) o;
+    }
+
+    double sum_size{0};
+    double max_size{0};
+
+    for (uint8_t j = 0; j < chunks; ++j)
+    {
+        double tmp_size{0};
+        tmp_size = sdsl::size_in_mega_bytes(*std::get<2>(ibf.bitvector.filterVector[j]));
+        if (tmp_size > max_size)
+        {
+            max_size = tmp_size;
+        }
+        sum_size += tmp_size;
+    }
+    state.counters["sum_size"] = sum_size;
+    state.counters["max_size"] = max_size;
+    state.counters["API"] = size(ibf);
+}
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, Uncompressed)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, Compressed)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, CompressedDisk, Chunks<1>)->Apply(IBFChunkedArguments);
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, CompressedDisk, Chunks<2>)->Apply(IBFChunkedArguments);
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, CompressedDisk, Chunks<4>)->Apply(IBFChunkedArguments);
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, CompressedDisk, Chunks<8>)->Apply(IBFChunkedArguments);
-BENCHMARK_TEMPLATE(select_IBFChunked, Dna, Normal<5>, CompressedDisk, Chunks<1>)->Apply(IBFChunkedArguments);
-BENCHMARK_TEMPLATE(select_IBFChunked, Dna, Normal<5>, CompressedDisk, Chunks<2>)->Apply(IBFChunkedArguments);
-BENCHMARK_TEMPLATE(select_IBFChunked, Dna, Normal<5>, CompressedDisk, Chunks<4>)->Apply(IBFChunkedArguments);
-BENCHMARK_TEMPLATE(select_IBFChunked, Dna, Normal<5>, CompressedDisk, Chunks<8>)->Apply(IBFChunkedArguments);
+// BENCHMARK_TEMPLATE(select_IBFChunked, Dna, Normal<5>, CompressedDisk, Chunks<1>)->Apply(IBFChunkedArguments);
+// BENCHMARK_TEMPLATE(select_IBFChunked, Dna, Normal<5>, CompressedDisk, Chunks<2>)->Apply(IBFChunkedArguments);
+// BENCHMARK_TEMPLATE(select_IBFChunked, Dna, Normal<5>, CompressedDisk, Chunks<4>)->Apply(IBFChunkedArguments);
+// BENCHMARK_TEMPLATE(select_IBFChunked, Dna, Normal<5>, CompressedDisk, Chunks<8>)->Apply(IBFChunkedArguments);
+BENCHMARK_TEMPLATE(get_size, Dna, Normal<5>, CompressedDisk, Chunks<1>)->Apply(IBFChunkedArguments);
+BENCHMARK_TEMPLATE(get_size, Dna, Normal<5>, CompressedDisk, Chunks<2>)->Apply(IBFChunkedArguments);
+BENCHMARK_TEMPLATE(get_size, Dna, Normal<5>, CompressedDisk, Chunks<4>)->Apply(IBFChunkedArguments);
+BENCHMARK_TEMPLATE(get_size, Dna, Normal<5>, CompressedDisk, Chunks<8>)->Apply(IBFChunkedArguments);
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Normal<5>, Uncompressed)->Apply(DAArguments);
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Normal<5>, Compressed)->Apply(DAArguments);
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, CompressedArray)->Apply(DAAddArguments)->UseManualTime();
