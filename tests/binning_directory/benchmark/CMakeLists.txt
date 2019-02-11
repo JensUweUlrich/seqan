@@ -120,7 +120,9 @@ target_link_libraries(bench "pthread" "benchmark")
 add_dependencies(bench benchmark)
 
 add_executable(sim sim.cpp)
-#target_link_libraries(sim "pthread" "benchmark")
-#add_dependencies(sim benchmark)
+
+add_executable(count count.cpp
+                     helper.h)
+target_link_libraries(count "pthread")
 
 #add_subdirectories()
