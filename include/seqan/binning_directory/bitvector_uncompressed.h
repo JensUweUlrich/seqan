@@ -155,33 +155,23 @@ struct Bitvector<Uncompressed> : BitvectorBase
     {
         CharString file{random_string()};
         store(file);
-        TBlockBitSize delta = newBlockBitSize - blockBitSize + 1;
-        if (delta == 1)
+        TBlockBitSize delta = newBlockBitSize - blockBitSize + 64;
+        if (delta == 64)
         {
             noOfBins = bins;
             return;
         }
         uncompressed_vector.reset(new sdsl::bit_vector(newNoOfBits+FILTER_METADATA_SIZE,0));
-        sdsl::int_vector_buffer<1> buffered_vector(toCString(file));
-        TNoOfBits pos{0};
-        TNoOfBits posBuff{0};
-        for (auto it = buffered_vector.begin(); it != buffered_vector.end() && pos != newNoOfBits; ++it)
+        std::cerr.setstate(std::ios::failbit); // ignore cerr because of mismatching width. We want to reinterpret it as 64 bit integers
+        sdsl::int_vector_buffer<64> buffered_vector(toCString(file), std::ios::in, 1024*1024*8);
+        std::cerr.clear();
+
+        TNoOfBits idx{0};
+        for (auto it = buffered_vector.begin(); it != buffered_vector.end() && idx != newNoOfBits; idx += delta, ++it)
         {
-            if (*it)
-            {
-              set_pos(pos);
-            }
-            if (posBuff == blockBitSize -1)
-            {
-                posBuff = 0;
-                pos += delta;
-            }
-            else
-            {
-                ++pos;
-                ++posBuff;
-            }
+            set_int(idx, *it);
         }
+
         sdsl::remove(toCString(file));
         noOfBins = bins;
         binWidth = newBinWidth;
