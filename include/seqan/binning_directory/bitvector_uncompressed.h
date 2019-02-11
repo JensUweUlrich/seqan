@@ -153,26 +153,26 @@ struct Bitvector<Uncompressed> : BitvectorBase
 
     void resize(TNoOfBins bins, TNoOfBits newNoOfBits, TBlockBitSize newBlockBitSize, TBinWidth newBinWidth)
     {
-        CharString file{random_string()};
-        store(file);
+        TNoOfBits idxNew{newNoOfBits}, idxOld{noOfBits};
         TBlockBitSize delta = newBlockBitSize - blockBitSize + 64;
-        if (delta == 64)
-        {
-            noOfBins = bins;
-            return;
-        }
-        uncompressed_vector.reset(new sdsl::bit_vector(newNoOfBits+FILTER_METADATA_SIZE,0));
-        std::cerr.setstate(std::ios::failbit); // ignore cerr because of mismatching width. We want to reinterpret it as 64 bit integers
-        sdsl::int_vector_buffer<64> buffered_vector(toCString(file), std::ios::in, 1024*1024*8);
-        std::cerr.clear();
 
-        TNoOfBits idx{0};
-        for (auto it = buffered_vector.begin(); it != buffered_vector.end() && idx != newNoOfBits; idx += delta, ++it)
+        uncompressed_vector->resize(newNoOfBits + FILTER_METADATA_SIZE);
+
+        // Shift MetaData
+        for (TNoOfBits i = idxNew, j = idxOld, c = 0; c < FILTER_METADATA_SIZE / 64; ++c, i += 64, j += 64)
         {
-            set_int(idx, *it);
+            uint64_t old = get_int(j);
+            set_int(j, 0);
+            set_int(i, old);
+        }
+        // Shift Data
+        for (TNoOfBits i = idxNew, j = idxOld; j > 0; i -= delta, j -= 64)
+        {
+            uint64_t old = get_int(j);
+            set_int(j, 0);
+            set_int(i, old);
         }
 
-        sdsl::remove(toCString(file));
         noOfBins = bins;
         binWidth = newBinWidth;
         blockBitSize = newBlockBitSize;
