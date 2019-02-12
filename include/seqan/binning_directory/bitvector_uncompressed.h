@@ -153,35 +153,26 @@ struct Bitvector<Uncompressed> : BitvectorBase
 
     void resize(TNoOfBins bins, TNoOfBits newNoOfBits, TBlockBitSize newBlockBitSize, TBinWidth newBinWidth)
     {
-        CharString file{random_string()};
-        store(file);
-        TBlockBitSize delta = newBlockBitSize - blockBitSize + 1;
-        if (delta == 1)
+        TNoOfBits idxNew{newNoOfBits}, idxOld{noOfBits};
+        TBlockBitSize delta = newBlockBitSize - blockBitSize + 64;
+
+        uncompressed_vector->resize(newNoOfBits + FILTER_METADATA_SIZE);
+
+        // Shift MetaData
+        for (TNoOfBits i = idxNew, j = idxOld, c = 0; c < FILTER_METADATA_SIZE / 64; ++c, i += 64, j += 64)
         {
-            return;
+            uint64_t old = get_int(j);
+            set_int(j, 0);
+            set_int(i, old);
         }
-        uncompressed_vector.reset(new sdsl::bit_vector(newNoOfBits+FILTER_METADATA_SIZE,0));
-        sdsl::int_vector_buffer<1> buffered_vector(toCString(file));
-        TNoOfBits pos{0};
-        TNoOfBits posBuff{0};
-        for (auto it = buffered_vector.begin(); it != buffered_vector.end() && pos != newNoOfBits; ++it)
+        // Shift Data
+        for (TNoOfBits i = idxNew, j = idxOld; j > 0; i -= delta, j -= 64)
         {
-            if (*it)
-            {
-              set_pos(pos);
-            }
-            if (posBuff == blockBitSize -1)
-            {
-                posBuff = 0;
-                pos += delta;
-            }
-            else
-            {
-                ++pos;
-                ++posBuff;
-            }
+            uint64_t old = get_int(j);
+            set_int(j, 0);
+            set_int(i, old);
         }
-        sdsl::remove(toCString(file));
+
         noOfBins = bins;
         binWidth = newBinWidth;
         blockBitSize = newBlockBitSize;
