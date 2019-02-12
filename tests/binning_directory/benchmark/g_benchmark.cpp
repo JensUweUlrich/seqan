@@ -694,6 +694,8 @@ static void get_size(benchmark::State& state)
     state.counters["API"] = size(ibf);
 }
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, Uncompressed)->Apply(IBFArguments);
+BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, Uncompressed, Chunks<1>)->Args({8192, 19, 36, 3});
+BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, Uncompressed, Chunks<1>)->Args({8192, 19, 37, 3});
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, Compressed)->Apply(IBFArguments);
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, CompressedDisk, Chunks<1>)->Apply(IBFChunkedArguments);
 // BENCHMARK_TEMPLATE(insertKmer_IBF, Dna, Normal<5>, CompressedDisk, Chunks<2>)->Apply(IBFChunkedArguments);
@@ -703,10 +705,10 @@ static void get_size(benchmark::State& state)
 // BENCHMARK_TEMPLATE(select_IBFChunked, Dna, Normal<5>, CompressedDisk, Chunks<2>)->Apply(IBFChunkedArguments);
 // BENCHMARK_TEMPLATE(select_IBFChunked, Dna, Normal<5>, CompressedDisk, Chunks<4>)->Apply(IBFChunkedArguments);
 // BENCHMARK_TEMPLATE(select_IBFChunked, Dna, Normal<5>, CompressedDisk, Chunks<8>)->Apply(IBFChunkedArguments);
-BENCHMARK_TEMPLATE(get_size, Dna, Normal<5>, CompressedDisk, Chunks<1>)->Apply(IBFChunkedArguments);
-BENCHMARK_TEMPLATE(get_size, Dna, Normal<5>, CompressedDisk, Chunks<2>)->Apply(IBFChunkedArguments);
-BENCHMARK_TEMPLATE(get_size, Dna, Normal<5>, CompressedDisk, Chunks<4>)->Apply(IBFChunkedArguments);
-BENCHMARK_TEMPLATE(get_size, Dna, Normal<5>, CompressedDisk, Chunks<8>)->Apply(IBFChunkedArguments);
+// BENCHMARK_TEMPLATE(get_size, Dna, Normal<5>, CompressedDisk, Chunks<1>)->Apply(IBFChunkedArguments);
+// BENCHMARK_TEMPLATE(get_size, Dna, Normal<5>, CompressedDisk, Chunks<2>)->Apply(IBFChunkedArguments);
+// BENCHMARK_TEMPLATE(get_size, Dna, Normal<5>, CompressedDisk, Chunks<4>)->Apply(IBFChunkedArguments);
+// BENCHMARK_TEMPLATE(get_size, Dna, Normal<5>, CompressedDisk, Chunks<8>)->Apply(IBFChunkedArguments);
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Normal<5>, Uncompressed)->Apply(DAArguments);
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, Normal<5>, Compressed)->Apply(DAArguments);
 // BENCHMARK_TEMPLATE(insertKmer_DA, Dna, CompressedArray)->Apply(DAAddArguments)->UseManualTime();
