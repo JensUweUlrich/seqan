@@ -278,9 +278,7 @@ struct Bitvector<CompressedDisk> : BitvectorBase
         bool res = true;
         for (uint8_t chunk = 0; chunk < noOfChunks; ++chunk)
         {
-            decompress(chunk);
-            res && sdsl::store_to_file(*std::get<1>(filterVector[chunk]), toCString(fileName)+std::string(".chunk_")+std::to_string(chunk));
-            compress(chunk);
+            res && filesystem::copy_file(toCString(PREFIX)+std::to_string(j), toCString(fileName)+std::string(".chunk_")+std::to_string(chunk));
         }
         return res;
     }

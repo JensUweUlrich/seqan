@@ -43,7 +43,8 @@
 #include <seqan/binning_directory/bitvector_base.h>
 #include <seqan/binning_directory/bitvector_uncompressed.h>
 #include <seqan/binning_directory/bitvector_compressed.h>
-#include <seqan/binning_directory/bitvector_disk.h>
+#include <seqan/binning_directory/bitvector_uncompresseddisk.h>
+#include <seqan/binning_directory/bitvector_compresseddisk.h>
 #include <seqan/binning_directory/binning_directory_direct_addressing.h>
 #include <seqan/binning_directory/binning_directory_interleaved_bloom_filter.h>
 

@@ -140,6 +140,10 @@ typedef Tag<Compressed_> Compressed;
 struct CompressedDisk_;
 typedef Tag<CompressedDisk_> CompressedDisk;
 
+//!\brief A tag for the uncompressed disk Bitvector.
+struct UncompressedDisk_;
+typedef Tag<UncompressedDisk_> UncompressedDisk;
+
 template<typename TSpec>
 struct Bitvector;
 
