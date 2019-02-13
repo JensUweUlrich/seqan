@@ -31,6 +31,10 @@
 // ==========================================================================
 // Author:  Enrico Seiler <enrico.seiler@fu-berlin.de>
 // ==========================================================================
+
+#ifndef INCLUDE_SEQAN_BINNING_DIRECTORY_BITVECTOR_UNCOMPRESSEDDISK_H_
+#define INCLUDE_SEQAN_BINNING_DIRECTORY_BITVECTOR_UNCOMPRESSEDDISK_H_
+
 #include <random>
 
 #if __has_include(<filesystem>)
@@ -70,7 +74,7 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
         for (uint8_t j = 0; j < noOfChunks; j++)
         {
             decompress(j);
-            size += sdsl::size_in_mega_bytes(filterVector[j]);
+            size += sdsl::size_in_mega_bytes(*filterVector[j]);
         }
         return size;
     }
@@ -80,7 +84,7 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
         if (currentChunk < 0 || currentChunk != static_cast<int16_t>(chunk))
         {
             compress(currentChunk);
-            sdsl::load_from_file(filterVector[chunk]), toCString(PREFIX)+std::to_string(chunk));
+            sdsl::load_from_file(*filterVector[chunk], toCString(PREFIX)+std::to_string(chunk));
             currentChunk = chunk;
         }
     }
@@ -89,7 +93,7 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
     {
         if (currentChunk == static_cast<int16_t>(chunk))
         {
-            sdsl::store_to_file(filterVector[chunk]), toCString(PREFIX)+std::to_string(chunk));
+            sdsl::store_to_file(*filterVector[chunk], toCString(PREFIX)+std::to_string(chunk));
             filterVector[chunk] = std::make_unique<sdsl::bit_vector>(0,0);
             currentChunk = -1;
         }
@@ -129,7 +133,7 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
     Bitvector<UncompressedDisk> & operator=(Bitvector<UncompressedDisk> & other)
     {
         for (const auto& element : other.filterVector)
-            filterVector.emplace_back(std::make_unique<sdsl::bit_vector>(element));
+            filterVector.emplace_back(std::make_unique<sdsl::bit_vector>(*element));
 
         noOfBins = other.noOfBins;
         noOfBits = other.noOfBits;
@@ -141,7 +145,7 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
         currentChunk = other.currentChunk;
         for (uint8_t j = 0; j < noOfChunks; j++)
         {
-            filesystem::copy_file(toCString(other.PREFIX)+std::to_string(j), toCString(PREFIX)+std::to_string(j));
+            filesystem::copy_file(toCString(other.PREFIX)+std::to_string(j), toCString(PREFIX)+std::to_string(j), filesystem::copy_options::overwrite_existing);
         }
 
         return *this;
@@ -181,7 +185,7 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
             {
                 filterVector.emplace_back(std::make_unique<sdsl::bit_vector>(std::move(tmp)));
                 currentChunk = chunk;
-                chunkSize = filterVector[currentChunk].size();
+                chunkSize = filterVector[currentChunk]->size();
                 compress(chunk);
                 ++chunk;
             }
@@ -210,7 +214,7 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
             return 0;
         uint64_t chunkPos = idx - chunkNo * chunkSize;
         decompress(chunkNo);
-        return filterVector[chunkNo].get_int(chunkPos, len);
+        return filterVector[chunkNo]->get_int(chunkPos, len);
     }
 
     uint64_t get_pos(uint64_t idx, uint8_t chunk) //const
@@ -220,7 +224,7 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
             return 0;
         uint64_t chunkPos = idx - chunkNo * chunkSize;
         decompress(chunkNo);
-        return filterVector[chunkNo][chunkPos];
+        return (*filterVector[chunkNo])[chunkPos];
     }
 
     void set_int(uint64_t idx, uint64_t val, uint8_t chunk, uint8_t len = 64)
@@ -230,7 +234,7 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
             return;
         uint64_t chunkPos = idx - chunkNo * chunkSize;
         decompress(chunkNo);
-        filterVector[chunkNo].set_int(chunkPos, val, len);
+        filterVector[chunkNo]->set_int(chunkPos, val, len);
     }
 
     void set_pos(uint64_t idx, uint8_t chunk)
@@ -240,7 +244,7 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
             return;
         decompress(chunkNo);
         uint64_t chunkPos = idx - chunkNo * chunkSize;
-        filterVector[chunkNo][chunkPos] = true;
+        (*filterVector[chunkNo])[chunkPos] = true;
     }
 
     void unset_pos(uint64_t idx, uint8_t chunk)
@@ -250,7 +254,7 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
             return;
         decompress(chunkNo);
         uint64_t chunkPos = idx - chunkNo * chunkSize;
-        filterVector[chunkNo][chunkPos] = false;
+        (*filterVector[chunkNo])[chunkPos] = false;
     }
 
     bool store(CharString fileName)
@@ -258,7 +262,7 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
         bool res = true;
         for (uint8_t chunk = 0; chunk < noOfChunks; ++chunk)
         {
-            res && filesystem::copy_file(toCString(PREFIX)+std::to_string(j), toCString(fileName)+std::string(".chunk_")+std::to_string(chunk));
+            res && filesystem::copy_file(toCString(PREFIX)+std::to_string(chunk), toCString(fileName)+std::string(".chunk_")+std::to_string(chunk), filesystem::copy_options::overwrite_existing);
         }
         return res;
     }
@@ -270,3 +274,5 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
 };
 
 }
+
+#endif  // INCLUDE_SEQAN_BINNING_DIRECTORY_BITVECTOR_UNCOMPRESSEDDISK_H_

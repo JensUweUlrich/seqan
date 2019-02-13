@@ -31,6 +31,10 @@
 // ==========================================================================
 // Author:  Enrico Seiler <enrico.seiler@fu-berlin.de>
 // ==========================================================================
+
+#ifndef INCLUDE_SEQAN_BINNING_DIRECTORY_BITVECTOR_COMPRESSEDDISK_H_
+#define INCLUDE_SEQAN_BINNING_DIRECTORY_BITVECTOR_COMPRESSEDDISK_H_
+
 #include <random>
 
 #if __has_include(<filesystem>)
@@ -148,7 +152,7 @@ struct Bitvector<CompressedDisk> : BitvectorBase
         noOfChunks = other.noOfChunks;
         for (uint8_t j = 0; j < noOfChunks; j++)
         {
-            filesystem::copy_file(toCString(other.PREFIX)+std::to_string(j), toCString(PREFIX)+std::to_string(j));
+            filesystem::copy_file(toCString(other.PREFIX)+std::to_string(j), toCString(PREFIX)+std::to_string(j), filesystem::copy_options::overwrite_existing);
         }
 
         return *this;
@@ -278,7 +282,7 @@ struct Bitvector<CompressedDisk> : BitvectorBase
         bool res = true;
         for (uint8_t chunk = 0; chunk < noOfChunks; ++chunk)
         {
-            res && filesystem::copy_file(toCString(PREFIX)+std::to_string(j), toCString(fileName)+std::string(".chunk_")+std::to_string(chunk));
+            res && filesystem::copy_file(toCString(PREFIX)+std::to_string(chunk), toCString(fileName)+std::string(".chunk_")+std::to_string(chunk), filesystem::copy_options::overwrite_existing);
         }
         return res;
     }
@@ -290,3 +294,5 @@ struct Bitvector<CompressedDisk> : BitvectorBase
 };
 
 }
+
+#endif  // INCLUDE_SEQAN_BINNING_DIRECTORY_BITVECTOR_UNCOMPRESSEDDISK_H_

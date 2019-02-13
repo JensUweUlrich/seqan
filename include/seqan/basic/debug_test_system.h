@@ -700,7 +700,7 @@ const char * tempFileName()
     return fileNameBuffer;
 
 #else  // ifdef STDLIB_VS
-    strcpy(fileNameBuffer, "/srv/hdd/seiler/IBF/build/run/tmp/SEQAN.XXXXXXXXXXXXXXXXXXXX");
+    strcpy(fileNameBuffer, "/tmp/SEQAN.XXXXXXXXXXXXXXXXXXXX");
     mode_t cur_umask = umask(S_IRWXO | S_IRWXG);  // to silence Coverity warning
     int _tmp = mkstemp(fileNameBuffer);
     (void) _tmp;

@@ -546,7 +546,7 @@ template<typename TSpec, typename TConfig>
 inline void insertKmerDir(BinningDirectory<TSpec, TConfig> & me, const char * baseDir, uint8_t threads)
 {
     Semaphore thread_limiter(threads);
-    std::mutex mtx;
+    // std::mutex mtx;
     std::vector<std::future<void>> tasks;
     if (!me.chunkMapSet)
         configureChunkMap(me);
@@ -565,7 +565,7 @@ inline void insertKmerDir(BinningDirectory<TSpec, TConfig> & me, const char * ba
             append(file, CharString(std::string(numDigits(bins)-numDigits(i), '0') + (std::to_string(i))));
             append(file, CharString(".fasta"));
             tasks.emplace_back(
-                std::async(std::launch::async, [=, &mtx, &thread_limiter, &me] { // &mtx
+                std::async(std::launch::async, [=, /*&mtx,*/ &thread_limiter, &me] {
                     Critical_section _(thread_limiter);
 
                     CharString id;
@@ -588,9 +588,9 @@ inline void insertKmerDir(BinningDirectory<TSpec, TConfig> & me, const char * ba
                     }
                     close(seqFileIn);
 
-                    mtx.lock();
-                    std::cerr << "Iteration " << static_cast<uint16_t>(c+1) << "/" << static_cast<uint16_t>(total_chunks) <<". Bin " << i << "/" << bins << ".\n";
-                    mtx.unlock();
+                    // mtx.lock();
+                    // std::cerr << "Iteration " << static_cast<uint16_t>(c+1) << "/" << static_cast<uint16_t>(total_chunks) <<". Bin " << i << "/" << bins << ".\n";
+                    // mtx.unlock();
                 })
             );
         }
