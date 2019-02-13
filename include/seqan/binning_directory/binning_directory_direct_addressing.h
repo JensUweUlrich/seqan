@@ -253,7 +253,7 @@ public:
      * \param text Text to count occurences for.
      */
     template<typename THashCount, typename TAnyString>
-    void count(std::vector<uint64_t> & counts, TAnyString const & text) const
+    void count(std::vector<uint16_t> & counts, TAnyString const & text) const
     {
         BDHash<TValue, THashCount> shape;
         if constexpr(is_offset<THashCount>::value)
@@ -309,7 +309,7 @@ public:
     }
 
     template<typename THashCount, typename TAnyString>
-    void count(std::vector<uint64_t> & counts, TAnyString const & text, uint32_t & threshold) const
+    void count(std::vector<uint16_t> & counts, TAnyString const & text, uint32_t & threshold) const
     {
         BDHash<TValue, THashCount> shape;
         if constexpr(is_offset<THashCount>::value)
