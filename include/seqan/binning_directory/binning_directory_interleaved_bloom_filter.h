@@ -480,12 +480,17 @@ public:
      * will be twice the size.
      * This increase in size is necessary to avoid invalidating all computed hash functions.
      * If you want to add more bins while keeping the size constant, you need to rebuild the BD.
-     * The function will store the underlying bitvector to disk, read it from disk (buffered) and store the old values  * in the new bitvector, i.e. you only need enough memory to hold the new bitvector.
+     * The function will store the underlying bitvector to disk, read it from disk (buffered) and store the old values
+     * in the new bitvector, i.e. you only need enough memory to hold the new bitvector.
      */
     void resizeBins(TNoOfBins bins)
     {
         static_assert(std::is_same<TBitvector, Uncompressed>::value,
             "Resize is only available for Uncompressed Bitvectors.");
+        if (bins <= noOfBins)
+        {
+            throw std::invalid_argument{"You can only increase the number of bins in the IBF."};
+        }
         TBinWidth newBinWidth = std::ceil((double)bins / intSize);
         TBlockBitSize newBlockBitSize = newBinWidth * intSize;
         TNoOfBits newNoOfBits = noOfBlocks * newBlockBitSize;

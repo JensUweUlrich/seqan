@@ -166,13 +166,16 @@ struct Bitvector<Uncompressed> : BitvectorBase
             set_int(i, old);
         }
         // Shift Data
-        for (TNoOfBits i = idxNew, j = idxOld; j > 0; i -= delta, j -= 64)
+        for (TNoOfBits i = idxNew, j = idxOld; j > 0; i -= newBlockBitSize, j -= blockBitSize)
         {
-            uint64_t old = get_int(j);
-            set_int(j, 0);
-            set_int(i, old);
+            TNoOfBits stop = i - newBlockBitSize;
+            for (TNoOfBits ii = i - delta, jj = j - 64; stop && ii >= stop; ii -= 64, jj -= 64)
+            {
+                uint64_t old = get_int(jj);
+                set_int(jj, 0);
+                set_int(ii, old);
+            }
         }
-
         noOfBins = bins;
         binWidth = newBinWidth;
         blockBitSize = newBlockBitSize;

@@ -422,12 +422,17 @@ public:
      * resizing a BD with 40 bins to 73 bins also increases the binWidth from 64 to 128 and hence the new bitvector
      * will be twice the size.
      * This increase in size is necessary due to the direct addressing used.
-     * The function will store the underlying bitvector to disk, read it from disk (buffered) and store the old values  * in the new bitvector, i.e. you only need enough memory to hold the new bitvector.
+     * The function will store the underlying bitvector to disk, read it from disk (buffered) and store the old values
+     * in the new bitvector, i.e. you only need enough memory to hold the new bitvector.
      */
     void resizeBins(TNoOfBins bins)
     {
         static_assert(std::is_same<TBitvector, Uncompressed>::value,
             "Resize is only available for Uncompressed Bitvectors.");
+        if (bins <= noOfBins)
+        {
+            throw std::invalid_argument{"You can only increase the number of bins in the IBF."};
+        }
         TBinWidth newBinWidth = std::ceil((double)bins / intSize);
         TBlockBitSize newBlockBitSize = newBinWidth * intSize;
         TNoOfBits newNoOfBits = noOfBlocks * newBlockBitSize;
