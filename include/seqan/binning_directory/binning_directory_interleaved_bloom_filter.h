@@ -395,7 +395,7 @@ public:
             preCalcValues[i] = i ^  (kmerSize * seedValue);
         if constexpr (std::is_same<TBitvector, CompressedDisk>::value || std::is_same<TBitvector, UncompressedDisk>::value)
         {
-            chunkOffset = noOfBlocks / chunks;;
+            chunkOffset = noOfBlocks / chunks;
         }
         else
         {

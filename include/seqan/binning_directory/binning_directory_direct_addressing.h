@@ -346,8 +346,14 @@ public:
         noOfBlocks = ipow(ValueSize<TValue>::VALUE, kmerSize);
         // Size of the bit vector
         noOfBits = noOfBlocks * blockBitSize;
-        // bitvector = Bitvector<TBitvector>(noOfBins, noOfBits);
-        chunkOffset = noOfBits / (chunks * blockBitSize);
+        if constexpr (std::is_same<TBitvector, CompressedDisk>::value || std::is_same<TBitvector, UncompressedDisk>::value)
+        {
+            chunkOffset = noOfBlocks / chunks;
+        }
+        else
+        {
+            chunkOffset = noOfBlocks;
+        }
     }
 
     /*!

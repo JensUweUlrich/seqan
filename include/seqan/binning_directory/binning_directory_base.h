@@ -366,30 +366,37 @@ inline void configureChunkMap(BinningDirectory<TSpec, TConfig> & me)
     uint16_t effectiveChunks = nextPow4(chunks);
     TNoOfChunks significantBits = sdsl::bits::hi(effectiveChunks);
     TNoOfChunks significantPositions = significantBits >> 1;
-    const double alpha = 1.1;
-    const double threshold = (1.0 / chunks) * alpha;
+    // const double alpha = 1.1;
+    // const double threshold = (1.0 / chunks) * alpha;
     std::vector<uint8_t> chunkMap;
     chunkMap.resize(effectiveChunks, 0);
-    std::vector<double> frequencyTable;
-    frequencyTable.resize(effectiveChunks, 1.0/effectiveChunks);
-    double f{0.0};
+    // std::vector<double> frequencyTable;
+    // frequencyTable.resize(effectiveChunks, 1.0/effectiveChunks);
+    // double f{0.0};
     TNoOfChunks chunk{0};
-    for (uint16_t index = 0; index < effectiveChunks; ++index)
+    for (uint16_t index = 0; index < effectiveChunks; ++index, ++chunk)
     {
-        double freq = frequencyTable[index];
-        if (f + freq >= threshold)
-        {
-            f = freq;
-            if (chunk != chunks -1)
-                ++chunk;
-            chunkMap[index] = chunk;
-        }
-        else
-        {
-            f += freq;
-            chunkMap[index] = chunk;
-        }
+        if (chunk == chunks)
+            chunk = 0;
+        chunkMap[index] = chunk;
+        // double freq = frequencyTable[index];
+        // if (f + freq >= threshold)
+        // {
+        //     f = freq;
+        //     if (chunk != chunks -1)
+        //         ++chunk;
+        //     chunkMap[index] = chunk;
+        // }
+        // else
+        // {
+        //     f += freq;
+        //     chunkMap[index] = chunk;
+        // }
     }
+
+    // std::cerr << "Resulting mapping\n";
+    // for (uint8_t index = 0; index < effectiveChunks; ++index)
+    //     std::cerr << (int)index << '\t' << (int)chunkMap[index] << '\n';
     me.chunkMap = chunkMap;
     me.effectiveChunks = effectiveChunks;
     me.significantBits = significantBits;
@@ -552,7 +559,7 @@ inline void insertKmerDir(BinningDirectory<TSpec, TConfig> & me, const char * ba
         configureChunkMap(me);
 
     uint32_t bins = me.noOfBins;
-    uint8_t total_chunks = (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value ? TConfig::TChunks::VALUE : 1u);
+    uint8_t total_chunks = (std::is_same<typename TConfig::TBitvector, CompressedDisk>::value || std::is_same<typename TConfig::TBitvector, UncompressedDisk>::value ? TConfig::TChunks::VALUE : 1u);
     for (uint8_t c = 0; c < total_chunks; ++c)
     {
         tasks.clear();

@@ -64,9 +64,8 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
     TNoOfBlocks noOfBlocks;
     uint8_t noOfChunks;
     uint64_t chunkSize;
-    int16_t currentChunk;
 
-    std::vector<std::unique_ptr<sdsl::bit_vector> > filterVector;
+    std::vector<std::tuple<bool, std::unique_ptr<sdsl::bit_vector> > > filterVector;
 
     double size_in_mega_bytes()
     {
@@ -74,28 +73,31 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
         for (uint8_t j = 0; j < noOfChunks; j++)
         {
             decompress(j);
-            size += sdsl::size_in_mega_bytes(*filterVector[j]);
+            size += sdsl::size_in_mega_bytes(*std::get<1>(filterVector[j]));
         }
         return size;
     }
 
     inline void decompress(uint8_t chunk)
     {
-        if (currentChunk < 0 || currentChunk != static_cast<int16_t>(chunk))
+        if (!std::get<0>(filterVector[chunk]))
         {
-            compress(currentChunk);
-            sdsl::load_from_file(*filterVector[chunk], toCString(PREFIX)+std::to_string(chunk));
-            currentChunk = chunk;
+            for (uint8_t c = 0; c < noOfChunks; ++c)
+            {
+                compress(c);
+            }
+            sdsl::load_from_file(*std::get<1>(filterVector[chunk]), toCString(PREFIX)+std::to_string(chunk));
+            std::get<0>(filterVector[chunk]) = true;
         }
     }
 
     inline void compress(uint8_t chunk)
     {
-        if (currentChunk == static_cast<int16_t>(chunk))
+        if (std::get<0>(filterVector[chunk]))
         {
-            sdsl::store_to_file(*filterVector[chunk], toCString(PREFIX)+std::to_string(chunk));
-            filterVector[chunk] = std::make_unique<sdsl::bit_vector>(0,0);
-            currentChunk = -1;
+            sdsl::store_to_file(*std::get<1>(filterVector[chunk]), toCString(PREFIX)+std::to_string(chunk));
+            std::get<1>(filterVector[chunk]) = std::make_unique<sdsl::bit_vector>(0,0);
+            std::get<0>(filterVector[chunk]) = false;
         }
     }
 
@@ -117,14 +119,15 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
         chunkSize = (noOfBlocks / noOfChunks) * blockBitSize;
         for (uint8_t i = 0; i < noOfChunks; ++i)
         {
-            currentChunk = i;
             if (i == noOfChunks - 1)
             {
-                filterVector.emplace_back(std::make_unique<sdsl::bit_vector>(chunkSize + FILTER_METADATA_SIZE, 0));
+                filterVector.emplace_back(std::make_tuple(true,
+                                                       std::make_unique<sdsl::bit_vector>(chunkSize + FILTER_METADATA_SIZE, 0)));
             }
             else
             {
-                filterVector.emplace_back(std::make_unique<sdsl::bit_vector>(chunkSize, 0));
+                filterVector.emplace_back(std::make_tuple(true,
+                                                       std::make_unique<sdsl::bit_vector>(chunkSize, 0)));
             }
             compress(i);
         }
@@ -133,7 +136,7 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
     Bitvector<UncompressedDisk> & operator=(Bitvector<UncompressedDisk> & other)
     {
         for (const auto& element : other.filterVector)
-            filterVector.emplace_back(std::make_unique<sdsl::bit_vector>(*element));
+            filterVector.emplace_back(std::make_tuple(std::get<0>(element), std::make_unique<sdsl::bit_vector>(*std::get<1>(element))));
 
         noOfBins = other.noOfBins;
         noOfBits = other.noOfBits;
@@ -142,7 +145,6 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
         noOfBlocks = other.noOfBlocks;
         chunkSize = other.chunkSize;
         noOfChunks = other.noOfChunks;
-        currentChunk = other.currentChunk;
         for (uint8_t j = 0; j < noOfChunks; j++)
         {
             filesystem::copy_file(toCString(other.PREFIX)+std::to_string(j), toCString(PREFIX)+std::to_string(j), filesystem::copy_options::overwrite_existing);
@@ -161,7 +163,6 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
         noOfBlocks = std::move(other.noOfBlocks);
         chunkSize = std::move(other.chunkSize);
         noOfChunks = std::move(other.noOfChunks);
-        currentChunk = std::move(other.currentChunk);
         PREFIX = std::move(other.PREFIX);
 
         return *this;
@@ -183,78 +184,93 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
             auto tmp = sdsl::bit_vector(0,0);
             if (sdsl::load_from_file(tmp, toCString(fileName)+std::string(".chunk_")+std::to_string(chunk)))
             {
-                filterVector.emplace_back(std::make_unique<sdsl::bit_vector>(std::move(tmp)));
-                currentChunk = chunk;
-                chunkSize = filterVector[currentChunk]->size();
+                filterVector.emplace_back(
+                    std::make_tuple(
+                        true,
+                        std::make_unique<sdsl::bit_vector>(std::move(tmp))));
+                chunkSize = std::get<1>(filterVector[chunk])->size();
                 compress(chunk);
                 ++chunk;
             }
             else
             {
-                currentChunk--;
                 break;
             }
         }
-        noOfChunks = chunk;
         chunkSize -= FILTER_METADATA_SIZE;
+        noOfChunks = chunk;
         noOfBits = chunkSize * chunk;
         noOfBins = get_int(noOfBits, noOfChunks - 1);
         // How many blocks of 64 bit do we need to represent our noOfBins
         binWidth = std::ceil((double)noOfBins / INT_SIZE);
         // How big is then a block (multiple of 64 bit)
         blockBitSize = binWidth * INT_SIZE;
-        // How many hash values can we represent
         noOfBlocks = noOfBits  / blockBitSize;
     }
 
     uint64_t get_int(uint64_t idx, uint8_t chunk, uint8_t len = 64) //const
     {
-        uint8_t chunkNo = idx / (chunkSize + (chunk == noOfChunks - 1 ? FILTER_METADATA_SIZE : 0));
-        if (chunkNo != chunk)
-            return 0;
-        uint64_t chunkPos = idx - chunkNo * chunkSize;
-        decompress(chunkNo);
-        return filterVector[chunkNo]->get_int(chunkPos, len);
+        uint8_t chunkNo = idx / chunkSize;
+        chunkNo -= chunkNo == noOfChunks;
+        if (chunkNo == chunk)
+        {
+            uint64_t chunkPos = idx - chunkNo * chunkSize;
+            decompress(chunkNo);
+            return std::get<1>(filterVector[chunkNo])->get_int(chunkPos, len);
+        }
+        return 0;
     }
 
     uint64_t get_pos(uint64_t idx, uint8_t chunk) //const
     {
-        uint8_t chunkNo = idx / (chunkSize + (chunk == noOfChunks - 1 ? FILTER_METADATA_SIZE : 0));
-        if (chunkNo != chunk)
-            return 0;
-        uint64_t chunkPos = idx - chunkNo * chunkSize;
-        decompress(chunkNo);
-        return (*filterVector[chunkNo])[chunkPos];
+        uint8_t chunkNo = idx / chunkSize;
+        chunkNo -= chunkNo == noOfChunks;
+        if (chunkNo == chunk)
+        {
+            uint64_t chunkPos = idx - chunkNo * chunkSize;
+            decompress(chunkNo);
+            return (*std::get<1>(filterVector[chunkNo]))[chunkPos];
+        }
+        return 0;
     }
 
     void set_int(uint64_t idx, uint64_t val, uint8_t chunk, uint8_t len = 64)
     {
-        uint8_t chunkNo = idx / (chunkSize + (chunk == noOfChunks - 1 ? FILTER_METADATA_SIZE : 0));
-        if (chunkNo != chunk)
-            return;
-        uint64_t chunkPos = idx - chunkNo * chunkSize;
-        decompress(chunkNo);
-        filterVector[chunkNo]->set_int(chunkPos, val, len);
+        uint8_t chunkNo = idx / chunkSize;
+        chunkNo -= chunkNo == noOfChunks;
+        if (chunkNo == chunk)
+        {
+            uint64_t chunkPos = idx - chunkNo * chunkSize;
+            decompress(chunkNo);
+            (*std::get<1>(filterVector[chunkNo])).set_int(chunkPos, val, len);
+        }
+        return;
     }
 
     void set_pos(uint64_t idx, uint8_t chunk)
     {
-        uint8_t chunkNo = idx / (chunkSize + (chunk == noOfChunks - 1 ? FILTER_METADATA_SIZE : 0));
-        if (chunkNo != chunk)
-            return;
-        decompress(chunkNo);
-        uint64_t chunkPos = idx - chunkNo * chunkSize;
-        (*filterVector[chunkNo])[chunkPos] = true;
+        uint8_t chunkNo = idx / chunkSize;
+        chunkNo -= chunkNo == noOfChunks;
+        if (chunkNo == chunk)
+        {
+            decompress(chunkNo);
+            uint64_t chunkPos = idx - chunkNo * chunkSize;
+            (*std::get<1>(filterVector[chunkNo]))[chunkPos] = true;
+        }
+        return;
+
     }
 
     void unset_pos(uint64_t idx, uint8_t chunk)
     {
-        uint8_t chunkNo = idx / (chunkSize + (chunk == noOfChunks - 1 ? FILTER_METADATA_SIZE : 0));
-        if (chunkNo != chunk)
-            return;
-        decompress(chunkNo);
-        uint64_t chunkPos = idx - chunkNo * chunkSize;
-        (*filterVector[chunkNo])[chunkPos] = false;
+        uint8_t chunkNo = idx / chunkSize;
+        chunkNo -= chunkNo == noOfChunks;
+        if (chunkNo == chunk)
+        {
+            decompress(chunkNo);
+            uint64_t chunkPos = idx - chunkNo * chunkSize;
+            (*std::get<1>(filterVector[chunkNo]))[chunkPos] = false;
+        }
     }
 
     bool store(CharString fileName)
@@ -262,6 +278,7 @@ struct Bitvector<UncompressedDisk> : BitvectorBase
         bool res = true;
         for (uint8_t chunk = 0; chunk < noOfChunks; ++chunk)
         {
+            decompress(chunk);
             res && filesystem::copy_file(toCString(PREFIX)+std::to_string(chunk), toCString(fileName)+std::string(".chunk_")+std::to_string(chunk), filesystem::copy_options::overwrite_existing);
         }
         return res;
