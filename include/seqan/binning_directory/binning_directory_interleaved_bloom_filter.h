@@ -223,7 +223,7 @@ public:
     {
         std::vector<std::future<void>> tasks;
         // We have so many blocks that we want to distribute to so many threads
-        if (std::is_same<TBitvector, CompressedDisk>::value)
+        if constexpr (std::is_same<TBitvector, CompressedDisk>::value)
         {
             threads = 1;
         }
@@ -393,7 +393,14 @@ public:
         preCalcValues.resize(noOfHashFunc);
         for(TNoOfHashFunc i = 0; i < noOfHashFunc ; i++)
             preCalcValues[i] = i ^  (kmerSize * seedValue);
-        chunkOffset = noOfBlocks / chunks;
+        if constexpr (std::is_same<TBitvector, CompressedDisk>::value || std::is_same<TBitvector, UncompressedDisk>::value)
+        {
+            chunkOffset = noOfBlocks / chunks;;
+        }
+        else
+        {
+            chunkOffset = noOfBlocks;
+        }
     }
 
     /*!
