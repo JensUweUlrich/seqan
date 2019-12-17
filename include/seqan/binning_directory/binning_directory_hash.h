@@ -173,13 +173,13 @@ public:
         }
         else
         {
-            // how many test positions are left if we take every offset'th kmer
-            uint16_t x = (seqan::length(text) - kmerSize + 1) % offset;
+            // how many test positions are left if we take every offset'th kmer (t - k + 1 - 1) / o
+            uint16_t x = (seqan::length(text) - kmerSize) % offset;
             // how many kmers are there when we take every offset'th kmer
             // possible = something left (1/0) + how many fit in the text
             // if something is left, we add a kmer that covers these positions
             // We always take the first k-mers
-            uint32_t possible = 2 * bool(x) + (seqan::length(text) - kmerSize + 1) / offset;
+            uint32_t possible = bool(x) + (seqan::length(text) - kmerSize) / offset + 1;
 
             std::vector<uint64_t> kmerHashes(possible, 0);
 
@@ -190,6 +190,7 @@ public:
 
             for (uint32_t i = 0, j = 0; i < positions; ++i)
             {
+                assert(j < kmerHashes.size());
                 uint64_t kmerHash = hashNext(it);
                 if (x && i == positions - 1) // we take the last kmer that covers otherwise uncovered positions
                 {
