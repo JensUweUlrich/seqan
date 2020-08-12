@@ -1,8 +1,6 @@
 # This project name is used for the CDash submission.
 SET (CTEST_PROJECT_NAME "SeqAn")
 
-find_package (Python3 COMPONENTS Interpreter REQUIRED)
-
 # define build name&co for easier identification on CDash
 set(CTEST_BUILD_NAME "travis-$ENV{TRAVIS_BUILD_NUMBER}-$ENV{TRAVIS_REPO_SLUG}-$ENV{TRAVIS_BRANCH}-$ENV{BUILD_NAME}-$ENV{CXX}")
 set(CTEST_SITE "travis-ci-build-server")
