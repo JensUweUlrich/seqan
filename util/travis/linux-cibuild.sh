@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # get some infos from git to embed it in the build name
 export SOURCE_DIRECTORY=`pwd`
