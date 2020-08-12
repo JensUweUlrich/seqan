@@ -182,5 +182,3 @@ include (package)
 # ===========================================================================
 
 include (SeqAnCtdSetup)
-
-find_package (Python3)
