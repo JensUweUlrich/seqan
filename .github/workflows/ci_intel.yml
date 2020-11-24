@@ -91,7 +91,7 @@ jobs:
           Start-Process -FilePath "C:\Program Files (x86)\Intel\oneAPI\compiler\2021.1-beta10\env\vars.bat"
           New-Item -Name "seqan-build" -ItemType "directory" -Force
           cd seqan-build
-          cmake ../seqan -G"${{ matrix.name }}" -T"Intel C++ Compiler 19.1" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DSEQAN_DISABLE_VERSION_CHECK=ON -DSEQAN_TRAVIS_BUILD:BOOL=ON
+          cmake ../seqan -G"${{ matrix.name }}" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DSEQAN_DISABLE_VERSION_CHECK=ON -DSEQAN_TRAVIS_BUILD:BOOL=ON
 
       - name: Build tests
         continue-on-error: true
