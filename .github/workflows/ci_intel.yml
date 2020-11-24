@@ -80,8 +80,8 @@ jobs:
       - name: install
         if: steps.cache-install.outputs.cache-hit != 'true'
         run: |
-          ls ${{ github.workspace }}
-          Start-Process ${{ github.workspace }}\scripts\install_windows.bat $WINDOWS_HPCKIT_URL $WINDOWS_CPP_COMPONENTS
+          ls ${{ github.workspace }}\seqan
+          Start-Process ${{ github.workspace }}\seqan\scripts\install_windows.bat $WINDOWS_HPCKIT_URL $WINDOWS_CPP_COMPONENTS
 
       - name: Configure tests
         env:
