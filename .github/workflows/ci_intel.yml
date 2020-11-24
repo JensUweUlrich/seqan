@@ -87,13 +87,13 @@ jobs:
         env:
           SEQAN_WIN_CONTRIB_DIRECTORY: ${{ github.workspace }}\seqan-contrib
         run: |
-          "C:\Program Files (x86)\Intel\oneAPI\compiler\2021.1-beta10\env\vars.bat"
           New-Item -Name "seqan-build" -ItemType "directory" -Force
           cd seqan-build
           cmake ../seqan -G"${{ matrix.name }}" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DSEQAN_DISABLE_VERSION_CHECK=ON -DSEQAN_TRAVIS_BUILD:BOOL=ON
 
       - name: Build tests
         run: |
+          "C:\Program Files (x86)\Intel\oneAPI\compiler\2021.1-beta10\env\vars.bat"
           cd seqan-build
           cmake --build . --config "${{ matrix.build_type }}" --parallel 2 -- /p:CLToolExe=icl.exe
 
