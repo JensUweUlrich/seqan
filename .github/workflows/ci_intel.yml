@@ -70,20 +70,6 @@ jobs:
           environment-file: seqan/manual/environment.yml
           use-only-tar-bz2: true
 
-      # - name: Install clcache
-      #   run: pip install clcache
-
-      # - name: Get cached build
-      #   uses: actions/cache@v2
-      #   with:
-      #     path: .clcache
-      #     key: ${{ matrix.name }}-clcache-${{ github.ref }}-${{ github.run_number }}
-      #     # Restoring: From current branch, otherwise from base branch, otherwise from any branch.
-      #     restore-keys: |
-      #       ${{ matrix.name }}-clcache-${{ github.ref }}
-      #       ${{ matrix.name }}-clcache-${{ github.base_ref }}
-      #       ${{ matrix.name }}-clcache-
-
       - name: cache install
         id: cache-install
         uses: actions/cache@v2
@@ -95,14 +81,6 @@ jobs:
         if: steps.cache-install.outputs.cache-hit != 'true'
         run: scripts/install_windows.bat $WINDOWS_HPCKIT_URL $WINDOWS_CPP_COMPONENTS
 
-    # - name: build
-    #   run: scripts/build_windows.bat c++
-
-      # - name: exclude unused files from cache
-      #   if: steps.cache-install.outputs.cache-hit != 'true'
-      #   shell: bash
-      #   run: scripts/cache_exclude_windows.sh
-
       - name: Configure tests
         env:
           SEQAN_WIN_CONTRIB_DIRECTORY: ${{ github.workspace }}\seqan-contrib
@@ -110,20 +88,12 @@ jobs:
           "C:\Program Files (x86)\Intel\oneAPI\compiler\2021.1-beta10\env\vars.bat"
           New-Item -Name "seqan-build" -ItemType "directory" -Force
           cd seqan-build
-          cmake ../seqan -G"${{ matrix.name }}" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DSEQAN_DISABLE_VERSION_CHECK=ON -DSEQAN_TRAVIS_BUILD:BOOL=ON
+          cmake ../seqan -G"${{ matrix.name }}" -T"Intel C++ Compiler 19.1" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DSEQAN_DISABLE_VERSION_CHECK=ON -DSEQAN_TRAVIS_BUILD:BOOL=ON
 
       - name: Build tests
-        # env:
-        #   CLCACHE_BASEDIR: ${{ github.workspace }}
-        #   CLCACHE_DIR: ${{ github.workspace }}/.clcache
-        #   CLCACHE_COMPRESS: true
-        #   CLCACHE_COMPRESSLEVEL: 6
-        #   CLCACHE_HARDLINK: true
         run: |
           cd seqan-build
-          cmake --build . --config "${{ matrix.build_type }}" --parallel 2 -- /p:TrackFileAccess=false /p:CLToolExe=icl.exe
-# clcache.exe -M 5368709120 # Set Maximum cache size to 5 GiB
-# clcache.exe -s
+          cmake --build . --config "${{ matrix.build_type }}" --parallel 2
 
       - name: Run tests
         run: |
