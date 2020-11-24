@@ -37,6 +37,12 @@ jobs:
         with:
           path: seqan
 
+      - name: install
+        if: steps.cache-install.outputs.cache-hit != 'true'
+        run: |
+          ls ${{ github.workspace }}\seqan\scripts
+          ${{ github.workspace }}\seqan\scripts\install_windows.bat $env:WINDOWS_HPCKIT_URL $env:WINDOWS_CPP_COMPONENTS
+
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
         with:
@@ -76,12 +82,6 @@ jobs:
         with:
           path: C:\Program Files (x86)\Intel\oneAPI\compiler
           key: install-${{ env.WINDOWS_HPCKIT_URL }}-${{ env.WINDOWS_CPP_COMPONENTS }}-compiler-${{ hashFiles('**/scripts/cache_exclude_windows.sh') }}
-
-      - name: install
-        if: steps.cache-install.outputs.cache-hit != 'true'
-        run: |
-          ls ${{ github.workspace }}\seqan\scripts
-          ${{ github.workspace }}\seqan\scripts\install_windows.bat $env:WINDOWS_HPCKIT_URL $env:WINDOWS_CPP_COMPONENTS
 
       - name: Configure tests
         env:
