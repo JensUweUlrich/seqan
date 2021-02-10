@@ -1335,7 +1335,7 @@ namespace seqan
             pf.pageNo = -1;                                 // cut back link
         }
 
-        struct testIODone : public std::unary_function<TPageFrame&,bool>
+        struct testIODone : public unary_function<TPageFrame&,bool>
         {
             String &me;
             testIODone(String &_me): me(_me) {}

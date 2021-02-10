@@ -62,6 +62,12 @@ namespace seqan
     };
 */
 
+ template <class Arg, class Result>
+    struct unary_function {
+        typedef Arg argument_type;
+        typedef Result result_type;
+    };
+
 //////////////////////////////////////////////////////////////////////////////
 
     template <typename TElement>
