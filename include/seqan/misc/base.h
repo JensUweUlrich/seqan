@@ -39,6 +39,13 @@
 namespace seqan
 {
 
+
+    template <class Arg, class Result>
+    struct unary_function {
+        typedef Arg argument_type;
+        typedef Result result_type;
+    };
+
     //////////////////////////////////////////////////////////////////////////////
     // In SeqAn sets and maps store elements as pairs of (key,object)
     // the elements of sets without objects are the keys.
