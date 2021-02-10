@@ -2152,7 +2152,7 @@ void convertMatchesToGlobalAlignment(FragmentStore<TSpec, TConfig> &store, TScor
 
 template <typename TFragmentStore>
 struct LessConvertPairWiseToGlobalAlignment:
-    public std::binary_function<
+    public binary_function<
         typename Value<typename TFragmentStore::TAlignedReadStore>::Type,
         typename Value<typename TFragmentStore::TAlignedReadStore>::Type,
         bool>
